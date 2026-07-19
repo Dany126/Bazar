@@ -37,6 +37,7 @@ dependencies:
   get_it: ^9.2.1
   dio: ^5.10.0
   dartz: ^0.10.1
+  flutter_svg: ^2.3.0
 
 dev_dependencies:
   flutter_test:
@@ -61,9 +62,9 @@ flutter:
   uses-material-design: true
 
   # To add assets to your application, add an assets section, like this:
-  # assets:
-  #   - images/a_dot_burr.jpeg
-  #   - images/a_dot_ham.jpeg
+  assets:
+    - assets/images/
+    
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images
@@ -79,25 +80,25 @@ flutter:
   fonts:
     - family: Fraunces
       fonts:
-        - asset: assets/fonts/Fraunces_72pt_Soft-Regular.ttf
+        - asset: assets/fonts/Gabarito-Regular.ttf
           weight: 500
-        - asset: assets/fonts/Fraunces_72pt_Soft-SemiBold.ttf
+        - asset: assets/fonts/Gabarito-SemiBold.ttf
           weight: 600
-        - asset: assets/fonts/Fraunces_72pt_Soft-Bold.ttf
+        - asset: assets/fonts/Gabarito-Bold.ttf
           weight: 700
-    - family: WorkSans
-      fonts:
-        - asset: assets/fonts/WorkSans-Regular.ttf
-        - asset: assets/fonts/WorkSans-Medium.ttf
+        - asset: assets/fonts/Gabarito-Regular.ttf
+        - asset: assets/fonts/Gabarito-Medium.ttf
           weight: 500
-        - asset: assets/fonts/WorkSans-SemiBold.ttf
+        - asset: assets/fonts/Gabarito-SemiBold.ttf
           weight: 600
-    - family: SpaceMono
-      fonts:
-        - asset: assets/fonts/SpaceMono-Regular.ttf
-        - asset: assets/fonts/SpaceMono-Bold.ttf
+        - asset: assets/fonts/Gabarito-Regular.ttf
+        - asset: assets/fonts/Gabarito-Bold.ttf
           weight: 700
 
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+flutter_assets:
+  assets_path: assets/images
+  output_path: lib/core/utils
+  filename: assets.dart

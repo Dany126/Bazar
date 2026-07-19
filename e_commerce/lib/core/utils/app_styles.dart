@@ -9,9 +9,9 @@ import 'package:flutter/material.dart';
 /// Text styles for the app.
 ///
 /// Two families are used:
-///   - 'Fraunces'  -> headings, prices, hero copy, anything that should
+///   - 'Gabarito'  -> headings, prices, hero copy, anything that should
 ///                    feel characterful
-///   - 'WorkSans'  -> body copy, labels, buttons, UI chrome
+///   - 'Gabarito'  -> body copy, labels, buttons, UI chrome
 ///
 /// Requires the fonts to be registered in pubspec.yaml (see bottom of
 /// file for the exact snippet + where to download them).
@@ -19,12 +19,12 @@ import 'package:flutter/material.dart';
 /// Naming: textStyles{Weight}{FontSize}.
 class AppStyles {
   // ===========================================================================
-  // FRAUNCES — display / characterful
+  // Gabarito — display / characterful
   // ===========================================================================
 
   /// Use: hero headkDividerColor on splash / onboarding screens.
   static const textStylesBold32 = TextStyle(
-    fontFamily: 'Fraunces',
+    fontFamily: 'Gabarito',
     fontSize: 32,
     fontWeight: FontWeight.w600,
     height: 1.2,
@@ -34,7 +34,7 @@ class AppStyles {
 
   /// Use: screen titles ("Your Bag", "Checkout", "Profile").
   static const textStylesSemiBold24 = TextStyle(
-    fontFamily: 'Fraunces',
+    fontFamily: 'Gabarito',
     fontSize: 24,
     fontWeight: FontWeight.w600,
     height: 1.25,
@@ -43,7 +43,7 @@ class AppStyles {
 
   /// Use: product name on the product detail screen.
   static const textStylesSemiBold20 = TextStyle(
-    fontFamily: 'Fraunces',
+    fontFamily: 'Gabarito',
     fontSize: 20,
     fontWeight: FontWeight.w600,
     height: 1.3,
@@ -52,7 +52,7 @@ class AppStyles {
 
   /// Use: section headers on Home ("Just In", "Order History").
   static const textStylesSemiBold18 = TextStyle(
-    fontFamily: 'Fraunces',
+    fontFamily: 'Gabarito',
     fontSize: 18,
     fontWeight: FontWeight.w600,
     height: 1.3,
@@ -61,7 +61,7 @@ class AppStyles {
 
   /// Use: price display, large (product detail sticky CTA).
   static const textStylesBold22Mono = TextStyle(
-    fontFamily: 'SpaceMono',
+    fontFamily: 'Gabarito',
     fontSize: 22,
     fontWeight: FontWeight.w700,
     color: AppColors.kPrimaryAccentColorDark,
@@ -69,7 +69,7 @@ class AppStyles {
 
   /// Use: price display, small (product cards, cart kDividerColor items).
   static const textStylesBold13Mono = TextStyle(
-    fontFamily: 'SpaceMono',
+    fontFamily: 'Gabarito',
     fontSize: 13,
     fontWeight: FontWeight.w700,
     color: AppColors.kPrimaryAccentColorDark,
@@ -81,7 +81,7 @@ class AppStyles {
 
   /// Use: button labels (filled + outkDividerColord buttons).
   static const textStylesSemiBold15 = TextStyle(
-    fontFamily: 'WorkSans',
+    fontFamily: 'Gabarito',
     fontSize: 15,
     fontWeight: FontWeight.w600,
     letterSpacing: 0.2,
@@ -90,7 +90,7 @@ class AppStyles {
 
   /// Use: card titles (product name on grid cards, order item name).
   static const textStylesSemiBold14 = TextStyle(
-    fontFamily: 'WorkSans',
+    fontFamily: 'Gabarito',
     fontSize: 14,
     fontWeight: FontWeight.w600,
     color: AppColors.kTextColor,
@@ -98,7 +98,7 @@ class AppStyles {
 
   /// Use: body copy — condition reports, descriptions, form values.
   static const textStylesRegular14 = TextStyle(
-    fontFamily: 'WorkSans',
+    fontFamily: 'Gabarito',
     fontSize: 14,
     fontWeight: FontWeight.w400,
     height: 1.6,
@@ -107,15 +107,20 @@ class AppStyles {
 
   /// Use: card metadata (brand, size, color on product cards).
   static const textStylesRegular12 = TextStyle(
-    fontFamily: 'WorkSans',
+    fontFamily: 'Gabarito',
     fontSize: 12,
     fontWeight: FontWeight.w400,
     color: AppColors.kSecondaryTextColor,
   );
+  static const textStylesRegular16 = TextStyle(
+    fontFamily: 'Gabarito',
+    fontSize: 16,
+    fontWeight: FontWeight.w400,
+  );
 
   /// Use: form field labels, filter chip text.
   static const textStylesMedium11 = TextStyle(
-    fontFamily: 'WorkSans',
+    fontFamily: 'Gabarito',
     fontSize: 11,
     fontWeight: FontWeight.w500,
     letterSpacing: 0.4,
@@ -128,7 +133,7 @@ class AppStyles {
 
   /// Use: order numbers, tracking codes, tag prices on product photos.
   static const textStylesBold12Mono = TextStyle(
-    fontFamily: 'SpaceMono',
+    fontFamily: 'Gabarito',
     fontSize: 12,
     fontWeight: FontWeight.w700,
     color: AppColors.kTextColor,
@@ -136,7 +141,7 @@ class AppStyles {
 
   /// Use: timestamps, order dates, fine print in mono.
   static const textStylesRegular11Mono = TextStyle(
-    fontFamily: 'SpaceMono',
+    fontFamily: 'Gabarito',
     fontSize: 11,
     fontWeight: FontWeight.w400,
     color: AppColors.kSecondaryTextColor,
@@ -157,29 +162,29 @@ class AppStyles {
 //
 // flutter:
 //   fonts:
-//     - family: Fraunces
+//     - family: Gabarito
 //       fonts:
-//         - asset: assets/fonts/Fraunces-Medium.ttf
+//         - asset: assets/fonts/Gabarito-Medium.ttf
 //           weight: 500
-//         - asset: assets/fonts/Fraunces-SemiBold.ttf
+//         - asset: assets/fonts/Gabarito-SemiBold.ttf
 //           weight: 600
-//         - asset: assets/fonts/Fraunces-Bold.ttf
+//         - asset: assets/fonts/Gabarito-Bold.ttf
 //           weight: 700
-//     - family: WorkSans
+//     - family: Gabarito
 //       fonts:
-//         - asset: assets/fonts/WorkSans-Regular.ttf
-//         - asset: assets/fonts/WorkSans-Medium.ttf
+//         - asset: assets/fonts/Gabarito-Regular.ttf
+//         - asset: assets/fonts/Gabarito-Medium.ttf
 //           weight: 500
-//         - asset: assets/fonts/WorkSans-SemiBold.ttf
+//         - asset: assets/fonts/Gabarito-SemiBold.ttf
 //           weight: 600
-//     - family: SpaceMono
+//     - family: Gabarito
 //       fonts:
-//         - asset: assets/fonts/SpaceMono-Regular.ttf
-//         - asset: assets/fonts/SpaceMono-Bold.ttf
+//         - asset: assets/fonts/Gabarito-Regular.ttf
+//         - asset: assets/fonts/Gabarito-Bold.ttf
 //           weight: 700
 //
 // Download all three families free from Google Fonts:
-//   https://fonts.google.com/specimen/Fraunces
+//   https://fonts.google.com/specimen/Gabarito
 //   https://fonts.google.com/specimen/Work+Sans
 //   https://fonts.google.com/specimen/Space+Mono
 // =============================================================================

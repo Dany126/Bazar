@@ -20,7 +20,7 @@ class AppColors {
   static const kPrimaryAccentColorDark = Color(0xFF8E6CEF);
 
   /// Moss — secondary accent (success states, secondary buttons).
-  static const kSecondaryAccentColor = Color(0xFF566246);
+  static const kSecondaryAccentColor = Color(0xFFF4F4F4);
 
   /// Oxblood — error / destructive actions.
   static const kErrorColor = Color(0xFF7A2E2E);
@@ -33,5 +33,5 @@ class AppColors {
   static const kDividerColor = Color(0xFFD8D0BA);
 
   /// Secondary text — captions, metadata, placeholders.
-  static const kSecondaryTextColor = Color(0xFF272727);
+  static const kSecondaryTextColor = Color.fromARGB(128, 39, 39, 39);
 }

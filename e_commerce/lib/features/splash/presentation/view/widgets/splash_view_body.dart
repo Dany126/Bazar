@@ -1,6 +1,6 @@
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
-import 'package:e_commerce/features/auth/presentation/view/auth_view.dart';
+import 'package:e_commerce/features/auth/presentation/view/sign_in_view.dart';
 import 'package:flutter/material.dart';
 
 class SplashViewBody extends StatefulWidget {
@@ -60,7 +60,7 @@ class _SplashViewBodyState extends State<SplashViewBody>
 
   void navigation(BuildContext context) async {
     await Future.delayed(const Duration(seconds: 3), () {
-      Navigator.pushReplacementNamed(context, AuthView.routeName);
+      Navigator.pushReplacementNamed(context, SignInView.routeName);
     });
   }
 }
