@@ -1,279 +1,227 @@
+import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 
-/// Text styles pulled from the Shoppe Figma file.
+/// Brand colors for the app.
+///
+/// Naming: {role}{Shade}. Shades follow a light->dark scale where used
+/// (50 lightest, 900 darkest), matching common design-token conventions.
+
+/// Text styles for the app.
 ///
 /// Two families are used:
-///   - 'Raleway'    -> headings, titles, buttons, emphasis/accent text
-///   - 'NunitoSans' -> body copy, descriptions, small labels
+///   - 'Fraunces'  -> headings, prices, hero copy, anything that should
+///                    feel characterful
+///   - 'WorkSans'  -> body copy, labels, buttons, UI chrome
 ///
-/// Requires the fonts to be registered in pubspec.yaml (see bottom of file
-/// for the exact snippet + where to download them).
+/// Requires the fonts to be registered in pubspec.yaml (see bottom of
+/// file for the exact snippet + where to download them).
 ///
-/// Naming: textStyles{Weight}{FontSize}. Where two styles share the same
-/// weight+size but differ in family/details, the second is suffixed `_2`
-/// (matches the pattern already used in your file, e.g. SemiBold13_2).
+/// Naming: textStyles{Weight}{FontSize}.
 class AppStyles {
   // ===========================================================================
-  // RALEWAY
+  // FRAUNCES — display / characterful
   // ===========================================================================
 
-  /// sample: "Login" (splash/auth) · count: 2
-  static const textStylesBold52 = TextStyle(
-    fontFamily: 'Raleway',
-    fontSize: 52,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -0.52,
+  /// Use: hero headkDividerColor on splash / onboarding screens.
+  static const textStylesBold32 = TextStyle(
+    fontFamily: 'Fraunces',
+    fontSize: 32,
+    fontWeight: FontWeight.w600,
+    height: 1.2,
+    letterSpacing: -0.3,
+    color: AppColors.kTextColor,
   );
 
-  /// sample: "About Shoppe" · count: 54
-  static const textStylesBold28 = TextStyle(
-    fontFamily: 'Raleway',
-    fontSize: 28,
-    fontWeight: FontWeight.w700,
-    height: 1.29, // 36/28
-    letterSpacing: -0.28,
+  /// Use: screen titles ("Your Bag", "Checkout", "Profile").
+  static const textStylesSemiBold24 = TextStyle(
+    fontFamily: 'Fraunces',
+    fontSize: 24,
+    fontWeight: FontWeight.w600,
+    height: 1.25,
+    color: AppColors.kTextColor,
   );
 
-  /// sample: "$17,00" (price display) · count: 4
-  static const textStylesExtraBold26 = TextStyle(
-    fontFamily: 'Raleway',
-    fontSize: 26,
-    fontWeight: FontWeight.w800,
-    height: 1.19, // 31/26
-    letterSpacing: -0.26,
-  );
-
-  /// sample: "Recently viewed" (section header) · count: 85
-  static const textStylesBold21 = TextStyle(
-    fontFamily: 'Raleway',
-    fontSize: 21,
-    fontWeight: FontWeight.w700,
-    height: 1.43, // 30/21
-    letterSpacing: -0.21,
-  );
-
-  /// sample: "Slarda" · count: 32
-  static const textStylesExtraBold20 = TextStyle(
-    fontFamily: 'Raleway',
+  /// Use: product name on the product detail screen.
+  static const textStylesSemiBold20 = TextStyle(
+    fontFamily: 'Fraunces',
     fontSize: 20,
-    fontWeight: FontWeight.w800,
+    fontWeight: FontWeight.w600,
+    height: 1.3,
+    color: AppColors.kTextColor,
   );
 
-  /// sample: "Vietnam" (accent color) · count: 18
-  static const textStylesBold20 = TextStyle(
-    fontFamily: 'Raleway',
-    fontSize: 20,
-    fontWeight: FontWeight.w700,
-    letterSpacing: -0.2,
-    color: Color(0xFF004CFF),
-  );
-
-  /// sample: "Voucher" (accent color) · count: 88
-  static const textStylesBold18 = TextStyle(
-    fontFamily: 'Raleway',
+  /// Use: section headers on Home ("Just In", "Order History").
+  static const textStylesSemiBold18 = TextStyle(
+    fontFamily: 'Fraunces',
     fontSize: 18,
+    fontWeight: FontWeight.w600,
+    height: 1.3,
+    color: AppColors.kTextColor,
+  );
+
+  /// Use: price display, large (product detail sticky CTA).
+  static const textStylesBold22Mono = TextStyle(
+    fontFamily: 'SpaceMono',
+    fontSize: 22,
     fontWeight: FontWeight.w700,
-    height: 1.28, // 23/18
-    letterSpacing: -0.18,
-    color: Color(0xFF004CFF),
+    color: AppColors.kPrimaryAccentColorDark,
   );
 
-  /// sample: "hello@mydomain.com" · count: 158
-  static const textStylesBold17 = TextStyle(
-    fontFamily: 'Raleway',
-    fontSize: 17,
+  /// Use: price display, small (product cards, cart kDividerColor items).
+  static const textStylesBold13Mono = TextStyle(
+    fontFamily: 'SpaceMono',
+    fontSize: 13,
     fontWeight: FontWeight.w700,
-    height: 1.24, // 21/17
-    letterSpacing: -0.17,
+    color: AppColors.kPrimaryAccentColorDark,
   );
 
-  /// sample: "209" · count: 20
-  static const textStylesMedium17 = TextStyle(
-    fontFamily: 'Raleway',
-    fontSize: 17,
-    fontWeight: FontWeight.w500,
-    height: 1.24, // 21/17
-    letterSpacing: -0.17,
-  );
+  // ===========================================================================
+  // WORK SANS — body / UI
+  // ===========================================================================
 
-  /// sample: "Attempt to deliver your parcel" (accent color) · count: 24
-  static const textStylesBold16 = TextStyle(
-    fontFamily: 'Raleway',
-    fontSize: 16,
-    fontWeight: FontWeight.w700,
-    height: 1.25, // 20/16
-    letterSpacing: -0.16,
-    color: Color(0xFF0042E0),
-  );
-
-  /// sample: "Sizes" · count: 117
-  static const textStylesMedium16 = TextStyle(
-    fontFamily: 'Raleway',
-    fontSize: 16,
-    fontWeight: FontWeight.w500,
-    height: 1.25, // 20/16
-    letterSpacing: -0.16,
-  );
-
-  /// sample: "10+ Orders" · count: 94
-  static const textStylesBold15 = TextStyle(
-    fontFamily: 'Raleway',
+  /// Use: button labels (filled + outkDividerColord buttons).
+  static const textStylesSemiBold15 = TextStyle(
+    fontFamily: 'WorkSans',
     fontSize: 15,
-    fontWeight: FontWeight.w700,
-    height: 1.27, // 19/15
-    letterSpacing: -0.15,
+    fontWeight: FontWeight.w600,
+    letterSpacing: 0.2,
+    color: AppColors.kMainBackgroundColor,
   );
 
-  /// sample: "Order #92287157" · count: 102
-  static const textStylesBold14 = TextStyle(
-    fontFamily: 'Raleway',
+  /// Use: card titles (product name on grid cards, order item name).
+  static const textStylesSemiBold14 = TextStyle(
+    fontFamily: 'WorkSans',
     fontSize: 14,
-    fontWeight: FontWeight.w700,
-    height: 1.29, // 18/14
-    letterSpacing: -0.14,
+    fontWeight: FontWeight.w600,
+    color: AppColors.kTextColor,
   );
 
-  /// sample: "Collected" (white) · count: 117
-  static const textStylesMedium14 = TextStyle(
-    fontFamily: 'Raleway',
+  /// Use: body copy — condition reports, descriptions, form values.
+  static const textStylesRegular14 = TextStyle(
+    fontFamily: 'WorkSans',
     fontSize: 14,
-    fontWeight: FontWeight.w500,
-    height: 1.29, // 18/14
-    letterSpacing: -0.14,
-    color: Colors.white,
+    fontWeight: FontWeight.w400,
+    height: 1.6,
+    color: AppColors.kTextColor,
   );
 
-  /// sample: "Ordered" · count: 76
-  static const textStylesBold13 = TextStyle(
-    fontFamily: 'Raleway',
-    fontSize: 13,
-    fontWeight: FontWeight.w700,
-    height: 1.31, // 17/13
-    letterSpacing: -0.13,
-  );
-
-  /// sample: "3 items" · count: 132
-  static const textStylesMedium13 = TextStyle(
-    fontFamily: 'Raleway',
-    fontSize: 13,
-    fontWeight: FontWeight.w500,
-    height: 1.31, // 17/13
-    letterSpacing: -0.13,
-  );
-
-  /// sample: masked card number · count: 18
-  static const textStylesBold12 = TextStyle(
-    fontFamily: 'Raleway',
+  /// Use: card metadata (brand, size, color on product cards).
+  static const textStylesRegular12 = TextStyle(
+    fontFamily: 'WorkSans',
     fontSize: 12,
-    fontWeight: FontWeight.w700,
-    height: 1.33, // 16/12
-    letterSpacing: -0.12,
+    fontWeight: FontWeight.w400,
+    color: AppColors.kSecondaryTextColor,
   );
 
-  /// sample: "Valid Until 6.20.20" · count: 14
+  /// Use: form field labels, filter chip text.
   static const textStylesMedium11 = TextStyle(
-    fontFamily: 'Raleway',
+    fontFamily: 'WorkSans',
     fontSize: 11,
     fontWeight: FontWeight.w500,
-    height: 1.36, // 15/11
-    letterSpacing: -0.11,
+    letterSpacing: 0.4,
+    color: AppColors.kSecondaryTextColor,
   );
 
   // ===========================================================================
-  // NUNITO SANS
+  // SPACE MONO — utility (prices, order numbers, SKUs)
   // ===========================================================================
 
-  /// sample: "Version 1.0 April, 2020" · count: 224 (most-used style overall)
-  static const textStylesRegular12 = TextStyle(
-    fontFamily: 'NunitoSans',
-    fontSize: 12,
-    fontWeight: FontWeight.w400,
-    height: 1.67, // 20/12
-  );
-
-  /// sample: "If you need help or you have a..." · count: 51
-  static const textStylesLight16 = TextStyle(
-    fontFamily: 'NunitoSans',
-    fontSize: 16,
-    fontWeight: FontWeight.w300,
-    height: 1.69, // 27/16
-  );
-
-  /// sample: "You won't be able to restore y..." · count: 26
-  static const textStylesSemiBold13 = TextStyle(
-    fontFamily: 'NunitoSans',
-    fontSize: 13,
-    fontWeight: FontWeight.w600,
-    height: 1.54, // 20/13
-  );
-
-  /// sample: "Version 1.0 April, 2020" (semibold variant) · count: 33
-  static const textStylesSemiBold12 = TextStyle(
-    fontFamily: 'NunitoSans',
-    fontSize: 12,
-    fontWeight: FontWeight.w600,
-    height: 1.5, // 18/12
-  );
-
-  /// sample: "About Slarda" · count: 33
-  static const textStylesSemiBold16 = TextStyle(
-    fontFamily: 'NunitoSans',
-    fontSize: 16,
-    fontWeight: FontWeight.w600,
-  );
-
-  /// sample: "Amanda Morgan" (uppercase label style) · count: 30
-  static const textStylesSemiBold10 = TextStyle(
-    fontFamily: 'NunitoSans',
-    fontSize: 10,
-    fontWeight: FontWeight.w600,
-    height: 1.3, // 13/10
-    letterSpacing: 1.5,
-  );
-
-  /// sample: placeholder body text · count: 23
-  static const textStylesRegular10 = TextStyle(
-    fontFamily: 'NunitoSans',
-    fontSize: 10,
-    fontWeight: FontWeight.w400,
-    height: 1.5, // 15/10
-  );
-
-  /// sample: "Apply" (light color, on dark bg) · count: 14
-  static const textStylesLight22 = TextStyle(
-    fontFamily: 'NunitoSans',
-    fontSize: 22,
-    fontWeight: FontWeight.w300,
-    height: 1.41, // 31/22
-    color: Color(0xFFF3F3F3),
-  );
-
-  /// sample: "Cancel" · count: 9
-  static const textStylesLight15 = TextStyle(
-    fontFamily: 'NunitoSans',
-    fontSize: 15,
-    fontWeight: FontWeight.w300,
-    height: 1.73, // 26/15
-    color: Color(0xFF202020),
-  );
-
-  /// sample: "English" (language list) · count: 14
-  static const textStylesRegular15 = TextStyle(
-    fontFamily: 'NunitoSans',
-    fontSize: 15,
-    fontWeight: FontWeight.w400,
-  );
-
-  /// sample: "Up to 50%" (badge, white) · count: 3
-  /// NOTE: duplicate weight+size vs. Raleway's textStylesBold12 above,
-  /// so it's suffixed _2 — same convention as your existing SemiBold13_2.
-  static const textStylesBold12_2 = TextStyle(
-    fontFamily: 'NunitoSans',
+  /// Use: order numbers, tracking codes, tag prices on product photos.
+  static const textStylesBold12Mono = TextStyle(
+    fontFamily: 'SpaceMono',
     fontSize: 12,
     fontWeight: FontWeight.w700,
-    height: 1.5, // 18/12
-    color: Colors.white,
+    color: AppColors.kTextColor,
   );
+
+  /// Use: timestamps, order dates, fine print in mono.
+  static const textStylesRegular11Mono = TextStyle(
+    fontFamily: 'SpaceMono',
+    fontSize: 11,
+    fontWeight: FontWeight.w400,
+    color: AppColors.kSecondaryTextColor,
+  );
+}
+
+/// Spacing scale — use instead of hardcoding padding/margin numbers.
+class AppSpacing {
+  static const xs = 4.0;
+  static const sm = 8.0;
+  static const md = 16.0;
+  static const lg = 24.0;
+  static const xl = 32.0;
+}
+
+/// Corner radius scale — matches the rounded, soft-edged mockup style.
+class AppRadius {
+  static const sm = 10.0;
+  static const md = 14.0;
+  static const lg = 18.0;
+  static const pill = 999.0;
+}
+
+/// App-wide ThemeData, built from the tokens above.
+/// Drop this straight into MaterialApp(theme: AppTheme.light).
+class AppTheme {
+  static ThemeData get light {
+    return ThemeData(
+      scaffoldBackgroundColor: AppColors.kMainBackgroundColor,
+      primaryColor: AppColors.kPrimaryAccentColor,
+      colorScheme: ColorScheme.fromSeed(
+        seedColor: AppColors.kPrimaryAccentColor,
+        primary: AppColors.kPrimaryAccentColor,
+        surface: AppColors.kCardBackgroundColor,
+        error: AppColors.kErrorColor,
+      ),
+      fontFamily: 'WorkSans',
+      textTheme: const TextTheme(
+        headlineLarge: AppStyles.textStylesBold32,
+        headlineMedium: AppStyles.textStylesSemiBold24,
+        titleLarge: AppStyles.textStylesSemiBold20,
+        titleMedium: AppStyles.textStylesSemiBold18,
+        bodyLarge: AppStyles.textStylesRegular14,
+        bodyMedium: AppStyles.textStylesRegular12,
+        labelLarge: AppStyles.textStylesSemiBold15,
+      ),
+      elevatedButtonTheme: ElevatedButtonThemeData(
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.kTextColor,
+          foregroundColor: AppColors.kMainBackgroundColor,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+          textStyle: AppStyles.textStylesSemiBold15,
+        ),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: AppColors.kTextColor,
+          side: const BorderSide(color: AppColors.kTextColor),
+          padding: const EdgeInsets.symmetric(vertical: 14),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(AppRadius.md),
+          ),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: AppColors.kCardBackgroundColor,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.kDividerColor),
+        ),
+      ),
+      cardTheme: CardThemeData(
+        color: AppColors.kCardBackgroundColor,
+        elevation: 0,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(AppRadius.md),
+          side: const BorderSide(color: AppColors.kDividerColor, width: 1),
+        ),
+      ),
+    );
+  }
 }
 
 // =============================================================================
@@ -282,26 +230,29 @@ class AppStyles {
 //
 // flutter:
 //   fonts:
-//     - family: Raleway
+//     - family: Fraunces
 //       fonts:
-//         - asset: assets/fonts/Raleway-Regular.ttf
-//         - asset: assets/fonts/Raleway-Medium.ttf
+//         - asset: assets/fonts/Fraunces-Medium.ttf
 //           weight: 500
-//         - asset: assets/fonts/Raleway-Bold.ttf
-//           weight: 700
-//         - asset: assets/fonts/Raleway-ExtraBold.ttf
-//           weight: 800
-//     - family: NunitoSans
-//       fonts:
-//         - asset: assets/fonts/NunitoSans-Light.ttf
-//           weight: 300
-//         - asset: assets/fonts/NunitoSans-Regular.ttf
-//         - asset: assets/fonts/NunitoSans-SemiBold.ttf
+//         - asset: assets/fonts/Fraunces-SemiBold.ttf
 //           weight: 600
-//         - asset: assets/fonts/NunitoSans-Bold.ttf
+//         - asset: assets/fonts/Fraunces-Bold.ttf
+//           weight: 700
+//     - family: WorkSans
+//       fonts:
+//         - asset: assets/fonts/WorkSans-Regular.ttf
+//         - asset: assets/fonts/WorkSans-Medium.ttf
+//           weight: 500
+//         - asset: assets/fonts/WorkSans-SemiBold.ttf
+//           weight: 600
+//     - family: SpaceMono
+//       fonts:
+//         - asset: assets/fonts/SpaceMono-Regular.ttf
+//         - asset: assets/fonts/SpaceMono-Bold.ttf
 //           weight: 700
 //
-// Download both families free from Google Fonts:
-//   https://fonts.google.com/specimen/Raleway
-//   https://fonts.google.com/specimen/Nunito+Sans
+// Download all three families free from Google Fonts:
+//   https://fonts.google.com/specimen/Fraunces
+//   https://fonts.google.com/specimen/Work+Sans
+//   https://fonts.google.com/specimen/Space+Mono
 // =============================================================================

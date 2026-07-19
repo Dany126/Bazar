@@ -1,5 +1,5 @@
-import 'package:church_project/Core/services/api_services.dart';
-import 'package:church_project/features/constant.dart';
+import 'package:e_commerce/constant.dart';
+import 'package:e_commerce/core/services/api_services.dart';
 import 'package:get_it/get_it.dart';
 
 /// Global service locator instance.

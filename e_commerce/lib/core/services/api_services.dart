@@ -1,6 +1,6 @@
-import 'package:church_project/Core/error/failure.dart';
-import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
+import 'package:e_commerce/core/error/failure.dart';
+import 'package:dartz/dartz.dart';
 
 /// Generic, reusable API service for any Flutter project.
 ///
