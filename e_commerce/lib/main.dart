@@ -1,4 +1,5 @@
 import 'package:e_commerce/core/helper_function/go_route.dart';
+import 'package:e_commerce/core/utils/app_theme.dart';
 import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
 import 'package:flutter/material.dart';
 
@@ -12,6 +13,7 @@ class Ecommerce extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      theme: AppTheme.light,
       debugShowCheckedModeBanner: false,
       onGenerateRoute: onGenerateRoute,
       initialRoute: SplashView.routeName,

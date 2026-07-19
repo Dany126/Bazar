@@ -143,86 +143,13 @@ class AppStyles {
   );
 }
 
-/// Spacing scale — use instead of hardcoding padding/margin numbers.
-class AppSpacing {
-  static const xs = 4.0;
-  static const sm = 8.0;
-  static const md = 16.0;
-  static const lg = 24.0;
-  static const xl = 32.0;
-}
 
 /// Corner radius scale — matches the rounded, soft-edged mockup style.
-class AppRadius {
-  static const sm = 10.0;
-  static const md = 14.0;
-  static const lg = 18.0;
-  static const pill = 999.0;
-}
+
 
 /// App-wide ThemeData, built from the tokens above.
 /// Drop this straight into MaterialApp(theme: AppTheme.light).
-class AppTheme {
-  static ThemeData get light {
-    return ThemeData(
-      scaffoldBackgroundColor: AppColors.kMainBackgroundColor,
-      primaryColor: AppColors.kPrimaryAccentColor,
-      colorScheme: ColorScheme.fromSeed(
-        seedColor: AppColors.kPrimaryAccentColor,
-        primary: AppColors.kPrimaryAccentColor,
-        surface: AppColors.kCardBackgroundColor,
-        error: AppColors.kErrorColor,
-      ),
-      fontFamily: 'WorkSans',
-      textTheme: const TextTheme(
-        headlineLarge: AppStyles.textStylesBold32,
-        headlineMedium: AppStyles.textStylesSemiBold24,
-        titleLarge: AppStyles.textStylesSemiBold20,
-        titleMedium: AppStyles.textStylesSemiBold18,
-        bodyLarge: AppStyles.textStylesRegular14,
-        bodyMedium: AppStyles.textStylesRegular12,
-        labelLarge: AppStyles.textStylesSemiBold15,
-      ),
-      elevatedButtonTheme: ElevatedButtonThemeData(
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppColors.kTextColor,
-          foregroundColor: AppColors.kMainBackgroundColor,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-          ),
-          textStyle: AppStyles.textStylesSemiBold15,
-        ),
-      ),
-      outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(
-          foregroundColor: AppColors.kTextColor,
-          side: const BorderSide(color: AppColors.kTextColor),
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(AppRadius.md),
-          ),
-        ),
-      ),
-      inputDecorationTheme: InputDecorationTheme(
-        filled: true,
-        fillColor: AppColors.kCardBackgroundColor,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(AppRadius.sm),
-          borderSide: const BorderSide(color: AppColors.kDividerColor),
-        ),
-      ),
-      cardTheme: CardThemeData(
-        color: AppColors.kCardBackgroundColor,
-        elevation: 0,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(AppRadius.md),
-          side: const BorderSide(color: AppColors.kDividerColor, width: 1),
-        ),
-      ),
-    );
-  }
-}
+
 
 // =============================================================================
 // pubspec.yaml setup (required — const TextStyle can't use google_fonts,
