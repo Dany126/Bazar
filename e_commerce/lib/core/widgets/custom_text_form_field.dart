@@ -41,14 +41,14 @@ class CustomTextFormField extends StatelessWidget {
       obscureText: obscureText,
       validator: validator,
       autovalidateMode: AutovalidateMode.onUserInteraction,
-      style: AppStyles.textStylesRegular14,
+      style: AppStyles.textStylesRegular14(context),
       decoration: InputDecoration(
         fillColor: const Color.fromARGB(255, 244, 244, 244),
         filled: true,
         hintText: hint,
-        hintStyle: AppStyles.textStylesRegular14.copyWith(
-          color: AppColors.kSecondaryTextColor,
-        ),
+        hintStyle: AppStyles.textStylesRegular14(
+          context,
+        ).copyWith(color: AppColors.kSecondaryTextColor),
         suffixIcon: suffix,
         suffixIconConstraints: const BoxConstraints(
           maxHeight: 40,

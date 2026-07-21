@@ -14,23 +14,31 @@ class SignUpViewBody extends StatelessWidget {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 23),
         child: Column(
           children: [
+            SizedBox(height: AppSpacing.md),
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
-              children: const [
-                Text("Create an account", style: AppStyles.textStylesBold32),
+              children: [
+                Text(
+                  "Create an account",
+                  style: AppStyles.textStylesBold32(context),
+                ),
               ],
             ),
-            SizedBox(height: AppSpacing.xl),
+
+            const SizedBox(height: AppSpacing.xl),
+
             const CustomTextFormField(
               hint: 'Enter your name',
               suffix: null,
               boardtype: TextInputType.emailAddress,
               obscureText: false,
             ),
-            SizedBox(height: AppSpacing.md),
+
+            const SizedBox(height: AppSpacing.md),
+
             const CustomTextFormField(
               hint: 'Enter your phone number',
               suffix: null,
@@ -38,7 +46,9 @@ class SignUpViewBody extends StatelessWidget {
               validator: AppValidators.phone,
               obscureText: false,
             ),
-            SizedBox(height: AppSpacing.md),
+
+            const SizedBox(height: AppSpacing.md),
+
             const CustomTextFormField(
               hint: 'Enter your email',
               suffix: null,
@@ -46,16 +56,20 @@ class SignUpViewBody extends StatelessWidget {
               obscureText: false,
               validator: AppValidators.email,
             ),
-            SizedBox(height: AppSpacing.md),
+
+            const SizedBox(height: AppSpacing.md),
+
             PasswordField(
               hint: 'Enter your password',
               onSaved: (String? value) {},
               validator: AppValidators.password,
             ),
-            SizedBox(height: AppSpacing.xl),
+
+            const SizedBox(height: AppSpacing.xl),
+
             CustomButton(onTap: () {}, text: 'Sign up'),
-            SizedBox(height: AppSpacing.xl),
-            
+
+            const SizedBox(height: AppSpacing.xl),
           ],
         ),
       ),

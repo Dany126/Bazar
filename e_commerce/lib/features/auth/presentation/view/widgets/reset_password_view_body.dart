@@ -15,16 +15,22 @@ class ResetPasswordViewBody extends StatelessWidget {
     return SingleChildScrollView(
       physics: const BouncingScrollPhysics(),
       child: Padding(
-        padding: EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 23),
         child: Column(
           children: [
+            SizedBox(height: AppSpacing.md),
             Row(
               mainAxisAlignment: MainAxisAlignment.start,
-              children: const [
-                Text("Forgot Password", style: AppStyles.textStylesBold32),
+              children: [
+                Text(
+                  "Forgot Password",
+                  style: AppStyles.textStylesBold32(context),
+                ),
               ],
             ),
-            SizedBox(height: AppSpacing.xl),
+
+            const SizedBox(height: AppSpacing.xl),
+
             const CustomTextFormField(
               hint: 'Enter your email',
               suffix: null,
@@ -32,13 +38,15 @@ class ResetPasswordViewBody extends StatelessWidget {
               obscureText: false,
               validator: AppValidators.email,
             ),
-            SizedBox(height: AppSpacing.xl),
+
+            const SizedBox(height: AppSpacing.xl),
+
             CustomButton(
               onTap: () {
                 showDialog(
                   context: context,
                   barrierDismissible: false,
-                  builder: (context) {
+                  builder: (dialogContext) {
                     return Dialog.fullscreen(
                       backgroundColor: Colors.white,
                       child: SafeArea(
@@ -48,22 +56,32 @@ class ResetPasswordViewBody extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Image.asset(Assets.assetsImagesMessage),
+
                               const SizedBox(height: AppSpacing.md),
-                              const Text(
+
+                              Text(
                                 'Check your email',
-                                style: AppStyles.textStylesBold32,
+                                style: AppStyles.textStylesBold32(
+                                  dialogContext,
+                                ),
                               ),
+
                               const SizedBox(height: AppSpacing.sm),
-                              const Text(
+
+                              Text(
                                 'We have sent a password recovery link to your email.',
                                 textAlign: TextAlign.center,
-                                style: AppStyles.textStylesRegular16,
+                                style: AppStyles.textStylesRegular16(
+                                  dialogContext,
+                                ),
                               ),
+
                               const SizedBox(height: AppSpacing.xl),
+
                               CustomButton(
                                 onTap: () {
                                   Navigator.of(
-                                    context,
+                                    dialogContext,
                                   ).pushReplacementNamed(SignInView.routeName);
                                 },
                                 text: 'Return to Login',

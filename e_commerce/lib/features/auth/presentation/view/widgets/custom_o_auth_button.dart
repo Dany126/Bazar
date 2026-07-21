@@ -9,6 +9,7 @@ class CustomOAuthButton extends StatelessWidget {
     required this.text,
     required this.imageUrl,
   });
+
   final VoidCallback onTap;
   final String text;
   final String imageUrl;
@@ -20,7 +21,7 @@ class CustomOAuthButton extends StatelessWidget {
       child: Container(
         width: double.infinity,
         decoration: ShapeDecoration(
-          color: AppColors.kSecondaryAccentColor /* Bg-Light-2 */,
+          color: AppColors.kSecondaryAccentColor,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(100),
           ),
@@ -28,18 +29,16 @@ class CustomOAuthButton extends StatelessWidget {
         child: Row(
           children: [
             Padding(
-              padding: EdgeInsets.symmetric(horizontal: 19, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 19, vertical: 12),
               child: Image.asset(imageUrl),
             ),
             const Spacer(),
-
             Text(
-              textAlign: TextAlign.center,
-
               text,
-              style: AppStyles.textStylesRegular16.copyWith(
-                color: AppColors.kSecondaryTextColor,
-              ),
+              textAlign: TextAlign.center,
+              style: AppStyles.textStylesRegular16(
+                context,
+              ).copyWith(color: AppColors.kSecondaryTextColor),
             ),
             const Spacer(flex: 2),
           ],

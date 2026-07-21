@@ -1,190 +1,121 @@
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 
-/// Brand colors for the app.
-///
-/// Naming: {role}{Shade}. Shades follow a light->dark scale where used
-/// (50 lightest, 900 darkest), matching common design-token conventions.
-
-/// Text styles for the app.
-///
-/// Two families are used:
-///   - 'Gabarito'  -> headings, prices, hero copy, anything that should
-///                    feel characterful
-///   - 'Gabarito'  -> body copy, labels, buttons, UI chrome
-///
-/// Requires the fonts to be registered in pubspec.yaml (see bottom of
-/// file for the exact snippet + where to download them).
-///
-/// Naming: textStyles{Weight}{FontSize}.
 class AppStyles {
-  // ===========================================================================
-  // Gabarito — display / characterful
-  // ===========================================================================
+  static double getFontSize(double size, BuildContext context) {
+    final width = MediaQuery.of(context).size.width;
 
-  /// Use: hero headkDividerColor on splash / onboarding screens.
-  static const textStylesBold32 = TextStyle(
+    if (width < 360) {
+      return size * 0.6;
+    } else if (width < 600) {
+      return size * 0.7;
+    } else {
+      return size * 1.2;
+    }
+  }
+
+  static TextStyle textStylesBold32(BuildContext context) => TextStyle(
     fontFamily: 'Gabarito',
-    fontSize: 32,
+    fontSize: getFontSize(32, context),
     fontWeight: FontWeight.w600,
     height: 1.2,
     letterSpacing: -0.3,
     color: AppColors.kTextColor,
   );
 
-  /// Use: screen titles ("Your Bag", "Checkout", "Profile").
-  static const textStylesSemiBold24 = TextStyle(
+  static TextStyle textStylesSemiBold24(BuildContext context) => TextStyle(
     fontFamily: 'Gabarito',
-    fontSize: 24,
+    fontSize: getFontSize(24, context),
     fontWeight: FontWeight.w600,
     height: 1.25,
     color: AppColors.kTextColor,
   );
 
-  /// Use: product name on the product detail screen.
-  static const textStylesSemiBold20 = TextStyle(
+  static TextStyle textStylesSemiBold20(BuildContext context) => TextStyle(
     fontFamily: 'Gabarito',
-    fontSize: 20,
+    fontSize: getFontSize(20, context),
     fontWeight: FontWeight.w600,
     height: 1.3,
     color: AppColors.kTextColor,
   );
 
-  /// Use: section headers on Home ("Just In", "Order History").
-  static const textStylesSemiBold18 = TextStyle(
+  static TextStyle textStylesSemiBold18(BuildContext context) => TextStyle(
     fontFamily: 'Gabarito',
-    fontSize: 18,
+    fontSize: getFontSize(18, context),
     fontWeight: FontWeight.w600,
     height: 1.3,
     color: AppColors.kTextColor,
   );
 
-  /// Use: price display, large (product detail sticky CTA).
-  static const textStylesBold22Mono = TextStyle(
+  static TextStyle textStylesBold22Mono(BuildContext context) => TextStyle(
     fontFamily: 'Gabarito',
-    fontSize: 22,
+    fontSize: getFontSize(22, context),
     fontWeight: FontWeight.w700,
     color: AppColors.kPrimaryAccentColorDark,
   );
 
-  /// Use: price display, small (product cards, cart kDividerColor items).
-  static const textStylesBold13Mono = TextStyle(
+  static TextStyle textStylesBold13Mono(BuildContext context) => TextStyle(
     fontFamily: 'Gabarito',
-    fontSize: 13,
+    fontSize: getFontSize(13, context),
     fontWeight: FontWeight.w700,
     color: AppColors.kPrimaryAccentColorDark,
   );
 
-  // ===========================================================================
-  // WORK SANS — body / UI
-  // ===========================================================================
-
-  /// Use: button labels (filled + outkDividerColord buttons).
-  static const textStylesSemiBold15 = TextStyle(
+  static TextStyle textStylesSemiBold15(BuildContext context) => TextStyle(
     fontFamily: 'Gabarito',
-    fontSize: 15,
+    fontSize: getFontSize(15, context),
     fontWeight: FontWeight.w600,
     letterSpacing: 0.2,
     color: AppColors.kMainBackgroundColor,
   );
 
-  /// Use: card titles (product name on grid cards, order item name).
-  static const textStylesSemiBold14 = TextStyle(
+  static TextStyle textStylesSemiBold14(BuildContext context) => TextStyle(
     fontFamily: 'Gabarito',
-    fontSize: 14,
+    fontSize: getFontSize(14, context),
     fontWeight: FontWeight.w600,
     color: AppColors.kTextColor,
   );
 
-  /// Use: body copy — condition reports, descriptions, form values.
-  static const textStylesRegular14 = TextStyle(
+  static TextStyle textStylesRegular14(BuildContext context) => TextStyle(
     fontFamily: 'Gabarito',
-    fontSize: 14,
+    fontSize: getFontSize(14, context),
     fontWeight: FontWeight.w400,
     height: 1.6,
     color: AppColors.kTextColor,
   );
 
-  /// Use: card metadata (brand, size, color on product cards).
-  static const textStylesRegular12 = TextStyle(
+  static TextStyle textStylesRegular12(BuildContext context) => TextStyle(
     fontFamily: 'Gabarito',
-    fontSize: 12,
+    fontSize: getFontSize(12, context),
     fontWeight: FontWeight.w400,
     color: AppColors.kSecondaryTextColor,
   );
-  static const textStylesRegular16 = TextStyle(
+
+  static TextStyle textStylesRegular16(BuildContext context) => TextStyle(
     fontFamily: 'Gabarito',
-    fontSize: 16,
+    fontSize: getFontSize(16, context),
     fontWeight: FontWeight.w400,
   );
 
-  /// Use: form field labels, filter chip text.
-  static const textStylesMedium11 = TextStyle(
+  static TextStyle textStylesMedium11(BuildContext context) => TextStyle(
     fontFamily: 'Gabarito',
-    fontSize: 11,
+    fontSize: getFontSize(11, context),
     fontWeight: FontWeight.w500,
     letterSpacing: 0.4,
     color: AppColors.kSecondaryTextColor,
   );
 
-  // ===========================================================================
-  // SPACE MONO — utility (prices, order numbers, SKUs)
-  // ===========================================================================
-
-  /// Use: order numbers, tracking codes, tag prices on product photos.
-  static const textStylesBold12Mono = TextStyle(
+  static TextStyle textStylesBold12Mono(BuildContext context) => TextStyle(
     fontFamily: 'Gabarito',
-    fontSize: 12,
+    fontSize: getFontSize(12, context),
     fontWeight: FontWeight.w700,
     color: AppColors.kTextColor,
   );
 
-  /// Use: timestamps, order dates, fine print in mono.
-  static const textStylesRegular11Mono = TextStyle(
+  static TextStyle textStylesRegular11Mono(BuildContext context) => TextStyle(
     fontFamily: 'Gabarito',
-    fontSize: 11,
+    fontSize: getFontSize(11, context),
     fontWeight: FontWeight.w400,
     color: AppColors.kSecondaryTextColor,
   );
 }
-
-
-/// Corner radius scale — matches the rounded, soft-edged mockup style.
-
-
-/// App-wide ThemeData, built from the tokens above.
-/// Drop this straight into MaterialApp(theme: AppTheme.light).
-
-
-// =============================================================================
-// pubspec.yaml setup (required — const TextStyle can't use google_fonts,
-// since those functions aren't const):
-//
-// flutter:
-//   fonts:
-//     - family: Gabarito
-//       fonts:
-//         - asset: assets/fonts/Gabarito-Medium.ttf
-//           weight: 500
-//         - asset: assets/fonts/Gabarito-SemiBold.ttf
-//           weight: 600
-//         - asset: assets/fonts/Gabarito-Bold.ttf
-//           weight: 700
-//     - family: Gabarito
-//       fonts:
-//         - asset: assets/fonts/Gabarito-Regular.ttf
-//         - asset: assets/fonts/Gabarito-Medium.ttf
-//           weight: 500
-//         - asset: assets/fonts/Gabarito-SemiBold.ttf
-//           weight: 600
-//     - family: Gabarito
-//       fonts:
-//         - asset: assets/fonts/Gabarito-Regular.ttf
-//         - asset: assets/fonts/Gabarito-Bold.ttf
-//           weight: 700
-//
-// Download all three families free from Google Fonts:
-//   https://fonts.google.com/specimen/Gabarito
-//   https://fonts.google.com/specimen/Work+Sans
-//   https://fonts.google.com/specimen/Space+Mono
-// =============================================================================
