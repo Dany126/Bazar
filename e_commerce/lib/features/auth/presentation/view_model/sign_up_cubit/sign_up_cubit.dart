@@ -2,13 +2,13 @@ import 'package:dartz/dartz.dart';
 import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/features/auth/domain/entity/user_entity.dart';
 import 'package:e_commerce/features/auth/domain/use_case/sign_up_usecase.dart';
-import 'package:e_commerce/features/auth/presentation/view_model/sigin_up_cubit/sigin_up_state.dart';
+import 'package:e_commerce/features/auth/presentation/view_model/sign_up_cubit/sign_up_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class SiginUpCubit extends Cubit<SiginUpState> {
+class SignUpCubit extends Cubit<SignUpState> {
   final SignUpUsecase signUpUsecase;
 
-  SiginUpCubit({required this.signUpUsecase}) : super(InitialState());
+  SignUpCubit({required this.signUpUsecase}) : super(InitialState());
 
   Future<Either<Failure, UserEntity>> signUp({
     required String email,

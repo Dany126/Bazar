@@ -8,10 +8,21 @@ import 'package:e_commerce/features/auth/presentation/view/reset_password_view.d
 import 'package:e_commerce/features/auth/presentation/view/signup_view.dart';
 import 'package:e_commerce/features/auth/presentation/view/widgets/custom_o_auth_form.dart';
 import 'package:e_commerce/features/auth/presentation/view/widgets/password_field.dart';
+import 'package:e_commerce/features/auth/presentation/view_model/sign_in_cubit/sign_in_cubit.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
-class SignInBody extends StatelessWidget {
+class SignInBody extends StatefulWidget {
   const SignInBody({super.key});
+
+  @override
+  State<SignInBody> createState() => _SignInBodyState();
+}
+
+class _SignInBodyState extends State<SignInBody> {
+  String email = '';
+  String password = '';
+  GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
@@ -32,19 +43,24 @@ class SignInBody extends StatelessWidget {
 
             SizedBox(height: AppSpacing.xl * 2),
 
-            const CustomTextFormField(
+            CustomTextFormField(
               hint: 'Enter your email address',
               suffix: null,
               boardtype: TextInputType.emailAddress,
               obscureText: false,
               validator: AppValidators.email,
+              onSaved: (String? p1) {
+                email = p1!;
+              },
             ),
 
             SizedBox(height: AppSpacing.md),
 
             PasswordField(
               hint: 'Enter your password',
-              onSaved: (String? p1) {},
+              onSaved: (String? p1) {
+                password = p1!;
+              },
             ),
 
             SizedBox(height: AppSpacing.xs),
@@ -85,7 +101,17 @@ class SignInBody extends StatelessWidget {
 
             SizedBox(height: AppSpacing.md * 2),
 
-            CustomButton(onTap: () {}, text: 'Sign in'),
+            CustomButton(
+              onTap: () async {
+                if (formKey.currentState!.validate()) {
+                  formKey.currentState!.save();
+                  await BlocProvider.of<SignInCubit>(
+                    context,
+                  ).signIn(email: email, password: password);
+                }
+              },
+              text: 'Sign in',
+            ),
 
             SizedBox(height: AppSpacing.md),
 
