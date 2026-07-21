@@ -29,7 +29,7 @@ class _SplashViewBodyState extends State<SplashViewBody>
     _translateAnimation = Tween<double>(
       begin: 0,
       end: 0,
-    ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticInOut));
 
     navigation(context);
   }
@@ -40,7 +40,7 @@ class _SplashViewBodyState extends State<SplashViewBody>
     final screenWidth = MediaQuery.of(context).size.width;
 
     _translateAnimation = Tween<double>(
-      begin: -screenWidth, // fully off-screen to the left
+      begin: -screenWidth,
       end: 0.0, // centered
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
@@ -63,7 +63,13 @@ class _SplashViewBodyState extends State<SplashViewBody>
         animation: _controller,
         builder: (context, child) => Transform.translate(
           offset: Offset(_translateAnimation.value, 0.0),
-          child: Center(child: Image.asset(Assets.assetsImagesLogo)),
+          child: Center(
+            child: Image.asset(
+              Assets.assetsImagesLogo,
+              width: MediaQuery.of(context).size.width * 0.5,
+              height: MediaQuery.of(context).size.width * 0.5,
+            ),
+          ),
         ),
       ),
     );

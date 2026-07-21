@@ -4,11 +4,11 @@ import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
 import 'package:flutter/material.dart';
 
 void main() {
-  runApp(Ecommerce());
+  runApp(const Bazar());
 }
 
-class Ecommerce extends StatelessWidget {
-  const Ecommerce({super.key});
+class Bazar extends StatelessWidget {
+  const Bazar({super.key});
 
   @override
   Widget build(BuildContext context) {
