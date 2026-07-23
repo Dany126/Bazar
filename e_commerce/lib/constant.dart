@@ -1,1 +1,1 @@
-const kBaseUrl = 'http://89.207.132.170:3000';
+const String kBaseUrl = "http://10.0.2.2:5000/api";

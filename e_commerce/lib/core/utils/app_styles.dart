@@ -6,11 +6,11 @@ class AppStyles {
     final width = MediaQuery.of(context).size.width;
 
     if (width < 360) {
-      return size * 0.6;
+      return size * 0.8;
     } else if (width < 600) {
-      return size * 0.7;
+      return size * 1;
     } else {
-      return size * 1.2;
+      return size * 1.3;
     }
   }
 

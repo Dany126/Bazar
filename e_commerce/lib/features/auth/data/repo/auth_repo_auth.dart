@@ -11,21 +11,24 @@ class AuthRepositoryImpl implements AuthRepository {
   AuthRepositoryImpl({required this.remoteDataSource});
 
   @override
-  @override
   Future<Either<Failure, UserEntity>> signIn({
     required String email,
     required String password,
   }) async {
-    try {
-      final user = await remoteDataSource.signIn(
-        email: email,
-        password: password,
-      );
+    final result = await remoteDataSource.signIn(
+      email: email,
+      password: password,
+    );
 
-      return Right(user);
-    } on DioException catch (e) {
-      return Left(ApiErrorHandler.handle(e));
-    }
+    return result.fold(
+      (failure) {
+        return Left(failure);
+      },
+
+      (userModel) {
+        return Right(userModel);
+      },
+    );
   }
 
   @override
@@ -35,18 +38,29 @@ class AuthRepositoryImpl implements AuthRepository {
     required String phone,
     required String password,
   }) async {
-    try {
-      final user = await remoteDataSource.signUp(
-        name: name,
-        email: email,
-        phone: phone,
-        password: password,
-      );
+    final result = await remoteDataSource.signUp(
+      name: name,
+      email: email,
+      phone: phone,
+      password: password,
+    );
 
-      return Right(user);
-    } on DioException catch (e) {
-      return Left(ApiErrorHandler.handle(e));
-    }
+    return result.fold(
+      (failure) {
+        return Left(failure);
+      },
+      (userModel) {
+        return Right(
+          UserEntity(
+            id: userModel.id,
+            email: userModel.email,
+            name: name,
+            phone: phone,
+            token: userModel.token,
+          ),
+        );
+      },
+    );
   }
 
   @override

@@ -1,3 +1,5 @@
+import 'package:dartz/dartz.dart';
+import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/core/services/api_services.dart';
 import 'package:e_commerce/features/auth/data/model/user_model.dart';
 import 'package:e_commerce/features/auth/domain/auth_data_source/auth_remote_data_source.dart';
@@ -8,36 +10,35 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   AuthRemoteDataSourceImpl({required this.apiService});
 
   @override
-  Future<UserModel> signIn({
+  Future<Either<Failure, UserModel>> signIn({
     required String email,
     required String password,
   }) async {
     final response = await apiService.post(
-      '${apiService.baseUrl}/auth/login',
+      '${apiService.baseUrl}/user/login',
       data: {'email': email, 'password': password},
     );
 
     return response.fold(
       (failure) {
-        throw failure;
+        return Left(failure);
       },
 
       (data) {
-        return UserModel.fromJson(data['user']);
+        return Right(UserModel.fromJson(data['user']));
       },
     );
   }
 
   @override
-  Future<UserModel> signUp({
+  Future<Either<Failure, UserModel>> signUp({
     required String name,
     required String email,
     required String phone,
     required String password,
   }) async {
     final response = await apiService.post(
-      '/auth/register',
-
+      '${apiService.baseUrl}/user/register',
       data: {
         'name': name,
         'email': email,
@@ -48,45 +49,44 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
     return response.fold(
       (failure) {
-        throw failure;
+        return Left(failure);
       },
 
       (data) {
-        return UserModel.fromJson(data['user']);
+        return Right(UserModel.fromJson(data['user']));
       },
     );
   }
 
   @override
-  Future<void> resetPassword({required String email}) async {
+  Future<Either<Failure, void>> resetPassword({required String email}) async {
     final response = await apiService.post(
-      '/auth/reset-password',
-
+      '${apiService.baseUrl}/auth/reset-password',
       data: {'email': email},
     );
 
-    response.fold(
+    return response.fold(
       (failure) {
-        throw failure;
+        return Left(failure);
       },
 
       (_) {
-        return;
+        return const Right(null);
       },
     );
   }
 
   @override
-  Future<void> logout() async {
-    final response = await apiService.post('/auth/logout');
+  Future<Either<Failure, void>> logout() async {
+    final response = await apiService.post('${apiService.baseUrl}/auth/logout');
 
-    response.fold(
+    return response.fold(
       (failure) {
-        throw failure;
+        return Left(failure);
       },
 
       (_) {
-        return;
+        return const Right(null);
       },
     );
   }

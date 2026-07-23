@@ -2,6 +2,7 @@ import 'package:e_commerce/features/auth/presentation/view/reset_password_view.d
 import 'package:e_commerce/features/auth/presentation/view/sign_in_view.dart';
 
 import 'package:e_commerce/features/auth/presentation/view/signup_view.dart';
+import 'package:e_commerce/features/home/presentation/views/home_view.dart';
 import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
 import 'package:flutter/material.dart';
 
@@ -18,6 +19,9 @@ Route onGenerateRoute(RouteSettings settings) {
 
     case ResetPasswordView.routeName:
       return MaterialPageRoute(builder: (context) => const ResetPasswordView());
+
+    case HomeView.routeName:
+      return MaterialPageRoute(builder: (context) => const HomeView());
 
     default:
       return MaterialPageRoute(

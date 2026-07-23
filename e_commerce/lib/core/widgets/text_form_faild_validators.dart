@@ -21,11 +21,12 @@ class AppValidators {
   static String? email(String? value) {
     final v = value?.trim() ?? '';
 
-    if (v.isEmpty) return 'البريد الإلكتروني مطلوب';
+    if (v.isEmpty) return 'Email is required';
 
     const pattern = r'^[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,7}$';
+
     if (!RegExp(pattern).hasMatch(v)) {
-      return 'أدخل بريداً إلكترونياً صحيحاً';
+      return 'Enter a valid email address';
     }
 
     return null; // valid
@@ -45,22 +46,26 @@ class AppValidators {
   static String? password(String? value) {
     final v = value ?? '';
 
-    if (v.isEmpty) return 'كلمة المرور مطلوبة';
+    if (v.isEmpty) return 'Password is required';
 
     if (v.length < 8) {
-      return 'كلمة المرور يجب أن تكون 8 أحرف على الأقل';
+      return 'Password must be at least 8 characters';
     }
+
     if (!RegExp(r'[A-Z]').hasMatch(v)) {
-      return 'يجب أن تحتوي على حرف كبير واحد على الأقل';
+      return 'Password must contain at least one uppercase letter';
     }
+
     if (!RegExp(r'[a-z]').hasMatch(v)) {
-      return 'يجب أن تحتوي على حرف صغير واحد على الأقل';
+      return 'Password must contain at least one lowercase letter';
     }
+
     if (!RegExp(r'[0-9]').hasMatch(v)) {
-      return 'يجب أن تحتوي على رقم واحد على الأقل';
+      return 'Password must contain at least one number';
     }
+
     if (!RegExp(r'[!@#\$%^&*(),.?":{}|<>_\-]').hasMatch(v)) {
-      return 'يجب أن تحتوي على رمز خاص واحد على الأقل';
+      return 'Password must contain at least one special character';
     }
 
     return null; // valid
@@ -70,11 +75,20 @@ class AppValidators {
   ///
   /// Usage:
   ///   TextFormField(
-  ///     validator: (v) => AppValidators.confirmPassword(v, _passwordController.text),
+  ///     validator: (v) => AppValidators.confirmPassword(
+  ///       v,
+  ///       _passwordController.text,
+  ///     ),
   ///   )
   static String? confirmPassword(String? value, String original) {
-    if (value == null || value.isEmpty) return 'تأكيد كلمة المرور مطلوب';
-    if (value != original) return 'كلمتا المرور غير متطابقتين';
+    if (value == null || value.isEmpty) {
+      return 'Confirm password is required';
+    }
+
+    if (value != original) {
+      return 'Passwords do not match';
+    }
+
     return null;
   }
 
@@ -83,10 +97,10 @@ class AppValidators {
   /// Validates an Egyptian mobile phone number.
   ///
   /// Accepted formats (with or without country code):
-  ///   010XXXXXXXX  →  Vodafone
-  ///   011XXXXXXXX  →  Etisalat (e&)
-  ///   012XXXXXXXX  →  Orange
-  ///   015XXXXXXXX  →  WE
+  ///   010XXXXXXXX  → Vodafone
+  ///   011XXXXXXXX  → Etisalat (e&)
+  ///   012XXXXXXXX  → Orange
+  ///   015XXXXXXXX  → WE
   ///
   ///   +20 10/11/12/15 XXXXXXXX
   ///   0020 10/11/12/15 XXXXXXXX
@@ -95,12 +109,12 @@ class AppValidators {
   static String? phone(String? value) {
     final v = (value ?? '').replaceAll(RegExp(r'[\s\-()]+'), '');
 
-    if (v.isEmpty) return 'رقم الهاتف مطلوب';
+    if (v.isEmpty) return 'Phone number is required';
 
-    // Egyptian mobile pattern
     const pattern = r'^(\+20|0020|0)?(10|11|12|15)\d{8}$';
+
     if (!RegExp(pattern).hasMatch(v)) {
-      return 'أدخل رقم هاتف مصري صحيح (مثال: 01012345678)';
+      return 'Enter a valid Egyptian phone number (Example: 01012345678)';
     }
 
     return null; // valid
@@ -108,12 +122,13 @@ class AppValidators {
 
   // ─── Generic helpers ──────────────────────────────────────────────────────
 
-  /// Not-empty validator. Pass a [fieldName] for a localised message.
+  /// Not-empty validator. Pass a [fieldName] for a localized message.
   static String? Function(String?) required(String fieldName) {
     return (String? value) {
       if (value == null || value.trim().isEmpty) {
-        return '$fieldName مطلوب';
+        return '$fieldName is required';
       }
+
       return null;
     };
   }

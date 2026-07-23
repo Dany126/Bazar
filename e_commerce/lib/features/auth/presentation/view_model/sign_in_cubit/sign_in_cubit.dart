@@ -17,10 +17,10 @@ class SignInCubit extends Cubit<SignInState> {
     final result = await signInUsecase(
       SignInParams(email: email, password: password),
     );
-    result.fold(
-      (failure) => emit(SignInError(failure)),
-      (user) => emit(SignInSuccess(user)),
-    );
+    result.fold((failure) {
+      // log(failure.message);
+      emit(SignInError(failure));
+    }, (user) => emit(SignInSuccess(user)));
     return result;
   }
 }

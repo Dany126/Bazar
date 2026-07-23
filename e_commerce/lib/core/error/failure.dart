@@ -70,7 +70,7 @@ class ApiErrorHandler {
   static String _defaultMessageFor(int? statusCode) {
     switch (statusCode) {
       case 400:
-        return 'Bad request.';
+        return 'Invalid request. Check your input.';
       case 401:
         return 'Unauthorized. Please log in again.';
       case 403:
@@ -83,6 +83,7 @@ class ApiErrorHandler {
         return 'Validation error, check your input.';
       case 500:
         return 'Server error. Please try again later.';
+
       default:
         return 'Something went wrong (code: $statusCode).';
     }

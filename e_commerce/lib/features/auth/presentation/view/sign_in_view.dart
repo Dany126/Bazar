@@ -14,7 +14,7 @@ class SignInView extends StatelessWidget {
     return Scaffold(
       body: SafeArea(
         child: BlocProvider<SignInCubit>(
-          create: (_) => getIt<SignInCubit>(),
+          create: (context) => getIt<SignInCubit>(),
 
           child: const SignInBody(),
         ),
@@ -22,3 +22,4 @@ class SignInView extends StatelessWidget {
     );
   }
 }
+// Dany123?

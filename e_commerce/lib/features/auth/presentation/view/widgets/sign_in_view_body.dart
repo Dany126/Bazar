@@ -1,3 +1,4 @@
+import 'package:e_commerce/core/helper_function/snack_bar.dart';
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_space.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
@@ -22,7 +23,16 @@ class SignInBody extends StatefulWidget {
 class _SignInBodyState extends State<SignInBody> {
   String email = '';
   String password = '';
-  GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
+
+  final TextEditingController emailController = TextEditingController();
+
+  @override
+  void dispose() {
+    emailController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -43,24 +53,32 @@ class _SignInBodyState extends State<SignInBody> {
 
             SizedBox(height: AppSpacing.xl * 2),
 
-            CustomTextFormField(
-              hint: 'Enter your email address',
-              suffix: null,
-              boardtype: TextInputType.emailAddress,
-              obscureText: false,
-              validator: AppValidators.email,
-              onSaved: (String? p1) {
-                email = p1!;
-              },
-            ),
+            Form(
+              key: formKey,
+              child: Column(
+                children: [
+                  CustomTextFormField(
+                    controller: emailController,
+                    hint: 'Enter your email address',
+                    suffix: null,
+                    boardtype: TextInputType.emailAddress,
+                    obscureText: false,
+                    validator: AppValidators.email,
+                    onSaved: (value) {
+                      email = value ?? '';
+                    },
+                  ),
 
-            SizedBox(height: AppSpacing.md),
+                  SizedBox(height: AppSpacing.md),
 
-            PasswordField(
-              hint: 'Enter your password',
-              onSaved: (String? p1) {
-                password = p1!;
-              },
+                  PasswordField(
+                    hint: 'Enter your password',
+                    onSaved: (value) {
+                      password = value ?? '';
+                    },
+                  ),
+                ],
+              ),
             ),
 
             SizedBox(height: AppSpacing.xs),
@@ -105,9 +123,15 @@ class _SignInBodyState extends State<SignInBody> {
               onTap: () async {
                 if (formKey.currentState!.validate()) {
                   formKey.currentState!.save();
-                  await BlocProvider.of<SignInCubit>(
-                    context,
-                  ).signIn(email: email, password: password);
+
+                  var result = await context.read<SignInCubit>().signIn(
+                    email: email,
+                    password: password,
+                  );
+
+                  result.fold((failure) {
+                    showSnackBar(context, failure);
+                  }, (user) {});
                 }
               },
               text: 'Sign in',
@@ -118,7 +142,6 @@ class _SignInBodyState extends State<SignInBody> {
             FittedBox(
               fit: BoxFit.scaleDown,
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.start,
                 children: [
                   SizedBox(width: AppSpacing.xs * 2),
 
