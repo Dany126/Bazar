@@ -2,29 +2,31 @@ import 'dart:ui';
 
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
-import 'package:e_commerce/core/utils/assets.dart';
 
 import 'package:e_commerce/features/home/domain/entity/product_entity.dart';
 import 'package:flutter/material.dart';
 
-class ProductCard extends StatelessWidget {
+class ProductCard extends StatefulWidget {
   const ProductCard({
     super.key,
     required this.product,
     this.isFavorite = false,
     this.onTap,
-    this.onFavoriteTap,
   });
 
   final ProductEntity product;
   final bool isFavorite;
   final VoidCallback? onTap;
-  final VoidCallback? onFavoriteTap;
 
+  @override
+  State<ProductCard> createState() => _ProductCardState();
+}
+
+class _ProductCardState extends State<ProductCard> {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: widget.onTap,
       child: Container(
         clipBehavior: Clip.hardEdge,
         decoration: BoxDecoration(
@@ -42,24 +44,37 @@ class ProductCard extends StatelessWidget {
                   width: double.infinity,
                   child: Padding(
                     padding: EdgeInsets.all(16.0),
-                    child: Image.asset(product.image, fit: BoxFit.cover),
+                    child: Image.asset(widget.product.image, fit: BoxFit.cover),
                   ),
                 ),
                 Positioned(
                   top: 5,
                   right: 8,
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(100),
-                    child: BackdropFilter(
-                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                      child: Container(
-                        height: 24,
-                        width: 24,
-                        alignment: Alignment.center,
+                  child: GestureDetector(
+                    onTap: () {
+                      widget.product.isFavorite = !widget.product.isFavorite;
+                      setState(() {});
+                    },
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(100),
+                      child: BackdropFilter(
+                        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                        child: Container(
+                          height: 24,
+                          width: 24,
+                          alignment: Alignment.center,
 
-                        child: GestureDetector(
-                          onTap: onFavoriteTap,
-                          child: Image.asset(Assets.assetsImagesFavIcon),
+                          child: widget.product.isFavorite
+                              ? const Icon(
+                                  Icons.favorite_border_outlined,
+
+                                  size: 18,
+                                )
+                              : Icon(
+                                  Icons.favorite,
+                                  color: const Color.fromARGB(255, 255, 0, 0),
+                                  size: 18,
+                                ),
                         ),
                       ),
                     ),
@@ -75,14 +90,14 @@ class ProductCard extends StatelessWidget {
                 children: [
                   const SizedBox(height: 8),
                   Text(
-                    product.name,
+                    widget.product.name,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: AppStyles.textStylesRegular12(context),
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    '\$${product.price.toStringAsFixed(2)}',
+                    '\$${widget.product.price.toStringAsFixed(2)}',
 
                     style: AppStyles.textStylesRegular12(
                       context,

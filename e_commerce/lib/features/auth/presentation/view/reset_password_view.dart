@@ -1,5 +1,5 @@
 import 'package:e_commerce/core/services/get_it_services.dart';
-import 'package:e_commerce/features/auth/presentation/view/widgets/custom_app_bar.dart';
+import 'package:e_commerce/core/widgets/custom_app_bar.dart';
 import 'package:e_commerce/features/auth/presentation/view/widgets/reset_password_view_body.dart';
 import 'package:e_commerce/features/auth/presentation/view_model/reset_password/reset_password_cubit.dart';
 import 'package:flutter/material.dart';
