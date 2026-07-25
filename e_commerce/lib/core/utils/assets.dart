@@ -2,6 +2,22 @@
 class Assets {
   Assets._();
   
+  /// Assets for assetsImagesActiveHome
+  /// assets/images/ActiveHome.png
+  static const String assetsImagesActiveHome = "assets/images/ActiveHome.png";
+
+  /// Assets for assetsImagesActiveReceipt
+  /// assets/images/ActiveReceipt.png
+  static const String assetsImagesActiveReceipt = "assets/images/ActiveReceipt.png";
+
+  /// Assets for assetsImagesActivenotificationbing
+  /// assets/images/Activenotificationbing.png
+  static const String assetsImagesActivenotificationbing = "assets/images/Activenotificationbing.png";
+
+  /// Assets for assetsImagesActiveprofile
+  /// assets/images/Activeprofile.png
+  static const String assetsImagesActiveprofile = "assets/images/Activeprofile.png";
+
   /// Assets for assetsImagesApple
   /// assets/images/Apple.png
   static const String assetsImagesApple = "assets/images/Apple.png";
@@ -49,6 +65,22 @@ class Assets {
   /// Assets for assetsImagesGoogle
   /// assets/images/Google.png
   static const String assetsImagesGoogle = "assets/images/Google.png";
+
+  /// Assets for assetsImagesInActiveHome
+  /// assets/images/InActiveHome.png
+  static const String assetsImagesInActiveHome = "assets/images/InActiveHome.png";
+
+  /// Assets for assetsImagesInActiveReceipt
+  /// assets/images/InActiveReceipt.png
+  static const String assetsImagesInActiveReceipt = "assets/images/InActiveReceipt.png";
+
+  /// Assets for assetsImagesInActivenotificationbing
+  /// assets/images/InActivenotificationbing.png
+  static const String assetsImagesInActivenotificationbing = "assets/images/InActivenotificationbing.png";
+
+  /// Assets for assetsImagesInActiveprofile
+  /// assets/images/InActiveprofile.png
+  static const String assetsImagesInActiveprofile = "assets/images/InActiveprofile.png";
 
   /// Assets for assetsImagesLogo
   /// assets/images/logo.png
