@@ -1,14 +1,36 @@
-class ProductEntity {
+import 'package:equatable/equatable.dart';
+
+// ignore: must_be_immutable
+class ProductEntity extends Equatable {
   final int id;
   final String name;
+  final String thumbnailUrl;
   final double price;
-  final String image;
-  bool isFavorite = false;
+  final double? discountPrice;
+  final double rating;
+  final int soldCount;
+  bool isFavorite;
 
   ProductEntity({
     required this.id,
     required this.name,
+    required this.thumbnailUrl,
     required this.price,
-    required this.image,
+    this.discountPrice,
+    this.isFavorite = false,
+    required this.rating,
+    required this.soldCount,
   });
+
+  @override
+  List<Object?> get props => [
+    id,
+    name,
+    thumbnailUrl,
+    price,
+    discountPrice,
+    isFavorite,
+    rating,
+    soldCount,
+  ];
 }

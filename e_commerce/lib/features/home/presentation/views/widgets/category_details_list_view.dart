@@ -47,7 +47,7 @@ class CategoryDetailsListView extends StatelessWidget {
 
               leading: ClipOval(
                 child: Image.asset(
-                  categories[index].image,
+                  categories[index].imageUrl,
                   height: 40,
                   width: 40,
                   fit: BoxFit.cover,

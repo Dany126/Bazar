@@ -44,7 +44,10 @@ class _ProductCardState extends State<ProductCard> {
                   width: double.infinity,
                   child: Padding(
                     padding: EdgeInsets.all(16.0),
-                    child: Image.asset(widget.product.image, fit: BoxFit.cover),
+                    child: Image.asset(
+                      widget.product.thumbnailUrl,
+                      fit: BoxFit.cover,
+                    ),
                   ),
                 ),
                 Positioned(

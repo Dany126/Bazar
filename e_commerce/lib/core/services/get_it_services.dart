@@ -1,4 +1,8 @@
+import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:dio/dio.dart';
 import 'package:e_commerce/constant.dart';
+import 'package:e_commerce/core/network/dio_error_interceptor.dart';
+import 'package:e_commerce/core/network/network_info.dart';
 import 'package:e_commerce/core/services/api_services.dart';
 import 'package:e_commerce/features/auth/data/auth_data_source/auth_remote_data_source_impl.dart';
 import 'package:e_commerce/features/auth/data/repo/auth_repo_auth.dart';
@@ -65,4 +69,20 @@ void setupServiceLocator() {
   getIt.registerFactory<SignUpCubit>(
     () => SignUpCubit(signUpUsecase: getIt<SignUpUsecase>()),
   );
+
+  getIt.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(getIt()));
+  getIt.registerLazySingleton(() => Connectivity());
+
+  getIt.registerLazySingleton<Dio>(() {
+    final dio = Dio(
+      BaseOptions(
+        baseUrl: kBaseUrl,
+        connectTimeout: const Duration(seconds: 15),
+        receiveTimeout: const Duration(seconds: 15),
+      ),
+    );
+
+    dio.interceptors.add(DioErrorInterceptor());
+    return dio;
+  });
 }

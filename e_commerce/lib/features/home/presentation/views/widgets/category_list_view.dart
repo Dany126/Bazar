@@ -9,11 +9,11 @@ import 'package:flutter/material.dart';
 class CategoryListView extends StatelessWidget {
   CategoryListView({super.key});
   final List<CategoryEntity> categories = [
-    CategoryEntity(id: 1, name: 'hoodies', image: Assets.assetsImagesC1),
-    CategoryEntity(id: 2, name: 'Shorts', image: Assets.assetsImagesC2),
-    CategoryEntity(id: 3, name: 'Shoes', image: Assets.assetsImagesC4),
-    CategoryEntity(id: 5, name: 'Bags', image: Assets.assetsImagesC5),
-    CategoryEntity(id: 4, name: 'Accessories', image: Assets.assetsImagesC3),
+    CategoryEntity(id: 1, name: 'hoodies', imageUrl: Assets.assetsImagesC1),
+    CategoryEntity(id: 2, name: 'Shorts', imageUrl: Assets.assetsImagesC2),
+    CategoryEntity(id: 3, name: 'Shoes', imageUrl: Assets.assetsImagesC4),
+    CategoryEntity(id: 5, name: 'Bags', imageUrl: Assets.assetsImagesC5),
+    CategoryEntity(id: 4, name: 'Accessories', imageUrl: Assets.assetsImagesC3),
   ];
 
   @override
@@ -59,7 +59,7 @@ class CategoryCard extends StatelessWidget {
                 height: 56,
                 width: 56,
                 color: AppColors.kSecondaryAccentColor.withAlpha(40),
-                child: Image.asset(categories.image, fit: BoxFit.cover),
+                child: Image.asset(categories.imageUrl, fit: BoxFit.cover),
               ),
             ),
             const SizedBox(height: 4),
