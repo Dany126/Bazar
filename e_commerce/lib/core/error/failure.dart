@@ -1,90 +1,81 @@
-import 'package:dio/dio.dart';
+import 'package:equatable/equatable.dart';
 
-/// Represents a failure that occurred somewhere in the app
-
-/// (API call, cache, etc). Use this with dartz's Either<Failure, T.
-class Failure {
+/// Base class for all Failures returned to the presentation layer.
+/// Every repository/service method returns Either<Failure, T>, so the UI
+/// never deals with try/catch — only pattern matching via fold().
+abstract class Failure extends Equatable {
   final String message;
   final int? statusCode;
 
-  Failure({required this.message, this.statusCode});
+  const Failure({required this.message, this.statusCode});
 
   @override
-  String toString() => 'Failure(statusCode: $statusCode, message: $message)';
+  List<Object?> get props => [message, statusCode];
 }
 
-/// Converts any error thrown during an API call into a clean [Failure].
-/// Call this inside a catch block in your ApiService.
-class ApiErrorHandler {
-  static Failure handle(dynamic error) {
-    if (error is DioException) {
-      return _handleDioError(error);
-    }
-    return Failure(message: 'Unexpected error, please try again.');
-  }
+/// Server responded with an error (5xx, malformed body, generic 4xx not
+/// covered by a more specific Failure below).
+class ServerFailure extends Failure {
+  const ServerFailure({required super.message, super.statusCode});
+}
 
-  static Failure _handleDioError(DioException error) {
-    switch (error.type) {
-      case DioExceptionType.connectionTimeout:
-      case DioExceptionType.sendTimeout:
-      case DioExceptionType.receiveTimeout:
-        return Failure(message: 'Connection timeout. Check your internet.');
+/// No internet connection, or Dio couldn't establish a connection at all.
+class NetworkFailure extends Failure {
+  const NetworkFailure({
+    super.message = 'No internet connection',
+    super.statusCode,
+  });
+}
 
-      case DioExceptionType.badCertificate:
-        return Failure(message: 'Secure connection failed.');
+/// Connect/send/receive timeout.
+class TimeoutFailure extends Failure {
+  const TimeoutFailure({
+    super.message = 'Request timed out. Please try again.',
+    super.statusCode,
+  });
+}
 
-      case DioExceptionType.connectionError:
-        return Failure(message: 'No internet connection.');
+/// 401 / 403 — invalid, missing, or expired token.
+class UnauthorizedFailure extends Failure {
+  const UnauthorizedFailure({
+    super.message = 'Session expired. Please sign in again.',
+    super.statusCode,
+  });
+}
 
-      case DioExceptionType.cancel:
-        return Failure(message: 'Request was cancelled.');
+/// 404 — resource doesn't exist.
+class NotFoundFailure extends Failure {
+  const NotFoundFailure({
+    super.message = 'Requested resource was not found.',
+    super.statusCode,
+  });
+}
 
-      case DioExceptionType.badResponse:
-        return _handleBadResponse(error);
+/// 422 — validation errors, optionally with field-level messages.
+class ValidationFailure extends Failure {
+  final Map<String, List<String>>? errors;
 
-      case DioExceptionType.unknown:
-      default:
-        return Failure(message: 'Something went wrong. Please try again.');
-    }
-  }
+  const ValidationFailure({
+    required super.message,
+    this.errors,
+    super.statusCode,
+  });
 
-  static Failure _handleBadResponse(DioException error) {
-    final statusCode = error.response?.statusCode;
-    final data = error.response?.data;
+  @override
+  List<Object?> get props => [message, statusCode, errors];
+}
 
-    // Try to extract a server-provided message, fall back to a default per status code.
-    String message =
-        _extractServerMessage(data) ?? _defaultMessageFor(statusCode);
+/// Local cache/storage failure (shared_preferences, hive, sqlite, etc.)
+/// Kept here even though ApiService won't throw it, since repositories
+/// that mix remote + local sources (e.g. cart, wishlist) will need it.
+class CacheFailure extends Failure {
+  const CacheFailure({required super.message, super.statusCode});
+}
 
-    return Failure(message: message, statusCode: statusCode);
-  }
-
-  static String? _extractServerMessage(dynamic data) {
-    if (data is Map<String, dynamic>) {
-      // Adjust these keys to match your backend's error response shape.
-      return data['message'] ?? data['error'] ?? data['error_description'];
-    }
-    return null;
-  }
-
-  static String _defaultMessageFor(int? statusCode) {
-    switch (statusCode) {
-      case 400:
-        return 'Bad request.';
-      case 401:
-        return 'Unauthorized. Please log in again.';
-      case 403:
-        return 'You don\'t have permission to do that.';
-      case 404:
-        return 'Requested resource not found.';
-      case 409:
-        return 'Conflict with current data state.';
-      case 422:
-        return 'Validation error, check your input.';
-      case 500:
-        return 'Server error. Please try again later.';
-      default:
-        return 'Something went wrong (code: $statusCode).';
-    }
-  }
+/// Anything that doesn't match a known Dio error shape.
+class UnknownFailure extends Failure {
+  const UnknownFailure({
+    super.message = 'An unexpected error occurred.',
+    super.statusCode,
+  });
 }

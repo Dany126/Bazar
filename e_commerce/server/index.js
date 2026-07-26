@@ -16,13 +16,13 @@ connectToDB;
 app.use(cookieParser());
 app.use(express.json());
 
-// app.use(
-//   cors({
-//     origin: ["http://localhost:5173"],
-//     methods: ["POST", "GET", "PUT", "DELETE"],
-//     credentials: true,
-//   }),
-// );
+app.use(
+  cors({
+    origin: "*",
+    methods: ["POST", "GET", "PUT", "DELETE"],
+    credentials: true,
+  }),
+);
 
 //http://localhost:5000/api/user/register
 //http://localhost:5000/api/user/login

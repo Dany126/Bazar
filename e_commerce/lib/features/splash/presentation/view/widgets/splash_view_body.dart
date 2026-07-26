@@ -1,5 +1,6 @@
 import 'package:e_commerce/core/utils/app_colors.dart';
-import 'package:e_commerce/core/utils/app_styles.dart';
+
+import 'package:e_commerce/core/utils/assets.dart';
 import 'package:e_commerce/features/auth/presentation/view/sign_in_view.dart';
 import 'package:flutter/material.dart';
 
@@ -13,7 +14,7 @@ class SplashViewBody extends StatefulWidget {
 class _SplashViewBodyState extends State<SplashViewBody>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
-  late Animation<double> _scaleAnimation;
+  late Animation<double> _translateAnimation;
 
   @override
   void initState() {
@@ -21,17 +22,29 @@ class _SplashViewBodyState extends State<SplashViewBody>
 
     _controller = AnimationController(
       vsync: this,
-      duration: const Duration(milliseconds: 3000),
+      duration: const Duration(milliseconds: 1200),
     );
 
-    _scaleAnimation = Tween<double>(
-      begin: 0.2,
-      end: 1.0,
+    // We'll set the real range in didChangeDependencies once we know screen width
+    _translateAnimation = Tween<double>(
+      begin: 0,
+      end: 0,
+    ).animate(CurvedAnimation(parent: _controller, curve: Curves.elasticInOut));
+
+    navigation(context);
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    final screenWidth = MediaQuery.of(context).size.width;
+
+    _translateAnimation = Tween<double>(
+      begin: -screenWidth,
+      end: 0.0, // centered
     ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeOutBack));
 
     _controller.forward();
-
-    navigation(context);
   }
 
   @override
@@ -46,12 +59,16 @@ class _SplashViewBodyState extends State<SplashViewBody>
       height: double.infinity,
       width: double.infinity,
       decoration: BoxDecoration(color: AppColors.kPrimaryColor),
-      child: ScaleTransition(
-        scale: _scaleAnimation, // AnimationController required
-        child: Center(
-          child: Text(
-            'Bazar',
-            style: AppStyles.textStylesBold32.copyWith(color: Colors.white),
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) => Transform.translate(
+          offset: Offset(_translateAnimation.value, 0.0),
+          child: Center(
+            child: Image.asset(
+              Assets.assetsImagesLogo,
+              width: MediaQuery.of(context).size.width * 0.5,
+              height: MediaQuery.of(context).size.width * 0.5,
+            ),
           ),
         ),
       ),
@@ -60,7 +77,9 @@ class _SplashViewBodyState extends State<SplashViewBody>
 
   void navigation(BuildContext context) async {
     await Future.delayed(const Duration(seconds: 3), () {
-      Navigator.pushReplacementNamed(context, SignInView.routeName);
+      if (context.mounted) {
+        Navigator.pushReplacementNamed(context, SignInView.routeName);
+      }
     });
   }
 }

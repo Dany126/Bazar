@@ -1,6 +1,5 @@
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_radius.dart';
-import 'package:e_commerce/core/utils/app_styles.dart';
 import 'package:flutter/material.dart';
 
 class AppTheme {
@@ -8,22 +7,68 @@ class AppTheme {
     return ThemeData(
       scaffoldBackgroundColor: AppColors.kMainBackgroundColor,
       primaryColor: AppColors.kPrimaryAccentColor,
+
       colorScheme: ColorScheme.fromSeed(
         seedColor: AppColors.kPrimaryAccentColor,
         primary: AppColors.kPrimaryAccentColor,
         surface: AppColors.kCardBackgroundColor,
         error: AppColors.kErrorColor,
       ),
-      fontFamily: 'WorkSans',
+
+      fontFamily: 'Gabarito',
+
       textTheme: const TextTheme(
-        headlineLarge: AppStyles.textStylesBold32,
-        headlineMedium: AppStyles.textStylesSemiBold24,
-        titleLarge: AppStyles.textStylesSemiBold20,
-        titleMedium: AppStyles.textStylesSemiBold18,
-        bodyLarge: AppStyles.textStylesRegular14,
-        bodyMedium: AppStyles.textStylesRegular12,
-        labelLarge: AppStyles.textStylesSemiBold15,
+        headlineLarge: TextStyle(
+          fontFamily: 'Gabarito',
+          fontSize: 32,
+          fontWeight: FontWeight.w600,
+          height: 1.2,
+          letterSpacing: -0.3,
+          color: AppColors.kTextColor,
+        ),
+        headlineMedium: TextStyle(
+          fontFamily: 'Gabarito',
+          fontSize: 24,
+          fontWeight: FontWeight.w600,
+          height: 1.25,
+          color: AppColors.kTextColor,
+        ),
+        titleLarge: TextStyle(
+          fontFamily: 'Gabarito',
+          fontSize: 20,
+          fontWeight: FontWeight.w600,
+          height: 1.3,
+          color: AppColors.kTextColor,
+        ),
+        titleMedium: TextStyle(
+          fontFamily: 'Gabarito',
+          fontSize: 18,
+          fontWeight: FontWeight.w600,
+          height: 1.3,
+          color: AppColors.kTextColor,
+        ),
+        bodyLarge: TextStyle(
+          fontFamily: 'Gabarito',
+          fontSize: 14,
+          fontWeight: FontWeight.w400,
+          height: 1.6,
+          color: AppColors.kTextColor,
+        ),
+        bodyMedium: TextStyle(
+          fontFamily: 'Gabarito',
+          fontSize: 12,
+          fontWeight: FontWeight.w400,
+          color: AppColors.kSecondaryTextColor,
+        ),
+        labelLarge: TextStyle(
+          fontFamily: 'Gabarito',
+          fontSize: 15,
+          fontWeight: FontWeight.w600,
+          letterSpacing: 0.2,
+          color: AppColors.kMainBackgroundColor,
+        ),
       ),
+
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.kTextColor,
@@ -32,9 +77,15 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(AppRadius.md),
           ),
-          textStyle: AppStyles.textStylesSemiBold15,
+          textStyle: const TextStyle(
+            fontFamily: 'Gabarito',
+            fontSize: 15,
+            fontWeight: FontWeight.w600,
+            letterSpacing: 0.2,
+          ),
         ),
       ),
+
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: AppColors.kTextColor,
@@ -45,6 +96,7 @@ class AppTheme {
           ),
         ),
       ),
+
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: AppColors.kCardBackgroundColor,
@@ -52,7 +104,19 @@ class AppTheme {
           borderRadius: BorderRadius.circular(AppRadius.sm),
           borderSide: const BorderSide(color: AppColors.kDividerColor),
         ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(color: AppColors.kDividerColor),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(AppRadius.sm),
+          borderSide: const BorderSide(
+            color: AppColors.kPrimaryAccentColor,
+            width: 2,
+          ),
+        ),
       ),
+
       cardTheme: CardThemeData(
         color: AppColors.kCardBackgroundColor,
         elevation: 0,

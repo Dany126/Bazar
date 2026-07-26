@@ -6,14 +6,15 @@ AppBar customAppBar(context) {
     backgroundColor: Colors.transparent,
     elevation: 0,
     scrolledUnderElevation: 0,
+    leadingWidth: 100,
 
     // leadingWidth: MediaQuery.of(context).size.width * .5,
     leading: Row(
       children: [
-        const SizedBox(width: 12),
+        const SizedBox(width: 20),
         Container(
-          width: 40,
-          height: 40,
+          width: 50,
+          height: 50,
           decoration: ShapeDecoration(
             color: AppColors.kSecondaryAccentColor /* Bg-Light-2 */,
             shape: RoundedRectangleBorder(
