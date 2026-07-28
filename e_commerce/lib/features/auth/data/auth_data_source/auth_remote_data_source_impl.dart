@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/core/services/api_services.dart';
@@ -27,7 +25,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       },
 
       (data) {
-        log(data);
         return Right(UserModel.fromJson(data['user']));
       },
     );
@@ -64,7 +61,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<Either<Failure, void>> resetPassword({required String email}) async {
     final response = await apiService.post(
-      '${apiService.baseUrl}/user/reset-password',
+      '${apiService.baseUrl}/auth/reset-password',
       data: {'email': email},
     );
 
@@ -94,6 +91,3 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     );
   }
 }
-
-
-// danyashraf012@gmail.com

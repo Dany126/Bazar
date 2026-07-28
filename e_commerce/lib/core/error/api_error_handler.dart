@@ -66,8 +66,8 @@ class ApiErrorHandler {
         );
       default:
         return ServerFailure(
-          message: message ?? 'Something went wrong. Please try again.',
           statusCode: statusCode,
+          message: 'Something went wrong. Please try again.',
         );
     }
   }
