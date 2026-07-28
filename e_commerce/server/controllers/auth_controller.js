@@ -2,7 +2,11 @@ const joi = require("joi");
 const crypto = require("crypto");
 const { hashPassword, comparePassword } = require("../utils/hash");
 const User = require("../models/user_model");
-const generateToken = require("../utils/token");
+const {
+  generateAccessToken,
+  generateRefreshToken,
+  verifyRefreshToken,
+} = require("../utils/token");
 const { sendEmail } = require("../utils/Email");
 
 const registerSchema = joi.object({
@@ -47,23 +51,30 @@ const register = async (req, res, next) => {
       password_hash: hashedPassword,
     });
     if (newlyCreatedUser) {
-      const token = await generateToken(newlyCreatedUser?.id);
-      res.cookie("token", token, {
-        withCredentials: true,
-        httpOnly: false,
+      const accessToken = generateAccessToken(newlyCreatedUser._id);
+      const refreshToken = generateRefreshToken({
+        id: newlyCreatedUser._id,
+        tokenVersion: newlyCreatedUser.tokenVersion,
+      });
+      res.cookie("refreshToken", refreshToken, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 7 * 24 * 60 * 60 * 1000,
+      });
+
+      return res.status(201).json({
+        success: true,
+        message: "Login successfuly",
+        accessToken,
+        user: {
+          id: newlyCreatedUser.id,
+          name: newlyCreatedUser.name,
+          email: newlyCreatedUser.email,
+          phone: newlyCreatedUser.phone,
+        },
       });
     }
-
-    return res.status(200).json({
-      status: "success",
-      message: "User registeration successful",
-      userInfo: {
-        name: newlyCreatedUser.name,
-        email: newlyCreatedUser.email,
-        id: newlyCreatedUser._id,
-      },
-    });
-    next();
   } catch (err) {
     console.log(err);
     return res.status(500).json({
@@ -98,22 +109,85 @@ const login = async (req, res, next) => {
       });
     }
 
-    const token = generateToken(user._id);
-    res.cookie("token", token, {
-      withCredentials: true,
-      httpOnly: false,
+    const accessToken = generateAccessToken(user._id);
+    const refreshToken = generateRefreshToken({
+      id: user._id,
+      tokenVersion: user.tokenVersion,
+    });
+    res.cookie("refreshToken", refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     return res.status(201).json({
       success: true,
-      message: "User logged in",
+      message: "Login successfuly",
+      accessToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+      },
     });
-    next();
   } catch (err) {
     console.log(err);
     return res.status(500).json({
       success: false,
       message: "Something went wrong! Please try again later",
+    });
+  }
+};
+
+const refresh = async (req, res, next) => {
+  try {
+    const token = req.cookies?.refreshToken;
+    if (!token) {
+      return res.status(400).json({
+        message: "refresh token is missing",
+      });
+    }
+    const payload = verifyRefreshToken(token);
+    const user = await User.findById(payload.id);
+    if (!user) {
+      return res.status(401).json({
+        message: "User  not found",
+      });
+    }
+    if (user.tokenVersion !== payload.tokenversion) {
+      return res.status(401).json({
+        message: "Refresh token invalid",
+      });
+    }
+
+    const newAccessToken = generateAccessToken(user.id);
+    const newRefreshToken = generateRefreshToken({
+      id: user.id,
+      tokenVersion: user.tokenVersion,
+    });
+    res.cookie("refreshToken", newRefreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV,
+      sameSite: "lax",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+
+    return res.status(200).json({
+      message: "TokenRefreshed",
+      accessToken: newAccessToken,
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+      },
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      messsage: "internal server error",
     });
   }
 };
@@ -212,4 +286,4 @@ const resetPassword = async (req, res, next) => {
     });
   }
 };
-module.exports = { register, login, forgetPassword, resetPassword };
+module.exports = { register, login, refresh, forgetPassword, resetPassword };

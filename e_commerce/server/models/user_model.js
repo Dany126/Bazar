@@ -26,6 +26,10 @@ const userSchema = new mongoose.Schema({
     type: Date,
     default: undefined,
   },
+  tokenVersion: {
+    type: Number,
+    default: 0,
+  },
 });
 
 const User = mongoose.model("User", userSchema);
