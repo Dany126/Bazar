@@ -1,9 +1,9 @@
-import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
 import 'package:e_commerce/core/utils/assets.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/cubit/get_category_products_cubit/get_category_products_cubit.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/cubit/home_cubit/home_cubit.dart';
+import 'package:e_commerce/features/home/presentation/viewModel/cubit/home_cubit/home_states.dart';
 
 import 'package:e_commerce/features/home/presentation/views/category_details_view.dart';
 
@@ -26,12 +26,16 @@ class _HomeViewBodyState extends State<HomeViewBody> {
   @override
   void initState() {
     context.read<CategoryProductsCubit>().fetchProducts();
-    context.read<HomeCubit>().fetchHomeData();
+    // Note: HomeCubit.fetchHomeData() should be called wherever HomeCubit
+    // is provided (e.g. in the parent that provides it), not here — this
+    // widget is only built once state is already HomeLoaded.
     super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
+    final state = context.watch<HomeCubit>().state as HomeLoaded;
+
     return CustomScrollView(
       slivers: [
         SliverAppBar(
@@ -105,7 +109,9 @@ class _HomeViewBodyState extends State<HomeViewBody> {
 
         const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
-        SliverToBoxAdapter(child: ProductListView(products: kDumyProducts)),
+        SliverToBoxAdapter(
+          child: ProductListView(products: state.bestSellingProducts),
+        ),
 
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
@@ -123,7 +129,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
         // Grid
         SliverPadding(
           padding: const EdgeInsets.symmetric(horizontal: 0),
-          sliver: ProductGridView(products: kDumyProducts),
+          sliver: ProductGridView(products: state.newProducts),
         ),
 
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
