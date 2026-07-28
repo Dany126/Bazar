@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/core/services/api_services.dart';
@@ -25,6 +27,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       },
 
       (data) {
+        log(data);
         return Right(UserModel.fromJson(data['user']));
       },
     );

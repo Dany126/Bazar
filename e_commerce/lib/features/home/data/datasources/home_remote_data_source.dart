@@ -29,7 +29,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
   @override
   Future<List<CategoryModel>> getCategories() async {
     try {
-      final response = await apiService.get('/category');
+      final response = await apiService.get('${apiService.baseUrl}/category');
       final res = response.fold(
         (l) => throw ServerException(message: l.toString()),
         (r) => r,
@@ -77,7 +77,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
   }) async {
     try {
       final response = await apiService.get(
-        '/product',
+        '${apiService.baseUrl}/product',
         queryParameters: {'page': page, 'limit': limit},
       );
       final res = response.fold(
@@ -103,7 +103,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
   }) async {
     try {
       final response = await apiService.get(
-        '/categories/$categoryId/products',
+        '${apiService.baseUrl}/product',
         queryParameters: {'page': page, 'limit': limit},
       );
       final res = response.fold(

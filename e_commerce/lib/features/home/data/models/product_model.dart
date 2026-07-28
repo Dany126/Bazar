@@ -1,5 +1,6 @@
 import 'package:e_commerce/features/home/domain/entity/product_entity.dart';
 
+// ignore: must_be_immutable
 class ProductModel extends ProductEntity {
   ProductModel({
     required super.id,
