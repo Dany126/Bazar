@@ -1,7 +1,9 @@
 const joi = require("joi");
+const crypto = require("crypto");
 const { hashPassword, comparePassword } = require("../utils/hash");
 const User = require("../models/user_model");
 const generateToken = require("../utils/token");
+const { sendEmail } = require("../utils/Email");
 
 const registerSchema = joi.object({
   name: joi.string().required(),
@@ -9,6 +11,10 @@ const registerSchema = joi.object({
   phone: joi.string().required().min(11),
   password: joi.string().required(),
 });
+
+const getAppUrl = () => {
+  return process.env.APP_URL;
+};
 
 const loginSchema = joi.object({
   email: joi.string().email().required(),
@@ -32,10 +38,11 @@ const register = async (req, res, next) => {
         message: "User email already exists! Please try with different email",
       });
     }
+    const normalizedEmail = email.toLowerCase().trim();
     const hashedPassword = await hashPassword(password);
     const newlyCreatedUser = await User.create({
       name,
-      email,
+      email: normalizedEmail,
       phone,
       password_hash: hashedPassword,
     });
@@ -111,4 +118,98 @@ const login = async (req, res, next) => {
   }
 };
 
-module.exports = { register, login };
+const forgetPassword = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+    if (!email) {
+      return res.status(400).json({
+        success: false,
+        message: "Please Enter Your Email",
+      });
+    }
+    const normalizedEmail = email.toLowerCase().trim();
+    const user = await User.findOne({ email: normalizedEmail });
+    if (!user) {
+      return res.status(404).json({
+        success: false,
+        message: "No user found with this email",
+      });
+    }
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto
+      .createHash("sha256")
+      .update(rawToken)
+      .digest("hex");
+
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000);
+    await user.save();
+    const resetUrl = `${getAppUrl()}${process.env.PORT}/api/user/reset-password?token=${rawToken}`;
+    const { data, error } = await sendEmail(
+      user.email,
+      "onboarding@resend.dev",
+      "Reset your password",
+      `
+        <p>You requested password reset. click on the below link to reset the password:</p>
+          <p><a href="${resetUrl}">${resetUrl}</a></p>
+        `,
+    );
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: "Failed sending email",
+      });
+    }
+    return res.status(200).json({
+      message: "If email exists! we will send a reset link to you",
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      status: "failed",
+      message: "Some Error Occurred",
+    });
+  }
+};
+
+const resetPassword = async (req, res, next) => {
+  try {
+    const { token, password } = req.body;
+    if (!token) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid token",
+      });
+    }
+    if (!password || password.length < 6) {
+      return res.status(400).json({
+        message: "Password should be at least 6 char long",
+      });
+    }
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: new Date(Date.now()) },
+    });
+    if (!user) {
+      return res.status(400).json({
+        success: false,
+        message: "No user found",
+      });
+    }
+    const newleyCreatedPassword = await hashPassword(password);
+    user.password_hash = newleyCreatedPassword;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+    await user.save();
+    return res.status(200).json({
+      message: "password reset successfully",
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      messsage: "internal server error",
+    });
+  }
+};
+module.exports = { register, login, forgetPassword, resetPassword };
