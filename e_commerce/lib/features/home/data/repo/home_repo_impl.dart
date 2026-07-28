@@ -66,4 +66,25 @@ class HomeRepositoryImpl implements HomeRepository {
       return Left(ServerFailure(message: e.message));
     }
   }
+
+  @override
+  Future<Either<Failure, List<ProductEntity>>> getProductsByCategory({
+    required String categoryId,
+    int page = 1,
+    int limit = 10,
+  }) async {
+    if (!await networkInfo.isConnected) {
+      return const Left(NetworkFailure(message: 'No internet connection'));
+    }
+    try {
+      final result = await remoteDataSource.getProductsByCategory(
+        categoryId: categoryId,
+        page: page,
+        limit: limit,
+      );
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    }
+  }
 }

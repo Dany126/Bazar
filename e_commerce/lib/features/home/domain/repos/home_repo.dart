@@ -16,4 +16,9 @@ abstract class HomeRepository {
     int page = 1,
     int limit = 10,
   });
+  Future<Either<Failure, List<ProductEntity>>> getProductsByCategory({
+    required String categoryId,
+    int page = 1,
+    int limit = 10,
+  });
 }
