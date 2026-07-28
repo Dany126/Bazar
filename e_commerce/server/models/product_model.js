@@ -9,12 +9,24 @@ const productSchema = new mongoose.Schema({
     type: Number,
     required: [true, "please enter product price"],
   },
+  image: {
+    type: [String],
+    required: [true, "Please enter at least on image"],
+  },
   avg_rating: {
     type: Number,
     default: 4.5,
     min: [1, "Rating must be above 1.0"],
     max: [5, "Rating must be below 5.0"],
     set: (val) => Math.round(val * 10) / 10,
+  },
+  stock: {
+    type: Number,
+    default: 0,
+  },
+  soldCount: {
+    type: Number,
+    default: 0,
   },
   ratingsQuantity: {
     type: Number,
