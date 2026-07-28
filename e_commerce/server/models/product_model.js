@@ -9,6 +9,10 @@ const productSchema = new mongoose.Schema({
     type: Number,
     required: [true, "please enter product price"],
   },
+  image: {
+    type: [String],
+    required: [true, "Please enter at least on image"],
+  },
   avg_rating: {
     type: Number,
     default: 4.5,

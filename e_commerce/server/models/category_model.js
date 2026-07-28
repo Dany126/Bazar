@@ -2,6 +2,7 @@ const mongoose = require("mongoose");
 
 const categorySchema = new mongoose.Schema({
   name: String,
+  image: String,
 });
 
 // categorySchema.pre(/^find/, function (next) {
