@@ -1,6 +1,12 @@
+import 'package:e_commerce/core/services/get_it_services.dart';
 import 'package:e_commerce/core/utils/assets.dart';
-import 'package:e_commerce/features/home/presentation/views/widgets/home_view_body.dart';
+import 'package:e_commerce/features/auth/presentation/view_model/sign_out/cubit/sign_out_cubit.dart';
+import 'package:e_commerce/features/home/presentation/viewModel/cubit/get_category_products_cubit/get_category_products_cubit.dart';
+import 'package:e_commerce/features/home/presentation/viewModel/cubit/home_cubit/home_cubit.dart';
+import 'package:e_commerce/features/home/presentation/views/widgets/home_view_bloc_consumer.dart';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeView extends StatefulWidget {
   const HomeView({super.key});
@@ -49,11 +55,12 @@ class _HomeViewState extends State<HomeView> {
           ),
         ],
       ),
-      body: const SafeArea(
-        child: Padding(
-          padding: EdgeInsets.symmetric(horizontal: 24),
-          child: HomeViewBody(),
-        ),
+      body: MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (context) => getIt<HomeCubit>()),
+          BlocProvider(create: (context) => getIt<CategoryProductsCubit>()),
+        ],
+        child: HomeViewBlocConsumer(),
       ),
     );
   }

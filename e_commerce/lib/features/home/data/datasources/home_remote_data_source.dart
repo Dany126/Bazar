@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:e_commerce/core/services/api_services.dart';
 import '../../../../core/error/exceptions.dart';
 import '../models/category_model.dart';
 import '../models/product_model.dart';
@@ -21,15 +22,19 @@ abstract class HomeRemoteDataSource {
 }
 
 class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
-  final Dio dio;
+  final ApiService apiService;
 
-  HomeRemoteDataSourceImpl(this.dio);
+  HomeRemoteDataSourceImpl({required this.apiService});
 
   @override
   Future<List<CategoryModel>> getCategories() async {
     try {
-      final response = await dio.get('/categories');
-      final List data = response.data['data'] as List;
+      final response = await apiService.get('/category');
+      final res = response.fold(
+        (l) => throw ServerException(message: l.toString()),
+        (r) => r,
+      );
+      final List data = res['data'] as List;
       return data
           .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -46,11 +51,15 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     required int limit,
   }) async {
     try {
-      final response = await dio.get(
-        '/products/best-selling',
+      final response = await apiService.get(
+        '/product',
         queryParameters: {'page': page, 'limit': limit},
       );
-      final List data = response.data['data'] as List;
+      final res = response.fold(
+        (l) => throw ServerException(message: l.toString()),
+        (r) => r,
+      );
+      final List data = res['data'] as List;
       return data
           .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -67,11 +76,15 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     required int limit,
   }) async {
     try {
-      final response = await dio.get(
-        '/products/new',
+      final response = await apiService.get(
+        '/product',
         queryParameters: {'page': page, 'limit': limit},
       );
-      final List data = response.data['data'] as List;
+      final res = response.fold(
+        (l) => throw ServerException(message: l.toString()),
+        (r) => r,
+      );
+      final List data = res['data'] as List;
       return data
           .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -89,11 +102,15 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     required int limit,
   }) async {
     try {
-      final response = await dio.get(
+      final response = await apiService.get(
         '/categories/$categoryId/products',
         queryParameters: {'page': page, 'limit': limit},
       );
-      final List data = response.data['data'] as List;
+      final res = response.fold(
+        (l) => throw ServerException(message: l.toString()),
+        (r) => r,
+      );
+      final List data = res['data'] as List;
       return data
           .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
           .toList();

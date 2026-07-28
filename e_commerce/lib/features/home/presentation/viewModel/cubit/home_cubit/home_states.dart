@@ -1,13 +1,13 @@
 import 'package:e_commerce/features/home/domain/entity/category_entity.dart';
 import 'package:e_commerce/features/home/domain/entity/product_entity.dart';
 
-abstract class HomeStates {}
+abstract class HomeState {}
 
-class HomeInitial extends HomeStates {}
+class HomeInitial extends HomeState {}
 
-class HomeLoading extends HomeStates {}
+class HomeLoading extends HomeState {}
 
-class HomeLoaded extends HomeStates {
+class HomeLoaded extends HomeState {
   final List<CategoryEntity> categories;
   final List<ProductEntity> bestSellingProducts;
   final List<ProductEntity> newProducts;
@@ -19,7 +19,7 @@ class HomeLoaded extends HomeStates {
   });
 }
 
-class HomeError extends HomeStates {
+class HomeError extends HomeState {
   final String message;
 
   HomeError({required this.message});

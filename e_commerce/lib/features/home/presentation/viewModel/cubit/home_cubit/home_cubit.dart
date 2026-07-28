@@ -7,7 +7,7 @@ import 'package:e_commerce/features/home/domain/usecases/get_new_products_usecas
 import 'package:e_commerce/features/home/presentation/viewModel/cubit/home_cubit/home_states.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class HomeCubit extends Cubit<HomeStates> {
+class HomeCubit extends Cubit<HomeState> {
   final GetCategoriesUseCase getCategoriesUseCase;
   final GetBestSellingProductsUseCase getBestSellingProductsUseCase;
   final GetNewProductsUseCase getNewProductsUseCase;

@@ -61,7 +61,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<Either<Failure, void>> resetPassword({required String email}) async {
     final response = await apiService.post(
-      '${apiService.baseUrl}/auth/reset-password',
+      '${apiService.baseUrl}/user/reset-password',
       data: {'email': email},
     );
 
@@ -91,3 +91,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     );
   }
 }
+
+
+// danyashraf012@gmail.com

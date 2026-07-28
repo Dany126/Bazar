@@ -2,6 +2,8 @@ import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
 import 'package:e_commerce/core/utils/assets.dart';
+import 'package:e_commerce/features/home/presentation/viewModel/cubit/get_category_products_cubit/get_category_products_cubit.dart';
+import 'package:e_commerce/features/home/presentation/viewModel/cubit/home_cubit/home_cubit.dart';
 
 import 'package:e_commerce/features/home/presentation/views/category_details_view.dart';
 
@@ -11,6 +13,7 @@ import 'package:e_commerce/features/home/presentation/views/widgets/product_grid
 import 'package:e_commerce/features/home/presentation/views/widgets/search_bar.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/product_list_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class HomeViewBody extends StatefulWidget {
   const HomeViewBody({super.key});
@@ -20,6 +23,13 @@ class HomeViewBody extends StatefulWidget {
 }
 
 class _HomeViewBodyState extends State<HomeViewBody> {
+  @override
+  void initState() {
+    context.read<CategoryProductsCubit>().fetchProducts();
+    context.read<HomeCubit>().fetchHomeData();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
     return CustomScrollView(
