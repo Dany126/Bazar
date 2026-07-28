@@ -1,6 +1,5 @@
 import 'package:e_commerce/features/home/domain/entity/product_entity.dart';
 
-// ignore: must_be_immutable
 class ProductModel extends ProductEntity {
   ProductModel({
     required super.id,
@@ -15,13 +14,27 @@ class ProductModel extends ProductEntity {
 
   factory ProductModel.fromJson(Map<String, dynamic> json) {
     return ProductModel(
-      id: json['id'] as int,
-      name: json['name'] as String,
-      thumbnailUrl: json['thumbnail_url'] as String,
-      price: (json['price'] as num).toDouble(),
+      id: json['_id']?.toString() ?? '',
+
+      name: json['name']?.toString() ?? '',
+
+      thumbnailUrl: _getImage(json['image']),
+
+      price: (json['price'] ?? 0).toDouble(),
+
       discountPrice: (json['discount_price'] as num?)?.toDouble(),
-      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-      soldCount: json['sold_count'] as int? ?? 0,
+
+      rating: (json['avg_rating'] ?? 0).toDouble(),
+
+      soldCount: json['soldCount'] ?? 0,
     );
+  }
+
+  static String _getImage(dynamic image) {
+    if (image is List && image.isNotEmpty) {
+      return image.first.toString();
+    }
+
+    return '';
   }
 }

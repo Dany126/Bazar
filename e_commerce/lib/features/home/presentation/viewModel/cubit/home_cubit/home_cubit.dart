@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:e_commerce/core/use_case/use_case.dart';
 import 'package:e_commerce/features/home/domain/entity/category_entity.dart';
 import 'package:e_commerce/features/home/domain/entity/product_entity.dart';
@@ -21,38 +23,57 @@ class HomeCubit extends Cubit<HomeState> {
   Future<void> fetchHomeData() async {
     emit(HomeLoading());
 
-    final results = await Future.wait([
-      getCategoriesUseCase(NoParams()),
-      getBestSellingProductsUseCase(const GetBestSellingProductsParams()),
-      getNewProductsUseCase(const GetNewProductsParams()),
-    ]);
+    try {
+      final categoriesFuture = getCategoriesUseCase(NoParams());
+      log(categoriesFuture as String);
+      final bestSellingFuture = getBestSellingProductsUseCase(
+        const GetBestSellingProductsParams(),
+      );
+      final newProductsFuture = getNewProductsUseCase(
+        const GetNewProductsParams(),
+      );
 
-    final categoriesResult = results[0];
-    final bestSellingResult = results[1];
-    final newProductsResult = results[2];
+      final categoriesResult = await categoriesFuture;
+      final bestSellingResult = await bestSellingFuture;
+      final newProductsResult = await newProductsFuture;
 
-    String? error;
+      String? error;
 
-    categoriesResult.fold((f) => error = f.message, (_) {});
-    bestSellingResult.fold((f) => error ??= f.message, (_) {});
-    newProductsResult.fold((f) => error ??= f.message, (_) {});
+      categoriesResult.fold((failure) => error = failure.message, (_) {});
 
-    if (error != null) {
-      emit(HomeError(message: error!));
-      return;
+      bestSellingResult.fold((failure) => error ??= failure.message, (_) {});
+
+      newProductsResult.fold((failure) => error ??= failure.message, (_) {});
+
+      if (error != null) {
+        emit(HomeError(message: error!));
+        return;
+      }
+
+      final categories = categoriesResult.getOrElse(() => <CategoryEntity>[]);
+      log(categories as String);
+
+      final bestSellingProducts = bestSellingResult.getOrElse(
+        () => <ProductEntity>[],
+      );
+      log(bestSellingProducts as String);
+
+      final newProducts = newProductsResult.getOrElse(() => <ProductEntity>[]);
+      log(newProducts as String);
+
+      emit(
+        HomeLoaded(
+          categories: categories,
+          bestSellingProducts: bestSellingProducts,
+          newProducts: newProducts,
+        ),
+      );
+    } catch (e) {
+      emit(HomeError(message: e.toString()));
     }
-
-    emit(
-      HomeLoaded(
-        categories:
-            categoriesResult.getOrElse(() => []) as List<CategoryEntity>,
-        bestSellingProducts:
-            bestSellingResult.getOrElse(() => []) as List<ProductEntity>,
-        newProducts:
-            newProductsResult.getOrElse(() => []) as List<ProductEntity>,
-      ),
-    );
   }
 
-  Future<void> refresh() => fetchHomeData();
+  Future<void> refresh() async {
+    await fetchHomeData();
+  }
 }

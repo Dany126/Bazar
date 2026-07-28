@@ -2,7 +2,7 @@ import 'package:equatable/equatable.dart';
 
 // ignore: must_be_immutable
 class ProductEntity extends Equatable {
-  final int id;
+  final String id;
   final String name;
   final String thumbnailUrl;
   final double price;

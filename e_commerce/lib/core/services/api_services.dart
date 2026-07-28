@@ -36,7 +36,7 @@ class ApiService {
   final String? refreshTokenPath;
 
   static const _accessTokenKey = 'auth_access_token';
-  static const _refreshTokenKey = 'auth_refresh_token';
+  static const _refreshTokenKey = '';
 
   String? _accessToken;
   String? _refreshToken;
@@ -116,6 +116,7 @@ class ApiService {
 
       final newAccessToken = response.data['access_token'] as String?;
       final newRefreshToken = response.data['refresh_token'] as String?;
+
       if (newAccessToken == null) return false;
 
       await setAuthTokens(

@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:e_commerce/features/home/presentation/viewModel/cubit/home_cubit/home_cubit.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/cubit/home_cubit/home_states.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/home_view_body.dart';
@@ -15,15 +17,14 @@ class HomeViewBlocConsumer extends StatelessWidget {
           return const Center(child: CircularProgressIndicator());
         }
         if (state is HomeLoaded) {
-          return const HomeViewBody();
+          return HomeViewBody();
         }
-        return Container();
+
+        return Scaffold(body: Center(child: Text(state.toString())));
       },
       listener: (context, state) {
         if (state is HomeError) {
-          ScaffoldMessenger.of(
-            context,
-          ).showSnackBar(SnackBar(content: Text(state.message)));
+          log(state.message);
         }
       },
     );
