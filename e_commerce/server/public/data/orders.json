@@ -1,0 +1,97 @@
+[
+  {
+    "user": "64f123456789abcdef123456",
+    "products": [
+      {
+        "product": "64a111111111111111111111",
+        "quantity": 2,
+        "price": 1200
+      },
+      {
+        "product": "64a222222222222222222222",
+        "quantity": 1,
+        "price": 800
+      }
+    ],
+    "totalPrice": 3200,
+    "shippingAddress": {
+      "street": "15 Tahrir Street",
+      "city": "Cairo",
+      "country": "Egypt",
+      "postalCode": "11511"
+    },
+    "paymentMethod": "card",
+    "paymentStatus": "paid",
+    "orderStatus": "delivered"
+  },
+  {
+    "user": "64f234567890abcdef123456",
+    "products": [
+      {
+        "product": "64a333333333333333333333",
+        "quantity": 1,
+        "price": 2500
+      },
+      {
+        "product": "64a444444444444444444444",
+        "quantity": 3,
+        "price": 500
+      }
+    ],
+    "totalPrice": 4000,
+    "shippingAddress": {
+      "street": "12 El Haram Street",
+      "city": "Giza",
+      "country": "Egypt",
+      "postalCode": "12511"
+    },
+    "paymentMethod": "cash",
+    "paymentStatus": "pending",
+    "orderStatus": "processing"
+  },
+  {
+    "user": "64f345678901abcdef123456",
+    "products": [
+      {
+        "product": "64a555555555555555555555",
+        "quantity": 1,
+        "price": 4500
+      }
+    ],
+    "totalPrice": 4500,
+    "shippingAddress": {
+      "street": "20 Nasr City Street",
+      "city": "Cairo",
+      "country": "Egypt",
+      "postalCode": "11765"
+    },
+    "paymentMethod": "card",
+    "paymentStatus": "paid",
+    "orderStatus": "shipped"
+  },
+  {
+    "user": "64f456789012abcdef123456",
+    "products": [
+      {
+        "product": "64a666666666666666666666",
+        "quantity": 2,
+        "price": 750
+      },
+      {
+        "product": "64a777777777777777777777",
+        "quantity": 1,
+        "price": 1500
+      }
+    ],
+    "totalPrice": 3000,
+    "shippingAddress": {
+      "street": "8 Abbas El Akkad Street",
+      "city": "Cairo",
+      "country": "Egypt",
+      "postalCode": "11757"
+    },
+    "paymentMethod": "cash",
+    "paymentStatus": "pending",
+    "orderStatus": "confirmed"
+  }
+]

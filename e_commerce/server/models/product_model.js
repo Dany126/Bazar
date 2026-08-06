@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 const productSchema = new mongoose.Schema({
   name: {
@@ -43,6 +43,4 @@ productSchema.pre(/^find/, function () {
   this.populate("category", "-__v").select("-__v");
 });
 
-const Product = mongoose.model("Product", productSchema);
-
-module.exports = Product;
+export const Product = mongoose.model("Product", productSchema);

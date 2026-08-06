@@ -1,6 +1,6 @@
-const Category = require("../models/category_model");
+import { Category } from "../models/category_model.js";
 
-const createCategory = async (req, res, next) => {
+export const createCategory = async (req, res, next) => {
   try {
     const { name } = req.body;
     const data = await Category.create({ name });
@@ -25,7 +25,7 @@ const createCategory = async (req, res, next) => {
   }
 };
 
-const getAllCategories = async (req, res, next) => {
+export const getAllCategories = async (req, res, next) => {
   try {
     const categories = await Category.find().select("-__v");
     if (!categories) {
@@ -49,5 +49,3 @@ const getAllCategories = async (req, res, next) => {
     });
   }
 };
-
-module.exports = { getAllCategories, createCategory };

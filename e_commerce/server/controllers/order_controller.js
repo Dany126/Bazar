@@ -1,18 +1,33 @@
+import { Order } from "../models/order_model.js";
 import { Product } from "../models/product_model.js";
-import { apiFeatures } from "../utils/apiFeatures.js";
 
-export const createProduct = async (req, res) => {
+export const createOrder = async (req, res) => {
   try {
-    const data = await Product.create(req.body);
-    if (!data) {
+    const { products } = req.body;
+    if (!products || products.length <= 0) {
       return res.status(400).json({
         status: "Failed",
-        message: "Failed creating a product",
+        message: "Cannot make order without products",
+      });
+    }
+    for (const el of products) {
+      await Product.findByIdAndUpdate(el.product, {
+        $inc: {
+          stock: -el.quantity,
+          soldCount: el.quantity,
+        },
+      });
+    }
+    const order = await Order.create(req.body);
+    if (!order) {
+      return res.status(400).json({
+        status: "Failed",
+        message: "Failed creating an order",
       });
     }
     return res.status(200).json({
       status: "Success",
-      data,
+      order,
     });
   } catch (err) {
     console.log(err);
@@ -23,24 +38,19 @@ export const createProduct = async (req, res) => {
   }
 };
 
-export const getAllProducts = async (req, res) => {
+export const getAllOrders = async (req, res) => {
   try {
-    const query = { ...req.query, ...req.params };
-    const { filter, limits, skip, sortBy } = apiFeatures(query);
-    const products = await Product.find(filter)
-      .sort(sortBy)
-      .skip(skip)
-      .limit(limits);
-    if (!products) {
+    const orders = await Order.find();
+    if (!orders) {
       return res.status(400).json({
         status: "Failed",
-        message: "No product found",
+        message: "No order found",
       });
     }
     return res.status(200).json({
       status: "Success",
       data: {
-        products,
+        orders,
       },
     });
   } catch (err) {
@@ -52,19 +62,19 @@ export const getAllProducts = async (req, res) => {
   }
 };
 
-export const getProduct = async (req, res) => {
+export const getOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    const product = await Product.findById(id);
-    if (!product) {
+    const order = await Order.findById(id);
+    if (!order) {
       return res.status(404).json({
         status: "Failed",
-        message: "No Product Found With This ID",
+        message: "No Order Found With This ID",
       });
     }
     return res.status(200).json({
       status: "Success",
-      product,
+      order,
     });
   } catch (err) {
     console.log(err);
@@ -75,21 +85,21 @@ export const getProduct = async (req, res) => {
   }
 };
 
-export const updateProduct = async (req, res) => {
+export const updateOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedProduct = await Product.findByIdAndUpdate(id, req.body, {
+    const updatedOrder = await Order.findByIdAndUpdate(id, req.body, {
       returnDocument: "after",
     });
-    if (!updatedProduct) {
+    if (!updatedOrder) {
       return res.status(404).json({
         status: "Failed",
-        message: "No Product Found With This ID",
+        message: "No Order Found With This ID",
       });
     }
     return res.status(200).json({
       status: "Success",
-      updatedProduct,
+      updatedOrder,
     });
   } catch (err) {
     console.log(err);
@@ -100,14 +110,14 @@ export const updateProduct = async (req, res) => {
   }
 };
 
-export const deleteProduct = async (req, res) => {
+export const deleteOrder = async (req, res) => {
   try {
     const { id } = req.params;
-    const product = await Product.findByIdAndDelete(id);
-    if (!product) {
+    const order = await Order.findByIdAndDelete(id);
+    if (!order) {
       return res.status(404).json({
         status: "Failed",
-        message: "No Product Found With This ID",
+        message: "No Order Found With This ID",
       });
     }
     return res.status(200).json({

@@ -1,13 +1,13 @@
-const joi = require("joi");
-const crypto = require("crypto");
-const { hashPassword, comparePassword } = require("../utils/hash");
-const User = require("../models/user_model");
-const {
+import joi from "joi";
+import crypto from "crypto";
+import { hashPassword, comparePassword } from "../utils/hash.js";
+import { User } from "../models/user_model.js";
+import {
   generateAccessToken,
   generateRefreshToken,
   verifyRefreshToken,
-} = require("../utils/token");
-const { sendEmail } = require("../utils/Email");
+} from "../utils/token.js";
+import { sendEmail } from "../utils/Email.js";
 
 const registerSchema = joi.object({
   name: joi.string().required(),
@@ -25,7 +25,7 @@ const loginSchema = joi.object({
   password: joi.string().min(6).required(),
 });
 
-const register = async (req, res, next) => {
+export const register = async (req, res, next) => {
   try {
     const { name, email, phone, password } = req.body;
     const { error } = registerSchema.validate({ name, email, phone, password });
@@ -84,7 +84,7 @@ const register = async (req, res, next) => {
   }
 };
 
-const login = async (req, res, next) => {
+export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const { error } = loginSchema.validate({ email, password });
@@ -141,7 +141,7 @@ const login = async (req, res, next) => {
   }
 };
 
-const refresh = async (req, res, next) => {
+export const refresh = async (req, res, next) => {
   try {
     const token = req.cookies?.refreshToken;
     if (!token) {
@@ -192,7 +192,7 @@ const refresh = async (req, res, next) => {
   }
 };
 
-const forgetPassword = async (req, res, next) => {
+export const forgetPassword = async (req, res, next) => {
   try {
     const { email } = req.body;
     if (!email) {
@@ -246,7 +246,7 @@ const forgetPassword = async (req, res, next) => {
   }
 };
 
-const resetPassword = async (req, res, next) => {
+export const resetPassword = async (req, res, next) => {
   try {
     const { token, password } = req.body;
     if (!token) {
@@ -286,4 +286,3 @@ const resetPassword = async (req, res, next) => {
     });
   }
 };
-module.exports = { register, login, refresh, forgetPassword, resetPassword };
