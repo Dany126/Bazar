@@ -22,18 +22,11 @@ class HomeView extends StatelessWidget {
         ),
       ],
       child: Scaffold(
-        body: const HomeViewBody(),
-        bottomNavigationBar: CustomBottomNavigationBar(),
+        body: Padding(
+          padding: EdgeInsets.symmetric(horizontal: 24),
+          child: const HomeViewBody(),
+        ),
       ),
     );
-  }
-}
-
-class CustomBottomNavigationBar extends StatelessWidget {
-  const CustomBottomNavigationBar({super.key});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container();
   }
 }

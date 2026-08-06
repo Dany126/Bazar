@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
 import 'package:e_commerce/features/home/domain/entity/category_entity.dart';
@@ -35,11 +36,15 @@ class CategoryDetailsListView extends StatelessWidget {
                 style: AppStyles.textStylesRegular16(context),
               ),
               leading: ClipOval(
-                child: Image.network(
-                  categories[index].imageUrl,
+                child: CachedNetworkImage(
+                  imageUrl: categories[index].imageUrl,
+                  fit: BoxFit.cover,
                   height: 40,
                   width: 40,
-                  fit: BoxFit.cover,
+                  placeholder: (context, url) =>
+                      const Center(child: CircularProgressIndicator()),
+                  errorWidget: (context, url, error) =>
+                      const Icon(Icons.error, color: Colors.red),
                 ),
               ),
             ),

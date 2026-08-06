@@ -15,8 +15,8 @@ class AllItemsInCategoryView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final category =
-        ModalRoute.of(context)!.settings.arguments as CategoryEntity;
+    final category = ModalRoute.of(context)!.settings.arguments as CategoryEntity;
+    
 
     return BlocProvider<GetProductsCubit>(
       create: (_) {

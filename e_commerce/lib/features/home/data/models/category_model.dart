@@ -9,7 +9,7 @@ class CategoryModel extends CategoryEntity {
 
   factory CategoryModel.fromJson(Map<String, dynamic> json) {
     return CategoryModel(
-      id: json['id'],
+      id: json['_id'],
       name: json['name'] as String,
       imageUrl: json['image_url'] ?? "",
     );

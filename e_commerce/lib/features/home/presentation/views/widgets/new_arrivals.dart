@@ -1,0 +1,62 @@
+import 'package:e_commerce/core/services/get_it_services.dart';
+import 'package:e_commerce/core/utils/app_styles.dart';
+import 'package:e_commerce/core/widgets/custom_app_bar.dart';
+import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_cubit.dart';
+import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_state.dart';
+import 'package:e_commerce/features/home/presentation/views/widgets/product_grid_View.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+class NewArrivals extends StatelessWidget {
+  const NewArrivals({super.key});
+  static const routeName = 'new_arrivals';
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocProvider<GetProductsCubit>(
+      create: (_) => getIt<GetProductsCubit>()
+        ..fetchAllProducts(
+          page: 1,
+          limit: 50,
+        ), // adjust if "new" needs a different sort/param
+      child: Scaffold(
+        appBar: customAppBar(context),
+        body: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: CustomScrollView(
+            physics: const BouncingScrollPhysics(),
+            slivers: [
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 24, bottom: 16),
+                  child: Text(
+                    'New Arrivals',
+                    style: AppStyles.textStylesSemiBold24(context),
+                  ),
+                ),
+              ),
+              BlocBuilder<GetProductsCubit, GetProductsState>(
+                builder: (context, state) {
+                  if (state is GetProductsLoading) {
+                    return const SliverToBoxAdapter(
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (state is GetProductsFailure) {
+                    return SliverToBoxAdapter(
+                      child: Center(child: Text(state.message)),
+                    );
+                  }
+                  if (state is GetProductsSuccess) {
+                    return ProductGridView(products: state.products);
+                  }
+                  return const SliverToBoxAdapter(child: SizedBox.shrink());
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}

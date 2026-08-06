@@ -10,9 +10,11 @@ import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/g
 import 'package:e_commerce/features/home/presentation/views/category_details_view.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/category_list_view.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/custom_row.dart';
+import 'package:e_commerce/features/home/presentation/views/widgets/new_arrivals.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/product_grid_View.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/search_bar.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/product_list_view.dart';
+import 'package:e_commerce/features/home/presentation/views/widgets/top_selling.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -109,7 +111,12 @@ class _HomeViewBodyState extends State<HomeViewBody> {
 
         // Top Selling — own GetProductsCubit instance
         SliverToBoxAdapter(
-          child: CustomRow(title: 'Top Selling', onTap: () {}),
+          child: CustomRow(
+            title: 'Top Selling',
+            onTap: () {
+              Navigator.pushNamed(context, TopSelling.routeName);
+            },
+          ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 16)),
 
@@ -140,7 +147,9 @@ class _HomeViewBodyState extends State<HomeViewBody> {
           child: CustomRow(
             title: 'New Arrivals',
             withColor: true,
-            onTap: () {},
+            onTap: () {
+              Navigator.pushNamed(context, NewArrivals.routeName);
+            },
           ),
         ),
         const SliverToBoxAdapter(child: SizedBox(height: 16)),

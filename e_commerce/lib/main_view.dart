@@ -19,13 +19,18 @@ class _MainViewState extends State<MainView> {
 
   final List<Widget> screens = const [
     HomeView(),
-
     NotificationView(),
     OrderView(),
     ProfileView(),
   ];
 
   @override
+/*************  ✨ Windsurf Command ⭐  *************/
+/// Builds the widget tree for the [MainView].
+///
+/// It uses a [Scaffold] widget as the root of the tree and a
+
+/*******  40199105-da8f-45e7-98a6-30a3174ced48  *******/
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: currentIndex, children: screens),

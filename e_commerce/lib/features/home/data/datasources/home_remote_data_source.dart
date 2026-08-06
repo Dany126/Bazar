@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dio/dio.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/services/api_services.dart';
@@ -128,6 +130,8 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         (data) => data,
       );
 
+      log(res);
+
       final List<dynamic> data = res['data']['products'] as List<dynamic>;
 
       return data
@@ -148,7 +152,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
   }) async {
     try {
       final response = await apiService.get(
-        "$kGetProductByCategory/$category",
+        "$kGetProductByCategory/$category/product",
         queryParameters: {'page': page, 'limit': limit},
       );
 

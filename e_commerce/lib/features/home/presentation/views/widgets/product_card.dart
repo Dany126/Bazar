@@ -6,6 +6,8 @@ import 'package:e_commerce/core/utils/app_styles.dart';
 import 'package:e_commerce/features/home/domain/entity/product_entity.dart';
 import 'package:flutter/material.dart';
 
+import 'package:cached_network_image/cached_network_image.dart';
+
 class ProductCard extends StatefulWidget {
   const ProductCard({
     super.key,
@@ -44,9 +46,13 @@ class _ProductCardState extends State<ProductCard> {
                   width: double.infinity,
                   child: Padding(
                     padding: EdgeInsets.all(16.0),
-                    child: Image.asset(
-                      widget.product.thumbnailUrl,
+                    child: CachedNetworkImage(
+                      imageUrl: widget.product.thumbnailUrl,
                       fit: BoxFit.cover,
+                      placeholder: (context, url) =>
+                          const Center(child: CircularProgressIndicator()),
+                      errorWidget: (context, url, error) =>
+                          const Icon(Icons.error, color: Colors.red),
                     ),
                   ),
                 ),

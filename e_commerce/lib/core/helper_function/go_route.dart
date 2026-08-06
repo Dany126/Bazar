@@ -4,6 +4,8 @@ import 'package:e_commerce/features/auth/presentation/view/signup_view.dart';
 import 'package:e_commerce/features/home/presentation/views/category_details_view.dart';
 import 'package:e_commerce/features/home/presentation/views/home_view.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/all_item_in_category.dart';
+import 'package:e_commerce/features/home/presentation/views/widgets/new_arrivals.dart';
+import 'package:e_commerce/features/home/presentation/views/widgets/top_selling.dart';
 import 'package:e_commerce/features/notification/presentation/view/notification_view.dart';
 import 'package:e_commerce/features/order/presenation/view/order_view.dart';
 import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
@@ -45,6 +47,11 @@ Route onGenerateRoute(RouteSettings settings) {
       return MaterialPageRoute(builder: (context) => const MainView());
     case OrderView.routeName:
       return MaterialPageRoute(builder: (context) => const OrderView());
+    case TopSelling.routeName:
+      return MaterialPageRoute(builder: (context) => const TopSelling());
+
+    case NewArrivals.routeName:
+      return MaterialPageRoute(builder: (context) => const NewArrivals());
 
     default:
       return MaterialPageRoute(

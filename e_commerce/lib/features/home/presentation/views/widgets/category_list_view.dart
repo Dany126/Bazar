@@ -1,3 +1,4 @@
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
 import 'package:e_commerce/features/home/domain/entity/category_entity.dart';
@@ -52,7 +53,13 @@ class CategoryCard extends StatelessWidget {
                 height: 56,
                 width: 56,
                 color: AppColors.kSecondaryAccentColor.withAlpha(40),
-                child: Image.network(category.imageUrl, fit: BoxFit.cover),
+                child: CachedNetworkImage(
+                  imageUrl: category.imageUrl,
+                  fit: BoxFit.cover,
+                  placeholder: (context, url) =>
+                      const Center(child: CircularProgressIndicator()),
+                  errorWidget: (context, url, error) => const Icon(Icons.error),
+                ),
               ),
             ),
             const SizedBox(height: 4),
