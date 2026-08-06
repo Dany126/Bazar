@@ -6,7 +6,6 @@ import 'package:e_commerce/core/network/network_info.dart';
 import 'package:e_commerce/core/services/api_services.dart';
 import 'package:e_commerce/features/auth/data/auth_data_source/auth_remote_data_source_impl.dart';
 import 'package:e_commerce/features/auth/data/repo/auth_repo_auth.dart';
-
 import 'package:e_commerce/features/auth/domain/auth_data_source/auth_remote_data_source.dart';
 import 'package:e_commerce/features/auth/domain/repo/auth_repo.dart';
 import 'package:e_commerce/features/auth/domain/use_case/log_out_use_case.dart';
@@ -19,12 +18,10 @@ import 'package:e_commerce/features/auth/presentation/view_model/sign_up_cubit/s
 import 'package:e_commerce/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:e_commerce/features/home/data/repo/home_repo_impl.dart';
 import 'package:e_commerce/features/home/domain/repos/home_repo.dart';
-import 'package:e_commerce/features/home/domain/usecases/get_best_selling_products_usecase.dart';
-import 'package:e_commerce/features/home/domain/usecases/get_categories_usecase.dart';
-import 'package:e_commerce/features/home/domain/usecases/get_new_products_usecase.dart';
-import 'package:e_commerce/features/home/domain/usecases/get_products_by_category_usecase.dart';
-import 'package:e_commerce/features/home/presentation/viewModel/cubit/get_category_products_cubit/get_category_products_cubit.dart';
-import 'package:e_commerce/features/home/presentation/viewModel/cubit/home_cubit/home_cubit.dart';
+import 'package:e_commerce/features/home/domain/usecases/get_all_categories_usecase.dart';
+import 'package:e_commerce/features/home/domain/usecases/get_all_products_usecase.dart';
+import 'package:e_commerce/features/home/presentation/viewModel/categories_cubit/get_categories_cubit.dart';
+import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_cubit.dart';
 
 import 'package:get_it/get_it.dart';
 
@@ -36,50 +33,6 @@ void setupServiceLocator() {
   // =========================
 
   getIt.registerLazySingleton<ApiService>(() => ApiService(baseUrl: kBaseUrl));
-
-  // =========================
-  // Data Source
-  // =========================
-
-  getIt.registerLazySingleton<AuthRemoteDataSource>(
-    () => AuthRemoteDataSourceImpl(apiService: getIt<ApiService>()),
-  );
-
-  // =========================
-  // Repository
-  // =========================
-
-  getIt.registerLazySingleton<AuthRepository>(
-    () => AuthRepositoryImpl(remoteDataSource: getIt<AuthRemoteDataSource>()),
-  );
-
-  // =========================
-  // Use Cases
-  // =========================
-
-  getIt.registerLazySingleton<SignInUsecase>(
-    () => SignInUsecase(authRepository: getIt<AuthRepository>()),
-  );
-
-  getIt.registerLazySingleton<SignUpUsecase>(
-    () => SignUpUsecase(authRepository: getIt<AuthRepository>()),
-  );
-
-  getIt.registerLazySingleton<ResetPasswordUsecase>(
-    () => ResetPasswordUsecase(authRepository: getIt<AuthRepository>()),
-  );
-
-  // =========================
-  // Cubits
-  // =========================
-
-  getIt.registerFactory<SignInCubit>(
-    () => SignInCubit(signInUsecase: getIt<SignInUsecase>()),
-  );
-
-  getIt.registerFactory<SignUpCubit>(
-    () => SignUpCubit(signUpUsecase: getIt<SignUpUsecase>()),
-  );
 
   getIt.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(getIt()));
   getIt.registerLazySingleton(() => Connectivity());
@@ -96,57 +49,102 @@ void setupServiceLocator() {
     dio.interceptors.add(DioErrorInterceptor());
     return dio;
   });
-  // Home Data Source
+
+  // =========================
+  // Auth: Data Source
+  // =========================
+
+  getIt.registerLazySingleton<AuthRemoteDataSource>(
+    () => AuthRemoteDataSourceImpl(apiService: getIt<ApiService>()),
+  );
+
+  // =========================
+  // Auth: Repository
+  // =========================
+
+  getIt.registerLazySingleton<AuthRepository>(
+    () => AuthRepositoryImpl(remoteDataSource: getIt<AuthRemoteDataSource>()),
+  );
+
+  // =========================
+  // Auth: Use Cases
+  // =========================
+
+  getIt.registerLazySingleton<SignInUsecase>(
+    () => SignInUsecase(authRepository: getIt<AuthRepository>()),
+  );
+
+  getIt.registerLazySingleton<SignUpUsecase>(
+    () => SignUpUsecase(authRepository: getIt<AuthRepository>()),
+  );
+
+  getIt.registerLazySingleton<ResetPasswordUsecase>(
+    () => ResetPasswordUsecase(authRepository: getIt<AuthRepository>()),
+  );
+
+  getIt.registerLazySingleton<LogOutUseCase>(
+    () => LogOutUseCase(authRepository: getIt<AuthRepository>()),
+  );
+
+  // =========================
+  // Auth: Cubits
+  // =========================
+
+  getIt.registerFactory<SignInCubit>(
+    () => SignInCubit(signInUsecase: getIt<SignInUsecase>()),
+  );
+
+  getIt.registerFactory<SignUpCubit>(
+    () => SignUpCubit(signUpUsecase: getIt<SignUpUsecase>()),
+  );
+
+  getIt.registerFactory<SignOutCubit>(
+    () => SignOutCubit(getIt<LogOutUseCase>()),
+  );
+
+  // =========================
+  // Home: Data Source
+  // =========================
+
   getIt.registerLazySingleton<HomeRemoteDataSource>(
     () => HomeRemoteDataSourceImpl(apiService: getIt<ApiService>()),
   );
 
-  // Home Repository
-  getIt.registerLazySingleton<HomeRepository>(
+  // =========================
+  // Home: Repository
+  // =========================
+
+  getIt.registerLazySingleton<HomeRepo>(
     () => HomeRepositoryImpl(
       remoteDataSource: getIt<HomeRemoteDataSource>(),
       networkInfo: getIt<NetworkInfo>(),
     ),
   );
 
-  // Home Use Cases
-  getIt.registerLazySingleton<GetCategoriesUseCase>(
-    () => GetCategoriesUseCase(getIt<HomeRepository>()),
+  // =========================
+  // Home: Use Cases
+  // =========================
+
+  getIt.registerLazySingleton<GetAllCategoriesUseCase>(
+    () => GetAllCategoriesUseCase(getIt<HomeRepo>()),
   );
 
-  getIt.registerLazySingleton<GetBestSellingProductsUseCase>(
-    () => GetBestSellingProductsUseCase(getIt<HomeRepository>()),
+  getIt.registerLazySingleton<GetAllProductsUseCase>(
+    () => GetAllProductsUseCase(getIt<HomeRepo>()),
   );
 
-  getIt.registerLazySingleton<GetNewProductsUseCase>(
-    () => GetNewProductsUseCase(getIt<HomeRepository>()),
-  );
+  // =========================
+  // Home: Cubits
+  // =========================
 
-  getIt.registerLazySingleton<GetProductsByCategoryUseCase>(
-    () => GetProductsByCategoryUseCase(getIt<HomeRepository>()),
-  );
-
-  // Home Cubit
-  getIt.registerFactory<HomeCubit>(
-    () => HomeCubit(
-      getCategoriesUseCase: getIt(),
-      getBestSellingProductsUseCase: getIt(),
-      getNewProductsUseCase: getIt(),
+  getIt.registerFactory<GetCategoriesCubit>(
+    () => GetCategoriesCubit(
+      getAllCategoriesUseCase: getIt<GetAllCategoriesUseCase>(),
     ),
   );
 
-  // Category Products Cubit
-  getIt.registerFactoryParam<CategoryProductsCubit, String, void>(
-    (categoryId, _) => CategoryProductsCubit(
-      getProductsByCategoryUseCase: getIt<GetProductsByCategoryUseCase>(),
-      categoryId: categoryId,
-    ),
-  );
-
-  getIt.registerLazySingleton<SignOutCubit>(
-    () => SignOutCubit(getIt<LogOutUseCase>()),
-  );
-  getIt.registerLazySingleton<LogOutUseCase>(
-    () => LogOutUseCase(authRepository: getIt<AuthRepository>()),
+  getIt.registerFactory<GetProductsCubit>(
+    () =>
+        GetProductsCubit(getAllProductsUseCase: getIt<GetAllProductsUseCase>()),
   );
 }

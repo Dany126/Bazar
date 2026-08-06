@@ -7,7 +7,7 @@ import 'package:e_commerce/features/home/domain/entity/product_entity.dart';
 import 'package:e_commerce/features/home/domain/repos/home_repo.dart';
 import '../../../../core/error/exceptions.dart';
 
-class HomeRepositoryImpl implements HomeRepository {
+class HomeRepositoryImpl implements HomeRepo {
   final HomeRemoteDataSource remoteDataSource;
   final NetworkInfo networkInfo;
 
@@ -17,74 +17,32 @@ class HomeRepositoryImpl implements HomeRepository {
   });
 
   @override
-  Future<Either<Failure, List<CategoryEntity>>> getCategories() async {
-    if (!await networkInfo.isConnected) {
-      return const Left(NetworkFailure(message: 'No internet connection'));
-    }
+  Future<Either<Failure, List<CategoryEntity>>> getAllCategories() async {
     try {
-      final result = await remoteDataSource.getCategories();
+      final result = await remoteDataSource.getAllCategories();
       return Right(result);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
     }
   }
 
   @override
-  Future<Either<Failure, List<ProductEntity>>> getBestSellingProducts({
-    int page = 1,
-    int limit = 10,
+  Future<Either<Failure, List<ProductEntity>>> getAllProducts({
+    required int page,
+    required int limit,
   }) async {
-    if (!await networkInfo.isConnected) {
-      return const Left(NetworkFailure(message: 'No internet connection'));
-    }
     try {
-      final result = await remoteDataSource.getBestSellingProducts(
+      final result = await remoteDataSource.getAllProducts(
         page: page,
         limit: limit,
       );
       return Right(result);
     } on ServerException catch (e) {
       return Left(ServerFailure(message: e.message));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<ProductEntity>>> getNewProducts({
-    int page = 1,
-    int limit = 10,
-  }) async {
-    if (!await networkInfo.isConnected) {
-      return const Left(NetworkFailure(message: 'No internet connection'));
-    }
-    try {
-      final result = await remoteDataSource.getNewProducts(
-        page: page,
-        limit: limit,
-      );
-      return Right(result);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
-    }
-  }
-
-  @override
-  Future<Either<Failure, List<ProductEntity>>> getProductsByCategory({
-    required String categoryId,
-    int page = 1,
-    int limit = 10,
-  }) async {
-    if (!await networkInfo.isConnected) {
-      return const Left(NetworkFailure(message: 'No internet connection'));
-    }
-    try {
-      final result = await remoteDataSource.getProductsByCategory(
-        categoryId: categoryId,
-        page: page,
-        limit: limit,
-      );
-      return Right(result);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
     }
   }
 }

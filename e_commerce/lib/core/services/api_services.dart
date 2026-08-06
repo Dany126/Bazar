@@ -36,7 +36,7 @@ class ApiService {
   final String? refreshTokenPath;
 
   static const _accessTokenKey = 'auth_access_token';
-  static const _refreshTokenKey = '';
+  static const _refreshTokenKey = 'user/refresh';
 
   String? _accessToken;
   String? _refreshToken;

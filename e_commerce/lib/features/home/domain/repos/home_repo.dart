@@ -1,24 +1,13 @@
 import 'package:dartz/dartz.dart';
+import 'package:e_commerce/core/error/failure.dart';
+import 'package:e_commerce/features/home/domain/entity/category_entity.dart';
+import 'package:e_commerce/features/home/domain/entity/product_entity.dart';
 
-import '../../../../core/error/failure.dart';
-import '../entity/category_entity.dart';
-import '../entity/product_entity.dart';
+abstract class HomeRepo {
+  Future<Either<Failure, List<CategoryEntity>>> getAllCategories();
 
-abstract class HomeRepository {
-  Future<Either<Failure, List<CategoryEntity>>> getCategories();
-
-  Future<Either<Failure, List<ProductEntity>>> getBestSellingProducts({
-    int page = 1,
-    int limit = 10,
-  });
-
-  Future<Either<Failure, List<ProductEntity>>> getNewProducts({
-    int page = 1,
-    int limit = 10,
-  });
-  Future<Either<Failure, List<ProductEntity>>> getProductsByCategory({
-    required String categoryId,
-    int page = 1,
-    int limit = 10,
+  Future<Either<Failure, List<ProductEntity>>> getAllProducts({
+    required int page,
+    required int limit,
   });
 }

@@ -1,5 +1,7 @@
-import User from "../models/user_model";
-import { verifyAccessToken } from "./token";
+const User = require("../models/user_model");
+const { verifyAccessToken } = require("./token");
+
+
 
 async function requireAuth(req, res, next) {
   const authHeader = req.headers.authorization;
@@ -38,4 +40,4 @@ async function requireAuth(req, res, next) {
   }
 }
 
-export default requireAuth;
+module.exports = requireAuth;
