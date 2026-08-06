@@ -1,11 +1,18 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   createProduct,
+  deleteProduct,
   getAllProducts,
-} = require("../controllers/product_controller");
+  getProduct,
+  updateProduct,
+} from "../controllers/product_controller.js";
+import { checkID } from "../middleware/checkID.js";
 
-const productRouter = express.Router();
+export const productRouter = express.Router({ mergeParams: true });
 
 productRouter.route("/").post(createProduct).get(getAllProducts);
-
-module.exports = productRouter;
+productRouter
+  .route("/:id")
+  .get(checkID, getProduct)
+  .patch(checkID, updateProduct)
+  .delete(checkID, deleteProduct);

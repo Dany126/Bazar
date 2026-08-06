@@ -1,7 +1,9 @@
-const { Resend } = require("resend");
+import { Resend } from "resend";
+import dotenv from "dotenv";
+dotenv.config({ path: "./.env" });
 
 const resend = new Resend(process.env.RESEND_API_KEY);
-const sendEmail = async (to, from, subject, html) => {
+export const sendEmail = async (to, from, subject, html) => {
   const { data, error } = await resend.emails.send({
     to: to,
     from: from,
@@ -13,5 +15,3 @@ const sendEmail = async (to, from, subject, html) => {
     error,
   };
 };
-
-module.exports = { sendEmail };

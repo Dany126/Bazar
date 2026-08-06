@@ -1,17 +1,19 @@
-const express = require("express");
-const {
+import express from "express";
+import {
   register,
   login,
+  refresh,
   forgetPassword,
   resetPassword,
-  refresh,
-} = require("../controllers/auth_controller");
+} from "../controllers/auth_controller.js";
+import { getAllUsers } from "../controllers/user_controller.js";
 
-const userRouter = express.Router();
+export const userRouter = express.Router();
 
 userRouter.post("/register", register);
 userRouter.post("/login", login);
 userRouter.post("/refresh", refresh);
 userRouter.post("/forget-password", forgetPassword);
 userRouter.post("/reset-password", resetPassword);
-module.exports = userRouter;
+
+userRouter.get("/", getAllUsers);
