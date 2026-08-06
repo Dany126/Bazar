@@ -10,6 +10,22 @@ abstract class HomeRemoteDataSource {
     required int page,
     required int limit,
   });
+
+  Future<List<ProductModel>> getBestSellingProducts({
+    required int page,
+    required int limit,
+  });
+
+  Future<List<ProductModel>> getNewestProducts({
+    required int page,
+    required int limit,
+  });
+
+  Future<List<ProductModel>> getProductsByCategory({
+    required String category,
+    required int page,
+    required int limit,
+  });
 }
 
 class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
@@ -47,6 +63,91 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     try {
       final response = await apiService.get(
         '/products',
+        queryParameters: {'page': page, 'limit': limit},
+      );
+
+      final res = response.fold(
+        (failure) => throw ServerException(message: failure.toString()),
+        (data) => data,
+      );
+
+      final List<dynamic> data = res['data']['products'] as List<dynamic>;
+
+      return data
+          .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ServerException(
+        message: e.response?.data['message'] ?? 'Failed to fetch products',
+      );
+    }
+  }
+
+  @override
+  Future<List<ProductModel>> getBestSellingProducts({
+    required int page,
+    required int limit,
+  }) async {
+    try {
+      final response = await apiService.get(
+        '/products/best-selling',
+        queryParameters: {'page': page, 'limit': limit},
+      );
+
+      final res = response.fold(
+        (failure) => throw ServerException(message: failure.toString()),
+        (data) => data,
+      );
+
+      final List<dynamic> data = res['data']['products'] as List<dynamic>;
+
+      return data
+          .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ServerException(
+        message: e.response?.data['message'] ?? 'Failed to fetch products',
+      );
+    }
+  }
+
+  @override
+  Future<List<ProductModel>> getNewestProducts({
+    required int page,
+    required int limit,
+  }) async {
+    try {
+      final response = await apiService.get(
+        '/products/newest',
+        queryParameters: {'page': page, 'limit': limit},
+      );
+
+      final res = response.fold(
+        (failure) => throw ServerException(message: failure.toString()),
+        (data) => data,
+      );
+
+      final List<dynamic> data = res['data']['products'] as List<dynamic>;
+
+      return data
+          .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+    } on DioException catch (e) {
+      throw ServerException(
+        message: e.response?.data['message'] ?? 'Failed to fetch products',
+      );
+    }
+  }
+
+  @override
+  Future<List<ProductModel>> getProductsByCategory({
+    required String category,
+    required int page,
+    required int limit,
+  }) async {
+    try {
+      final response = await apiService.get(
+        '/products/category/$category',
         queryParameters: {'page': page, 'limit': limit},
       );
 

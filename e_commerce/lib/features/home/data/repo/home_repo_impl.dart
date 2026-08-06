@@ -50,18 +50,36 @@ class HomeRepositoryImpl implements HomeRepo {
   Future<Either<Failure, List<ProductEntity>>> getBestSellingProducts({
     required int page,
     required int limit,
-  }) {
-    // TODO: implement getBestSellingProducts
-    throw UnimplementedError();
+  }) async {
+    try {
+      final result = await remoteDataSource.getBestSellingProducts(
+        page: page,
+        limit: limit,
+      );
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
   }
 
   @override
   Future<Either<Failure, List<ProductEntity>>> getNewestProducts({
     required int page,
     required int limit,
-  }) {
-    // TODO: implement getNewestProducts
-    throw UnimplementedError();
+  }) async {
+    try {
+      final result = await remoteDataSource.getNewestProducts(
+        page: page,
+        limit: limit,
+      );
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
   }
 
   @override
@@ -69,8 +87,18 @@ class HomeRepositoryImpl implements HomeRepo {
     required String category,
     required int page,
     required int limit,
-  }) {
-    // TODO: implement getProductsByCategory
-    throw UnimplementedError();
+  }) async {
+    try {
+      final result = await remoteDataSource.getProductsByCategory(
+        category: category,
+        page: page,
+        limit: limit,
+      );
+      return Right(result);
+    } on ServerException catch (e) {
+      return Left(ServerFailure(message: e.message));
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
   }
 }

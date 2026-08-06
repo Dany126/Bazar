@@ -1,3 +1,4 @@
+import 'package:e_commerce/core/helper_function/shared_prefs_helper.dart';
 import 'package:e_commerce/core/utils/app_space.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
 import 'package:e_commerce/core/widgets/custom_button.dart';
@@ -111,6 +112,7 @@ class _SignUpViewBodyState extends State<SignUpViewBody> {
                     );
 
                     if (mounted) {
+                      await SharedPrefsHelper.setLoggedIn(true);
                       Navigator.pushReplacementNamed(
                         context,
                         MainView.routeName,

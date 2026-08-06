@@ -1,3 +1,4 @@
+import 'package:e_commerce/core/helper_function/shared_prefs_helper.dart';
 import 'package:e_commerce/core/helper_function/snack_bar.dart';
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_space.dart';
@@ -135,7 +136,8 @@ class _SignInBodyState extends State<SignInBody> {
                     (failure) {
                       showSnackBar(context, failure);
                     },
-                    (user) {
+                    (user) async {
+                      await SharedPrefsHelper.setLoggedIn(true);
                       Navigator.pushNamedAndRemoveUntil(
                         context,
                         MainView.routeName,

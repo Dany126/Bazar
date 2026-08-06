@@ -1,6 +1,5 @@
-import 'package:e_commerce/core/utils/app_colors.dart';
+import 'package:e_commerce/core/utils/assets.dart';
 import 'package:flutter/material.dart';
-import 'package:iconsax/iconsax.dart';
 
 class CustomBottomNavBar extends StatelessWidget {
   const CustomBottomNavBar({
@@ -30,26 +29,26 @@ class CustomBottomNavBar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
           _NavIcon(
-            icon: Iconsax.home,
-            activeIcon: Iconsax.home_1,
+            icon: Image.asset(Assets.assetsImagesInActiveHome),
+            activeIcon: Image.asset(Assets.assetsImagesActiveHome),
             isActive: currentIndex == 0,
             onTap: () => onTap(0),
           ),
           _NavIcon(
-            icon: Iconsax.notification,
-            activeIcon: Iconsax.notification5,
+            icon: Image.asset(Assets.assetsImagesInActivenotificationbing),
+            activeIcon: Image.asset(Assets.assetsImagesActivenotificationbing),
             isActive: currentIndex == 1,
             onTap: () => onTap(1),
           ),
           _NavIcon(
-            icon: Iconsax.receipt_text,
-            activeIcon: Iconsax.receipt_text5,
+            icon: Image.asset(Assets.assetsImagesInActiveReceipt),
+            activeIcon: Image.asset(Assets.assetsImagesActiveReceipt),
             isActive: currentIndex == 2,
             onTap: () => onTap(2),
           ),
           _NavIcon(
-            icon: Iconsax.profile_circle,
-            activeIcon: Iconsax.profile_circle5,
+            icon: Image.asset(Assets.assetsImagesInActiveprofile),
+            activeIcon: Image.asset(Assets.assetsImagesActiveprofile),
             isActive: currentIndex == 3,
             onTap: () => onTap(3),
           ),
@@ -67,8 +66,8 @@ class _NavIcon extends StatelessWidget {
     required this.onTap,
   });
 
-  final IconData icon;
-  final IconData activeIcon;
+  final Image icon;
+  final Image activeIcon;
   final bool isActive;
   final VoidCallback onTap;
 
@@ -77,14 +76,22 @@ class _NavIcon extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       behavior: HitTestBehavior.opaque,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        child: Icon(
-          isActive ? activeIcon : icon,
-          size: 26,
-          color: isActive
-              ? AppColors.kPrimaryColor
-              : AppColors.kSecondaryTextColor,
+      child: AnimatedScale(
+        duration: const Duration(milliseconds: 250),
+        curve: Curves.easeOutBack,
+        scale: isActive ? 1.15 : 1,
+        child: AnimatedSwitcher(
+          duration: const Duration(milliseconds: 250),
+          transitionBuilder: (child, animation) {
+            return ScaleTransition(
+              scale: animation,
+              child: FadeTransition(opacity: animation, child: child),
+            );
+          },
+          child: SizedBox(
+            key: ValueKey(isActive),
+            child: isActive ? activeIcon : icon,
+          ),
         ),
       ),
     );

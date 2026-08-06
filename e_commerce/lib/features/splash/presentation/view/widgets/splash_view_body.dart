@@ -1,7 +1,9 @@
+import 'package:e_commerce/core/helper_function/shared_prefs_helper.dart';
 import 'package:e_commerce/core/utils/app_colors.dart';
 
 import 'package:e_commerce/core/utils/assets.dart';
 import 'package:e_commerce/features/auth/presentation/view/sign_in_view.dart';
+import 'package:e_commerce/main_view.dart';
 import 'package:flutter/material.dart';
 
 class SplashViewBody extends StatefulWidget {
@@ -77,8 +79,13 @@ class _SplashViewBodyState extends State<SplashViewBody>
 
   void navigation(BuildContext context) async {
     await Future.delayed(const Duration(seconds: 3), () {
+      final bool isLoggedIn = SharedPrefsHelper.isLoggedIn();
       if (context.mounted) {
-        Navigator.pushReplacementNamed(context, SignInView.routeName);
+        if (isLoggedIn) {
+          Navigator.pushReplacementNamed(context, MainView.routeName);
+        } else {
+          Navigator.pushReplacementNamed(context, SignInView.routeName);
+        }
       }
     });
   }
