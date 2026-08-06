@@ -10,7 +10,8 @@ import 'package:e_commerce/features/auth/presentation/view/signup_view.dart';
 import 'package:e_commerce/features/auth/presentation/view/widgets/custom_o_auth_form.dart';
 import 'package:e_commerce/features/auth/presentation/view/widgets/password_field.dart';
 import 'package:e_commerce/features/auth/presentation/view_model/sign_in_cubit/sign_in_cubit.dart';
-import 'package:e_commerce/features/home/presentation/views/home_view.dart';
+
+import 'package:e_commerce/main_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -137,7 +138,7 @@ class _SignInBodyState extends State<SignInBody> {
                     (user) {
                       Navigator.pushNamedAndRemoveUntil(
                         context,
-                        HomeView.routeName,
+                        MainView.routeName,
                         (route) => false,
                       );
                     },

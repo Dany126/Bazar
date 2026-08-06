@@ -21,7 +21,19 @@ class HomeView extends StatelessWidget {
           create: (_) => getIt<GetProductsCubit>(),
         ),
       ],
-      child: const HomeViewBody(),
+      child: Scaffold(
+        body: const HomeViewBody(),
+        bottomNavigationBar: CustomBottomNavigationBar(),
+      ),
     );
+  }
+}
+
+class CustomBottomNavigationBar extends StatelessWidget {
+  const CustomBottomNavigationBar({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container();
   }
 }

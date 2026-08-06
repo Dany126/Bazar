@@ -5,7 +5,8 @@ import 'package:e_commerce/core/widgets/custom_text_form_field.dart';
 import 'package:e_commerce/core/widgets/text_form_faild_validators.dart';
 import 'package:e_commerce/features/auth/presentation/view/widgets/password_field.dart';
 import 'package:e_commerce/features/auth/presentation/view_model/sign_up_cubit/sign_up_cubit.dart';
-import 'package:e_commerce/features/home/presentation/views/home_view.dart';
+
+import 'package:e_commerce/main_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -112,7 +113,7 @@ class _SignUpViewBodyState extends State<SignUpViewBody> {
                     if (mounted) {
                       Navigator.pushReplacementNamed(
                         context,
-                        HomeView.routeName,
+                        MainView.routeName,
                       );
                     }
                   }
