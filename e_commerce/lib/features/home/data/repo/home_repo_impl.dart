@@ -45,4 +45,32 @@ class HomeRepositoryImpl implements HomeRepo {
       return Left(ServerFailure(message: e.toString()));
     }
   }
+
+  @override
+  Future<Either<Failure, List<ProductEntity>>> getBestSellingProducts({
+    required int page,
+    required int limit,
+  }) {
+    // TODO: implement getBestSellingProducts
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, List<ProductEntity>>> getNewestProducts({
+    required int page,
+    required int limit,
+  }) {
+    // TODO: implement getNewestProducts
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<Either<Failure, List<ProductEntity>>> getProductsByCategory({
+    required String category,
+    required int page,
+    required int limit,
+  }) {
+    // TODO: implement getProductsByCategory
+    throw UnimplementedError();
+  }
 }

@@ -10,4 +10,18 @@ abstract class HomeRepo {
     required int page,
     required int limit,
   });
+  Future<Either<Failure, List<ProductEntity>>> getBestSellingProducts({
+    required int page,
+    required int limit,
+  });
+  Future<Either<Failure, List<ProductEntity>>> getNewestProducts({
+    required int page,
+    required int limit,
+  });
+
+  Future<Either<Failure, List<ProductEntity>>> getProductsByCategory({
+    required String category,
+    required int page,
+    required int limit,
+  });
 }

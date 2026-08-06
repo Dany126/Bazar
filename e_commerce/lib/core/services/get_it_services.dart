@@ -21,7 +21,6 @@ import 'package:e_commerce/features/home/domain/repos/home_repo.dart';
 import 'package:e_commerce/features/home/domain/usecases/get_all_categories_usecase.dart';
 import 'package:e_commerce/features/home/domain/usecases/get_all_products_usecase.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/categories_cubit/get_categories_cubit.dart';
-import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_cubit.dart';
 
 import 'package:get_it/get_it.dart';
 
@@ -141,10 +140,5 @@ void setupServiceLocator() {
     () => GetCategoriesCubit(
       getAllCategoriesUseCase: getIt<GetAllCategoriesUseCase>(),
     ),
-  );
-
-  getIt.registerFactory<GetProductsCubit>(
-    () =>
-        GetProductsCubit(getAllProductsUseCase: getIt<GetAllProductsUseCase>()),
   );
 }
