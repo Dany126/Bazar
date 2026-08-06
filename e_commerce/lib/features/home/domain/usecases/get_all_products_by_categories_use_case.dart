@@ -5,7 +5,7 @@ import 'package:e_commerce/features/home/domain/repos/home_repo.dart';
 
 class GetAllProductsByCategoriesUseCase {
   final HomeRepo homeRepo;
-  GetAllProductsByCategoriesUseCase({required this.homeRepo});
+  GetAllProductsByCategoriesUseCase(this.homeRepo);
 
   Future<Either<Failure, List<ProductEntity>>> call({
     required int page,

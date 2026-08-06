@@ -19,8 +19,12 @@ import 'package:e_commerce/features/home/data/datasources/home_remote_data_sourc
 import 'package:e_commerce/features/home/data/repo/home_repo_impl.dart';
 import 'package:e_commerce/features/home/domain/repos/home_repo.dart';
 import 'package:e_commerce/features/home/domain/usecases/get_all_categories_usecase.dart';
+import 'package:e_commerce/features/home/domain/usecases/get_all_products_by_categories_use_case.dart';
 import 'package:e_commerce/features/home/domain/usecases/get_all_products_usecase.dart';
+import 'package:e_commerce/features/home/domain/usecases/get_best_selling_product_use_case.dart';
+import 'package:e_commerce/features/home/domain/usecases/get_newest_product_use_case.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/categories_cubit/get_categories_cubit.dart';
+import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_cubit.dart';
 
 import 'package:get_it/get_it.dart';
 
@@ -132,6 +136,16 @@ void setupServiceLocator() {
     () => GetAllProductsUseCase(getIt<HomeRepo>()),
   );
 
+  getIt.registerLazySingleton<GetAllProductsByCategoriesUseCase>(
+    () => GetAllProductsByCategoriesUseCase(getIt<HomeRepo>()),
+  );
+  getIt.registerLazySingleton<GetBestSellingProductUseCase>(
+    () => GetBestSellingProductUseCase(getIt<HomeRepo>()),
+  );
+  getIt.registerLazySingleton<GetNewtestProductUseCase>(
+    () => GetNewtestProductUseCase(getIt<HomeRepo>()),
+  );
+
   // =========================
   // Home: Cubits
   // =========================
@@ -139,6 +153,14 @@ void setupServiceLocator() {
   getIt.registerFactory<GetCategoriesCubit>(
     () => GetCategoriesCubit(
       getAllCategoriesUseCase: getIt<GetAllCategoriesUseCase>(),
+    ),
+  );
+
+  getIt.registerFactory<GetProductsCubit>(
+    () => GetProductsCubit(
+      getAllProductsUseCase: getIt<GetAllProductsUseCase>(),
+      getAllProductsByCategoriesUseCase:
+          getIt<GetAllProductsByCategoriesUseCase>(),
     ),
   );
 }
