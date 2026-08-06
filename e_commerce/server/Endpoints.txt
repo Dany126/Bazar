@@ -1,0 +1,21 @@
+// Categoty
+POST /http://localhost:5000/api/category
+GET  /http://localhost:5000/api/category
+GET  /http://localhost:5000/api/category/:id
+PATCH  /http://localhost:5000/api/category/:id
+DELETE  /http://localhost:5000/api/category:id
+
+// Order
+POST /http://localhost:5000/api/order
+GET  /http://localhost:5000/api/order
+GET  /http://localhost:5000/api/order/:id
+PATCH  /http://localhost:5000/api/order/:id
+DELETE  /http://localhost:5000/api/order:id
+
+// Product
+POST /http://localhost:5000/api/product
+GET  /http://localhost:5000/api/product
+GET  /http://localhost:5000/api/product/:id
+GET /http://localhost:5000/api/category/:categoryId/product 
+PATCH  /http://localhost:5000/api/product/:id
+DELETE  /http://localhost:5000/api/product:id
