@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/services/api_services.dart';
 import '../../../../core/error/exceptions.dart';
 import '../models/category_model.dart';
@@ -36,7 +37,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
   @override
   Future<List<CategoryModel>> getAllCategories() async {
     try {
-      final response = await apiService.get('/category');
+      final response = await apiService.get(kGetAllGategories);
 
       final res = response.fold(
         (failure) => throw ServerException(message: failure.toString()),
@@ -62,7 +63,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
   }) async {
     try {
       final response = await apiService.get(
-        '/products',
+        kGetAllProducts,
         queryParameters: {'page': page, 'limit': limit},
       );
 
@@ -90,7 +91,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
   }) async {
     try {
       final response = await apiService.get(
-        '/products/best-selling',
+        kGetNewProductByCategory,
         queryParameters: {'page': page, 'limit': limit},
       );
 
@@ -118,7 +119,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
   }) async {
     try {
       final response = await apiService.get(
-        '/products/newest',
+        kGetBestSellerProductByCategory,
         queryParameters: {'page': page, 'limit': limit},
       );
 
@@ -147,7 +148,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
   }) async {
     try {
       final response = await apiService.get(
-        '/products/category/$category',
+        "$kGetProductByCategory/$category",
         queryParameters: {'page': page, 'limit': limit},
       );
 
