@@ -16,11 +16,11 @@ class CustomBottomNavBar extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 16),
       decoration: const BoxDecoration(
-        color: Colors.white,
+        color: Colors.transparent,
         boxShadow: [
           BoxShadow(
             color: Colors.black12,
-            blurRadius: 8,
+            blurRadius: 80,
             offset: Offset(0, -2),
           ),
         ],
