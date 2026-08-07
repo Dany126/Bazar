@@ -123,7 +123,8 @@ class _HomeViewBodyState extends State<HomeViewBody> {
         SliverToBoxAdapter(
           child: BlocProvider<GetProductsCubit>(
             create: (_) =>
-                getIt<GetProductsCubit>()..fetchAllProducts(page: 1, limit: 10),
+                getIt<GetProductsCubit>()
+                  ..fetchBestSellingProducts(page: 1, limit: 10),
             child: BlocBuilder<GetProductsCubit, GetProductsState>(
               builder: (context, state) {
                 if (state is GetProductsLoading) {
@@ -158,7 +159,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
           padding: const EdgeInsets.symmetric(horizontal: 0),
           sliver: BlocProvider<GetProductsCubit>(
             create: (_) => getIt<GetProductsCubit>()
-              ..fetchAllProducts(
+              ..fetchNewProducts(
                 page: 1,
                 limit: 10,
               ), // adjust params for "new" sort/filter

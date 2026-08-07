@@ -161,6 +161,8 @@ void setupServiceLocator() {
       getAllProductsUseCase: getIt<GetAllProductsUseCase>(),
       getAllProductsByCategoriesUseCase:
           getIt<GetAllProductsByCategoriesUseCase>(),
+      getBestSellingProductsUseCase: getIt<GetBestSellingProductUseCase>(),
+      getNewestProductsUseCase: getIt<GetNewtestProductUseCase>(),
     ),
   );
 }

@@ -94,7 +94,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     try {
       final response = await apiService.get(
         kGetNewProductByCategory,
-        queryParameters: {'page': page, 'limit': limit},
+        queryParameters: {'page': page, 'limit': limit, 'sort': "-stock"},
       );
 
       final res = response.fold(
@@ -122,7 +122,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     try {
       final response = await apiService.get(
         kGetBestSellerProductByCategory,
-        queryParameters: {'page': page, 'limit': limit},
+        queryParameters: {'page': page, 'limit': limit, 'sort': "-createdAt"},
       );
 
       final res = response.fold(

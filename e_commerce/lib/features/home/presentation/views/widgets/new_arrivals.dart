@@ -15,7 +15,7 @@ class NewArrivals extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider<GetProductsCubit>(
       create: (_) => getIt<GetProductsCubit>()
-        ..fetchAllProducts(
+        ..fetchNewProducts(
           page: 1,
           limit: 50,
         ), // adjust if "new" needs a different sort/param

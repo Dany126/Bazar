@@ -1,102 +1,51 @@
 [
   {
-    "name": "iPhone 15 Pro",
-    "price": 49999,
-    "image": ["iphone15pro-front.jpg", "iphone15pro-back.jpg"],
+    "name": "iPhone 15 Pro Max",
+    "price": 1200,
+    "image": [
+      "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd",
+      "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9"
+    ],
     "avg_rating": 4.8,
     "stock": 25,
-    "soldCount": 120,
-    "ratingsQuantity": 45,
-    "category": "64f123456789abcdef123456"
+    "soldCount": 150,
+    "ratingsQuantity": 90,
+    "category": "66b000000000000000000001"
   },
   {
-    "name": "Samsung Galaxy S24",
-    "price": 38999,
-    "image": ["s24-front.jpg", "s24-back.jpg"],
+    "name": "Samsung Galaxy S24 Ultra",
+    "price": 1000,
+    "image": [
+      "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf"
+    ],
     "avg_rating": 4.7,
     "stock": 30,
-    "soldCount": 95,
-    "ratingsQuantity": 38,
-    "category": "64f123456789abcdef123456"
+    "soldCount": 120,
+    "ratingsQuantity": 70,
+    "category": "66b000000000000000000001"
   },
   {
-    "name": "MacBook Air M3",
-    "price": 64999,
-    "image": ["macbook-air-front.jpg", "macbook-air-side.jpg"],
+    "name": "MacBook Pro M3",
+    "price": 2200,
+    "image": [
+      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8"
+    ],
     "avg_rating": 4.9,
     "stock": 15,
-    "soldCount": 67,
-    "ratingsQuantity": 29,
-    "category": "64f234567890abcdef123456"
+    "soldCount": 80,
+    "ratingsQuantity": 50,
+    "category": "66b000000000000000000002"
   },
   {
-    "name": "Dell XPS 15",
-    "price": 55999,
-    "image": ["dell-xps-front.jpg", "dell-xps-side.jpg"],
-    "avg_rating": 4.6,
-    "stock": 20,
-    "soldCount": 52,
-    "ratingsQuantity": 21,
-    "category": "64f234567890abcdef123456"
-  },
-  {
-    "name": "Sony WH-1000XM5",
-    "price": 14999,
-    "image": ["sony-headphones-black.jpg", "sony-headphones-side.jpg"],
-    "avg_rating": 4.8,
-    "stock": 40,
-    "soldCount": 180,
-    "ratingsQuantity": 73,
-    "category": "64f345678901abcdef123456"
-  },
-  {
-    "name": "Apple AirPods Pro 2",
-    "price": 11999,
-    "image": ["airpods-pro-front.jpg", "airpods-pro-case.jpg"],
-    "avg_rating": 4.7,
-    "stock": 50,
-    "soldCount": 210,
-    "ratingsQuantity": 89,
-    "category": "64f345678901abcdef123456"
-  },
-  {
-    "name": "Nike Air Max 270",
-    "price": 5999,
-    "image": ["nike-air-max-side.jpg", "nike-air-max-top.jpg"],
+    "name": "Wireless Headphones",
+    "price": 150,
+    "image": [
+      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e"
+    ],
     "avg_rating": 4.5,
-    "stock": 35,
-    "soldCount": 85,
-    "ratingsQuantity": 34,
-    "category": "64f456789012abcdef123456"
-  },
-  {
-    "name": "Adidas Ultraboost",
-    "price": 7499,
-    "image": ["adidas-ultraboost-side.jpg", "adidas-ultraboost-top.jpg"],
-    "avg_rating": 4.6,
-    "stock": 28,
-    "soldCount": 73,
-    "ratingsQuantity": 31,
-    "category": "64f456789012abcdef123456"
-  },
-  {
-    "name": "Logitech MX Master 3S",
-    "price": 4999,
-    "image": ["logitech-mouse-top.jpg", "logitech-mouse-side.jpg"],
-    "avg_rating": 4.8,
-    "stock": 45,
-    "soldCount": 140,
-    "ratingsQuantity": 58,
-    "category": "64f567890123abcdef123456"
-  },
-  {
-    "name": "Keychron K2 Mechanical Keyboard",
-    "price": 3999,
-    "image": ["keychron-k2-front.jpg", "keychron-k2-side.jpg"],
-    "avg_rating": 4.7,
-    "stock": 32,
-    "soldCount": 98,
-    "ratingsQuantity": 42,
-    "category": "64f567890123abcdef123456"
+    "stock": 50,
+    "soldCount": 300,
+    "ratingsQuantity": 200,
+    "category": "66b000000000000000000003"
   }
 ]

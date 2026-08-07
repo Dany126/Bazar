@@ -1,0 +1,17 @@
+[
+    {
+        "_id": "66b000000000000000000001",
+        "name": "Mobiles",
+        "image": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9"
+    },
+    {
+        "_id": "66b000000000000000000002",
+        "name": "Laptops",
+        "image": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853"
+    },
+    {
+        "_id": "66b000000000000000000003",
+        "name": "Accessories",
+        "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e"
+    }
+]

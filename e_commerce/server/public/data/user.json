@@ -1,0 +1,18 @@
+[
+    {
+        "_id": "66a000000000000000000001",
+        "name": "Dany Ashraf",
+        "email": "dany@gmail.com",
+        "phone": "01012345678",
+        "password_hash": "$2b$10$8YqJw7Xx5YJqQk8fW3Qz0O",
+        "tokenVersion": 0
+    },
+    {
+        "_id": "66a000000000000000000002",
+        "name": "Ahmed Mohamed",
+        "email": "ahmed@gmail.com",
+        "phone": "01123456789",
+        "password_hash": "$2b$10$7XqK9YpQwE8LmN4RzT1Aa",
+        "tokenVersion": 0
+    }
+]

@@ -15,7 +15,8 @@ class TopSelling extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider<GetProductsCubit>(
       create: (_) =>
-          getIt<GetProductsCubit>()..fetchAllProducts(page: 1, limit: 50),
+          getIt<GetProductsCubit>()
+            ..fetchBestSellingProducts(page: 1, limit: 50),
       child: Scaffold(
         appBar: customAppBar(context),
         body: Padding(
