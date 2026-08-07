@@ -49,9 +49,7 @@ export const getAllOrders = async (req, res) => {
     }
     return res.status(200).json({
       status: "Success",
-      data: {
-        orders,
-      },
+      orders,
     });
   } catch (err) {
     console.log(err);
