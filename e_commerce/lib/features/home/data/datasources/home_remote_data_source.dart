@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:dio/dio.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/services/api_services.dart';
@@ -130,7 +128,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
         (data) => data,
       );
 
-      log(res);
+      // print(res);
 
       final List<dynamic> data = res['data']['products'] as List<dynamic>;
 

@@ -11,7 +11,7 @@ class CategoryModel extends CategoryEntity {
     return CategoryModel(
       id: json['_id'],
       name: json['name'] ?? "",
-      imageUrl: json['image_url'] ?? "",
+      imageUrl: json['image'] ?? "",
     );
   }
 }

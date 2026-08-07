@@ -4,7 +4,7 @@ import 'package:e_commerce/core/widgets/custom_app_bar.dart';
 import 'package:e_commerce/features/home/domain/entity/category_entity.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_cubit.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_state.dart';
-import 'package:e_commerce/features/home/presentation/views/widgets/product_card.dart';
+import 'package:e_commerce/features/home/presentation/views/widgets/product_grid_View.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -15,13 +15,18 @@ class AllItemsInCategoryView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final category = ModalRoute.of(context)!.settings.arguments as CategoryEntity;
-    
+    final category =
+        ModalRoute.of(context)!.settings.arguments as CategoryEntity;
 
     return BlocProvider<GetProductsCubit>(
       create: (_) {
         final cubit = getIt<GetProductsCubit>();
-        cubit.fetchAllProducts(page: 1, limit: 10);
+        cubit.fetchAllProductsByCategories(
+          page: 1,
+          limit: 10,
+          categoryId: category.id,
+        );
+        ;
         return cubit;
       },
       child: Scaffold(
@@ -47,26 +52,14 @@ class AllItemsInCategoryView extends StatelessWidget {
                       ),
                     ),
                     const SliverToBoxAdapter(child: SizedBox(height: 16)),
-                    SliverGrid.builder(
-                      itemCount: products.length,
-                      gridDelegate:
-                          const SliverGridDelegateWithFixedCrossAxisCount(
-                            crossAxisCount: 2,
-                            mainAxisSpacing: 16,
-                            crossAxisSpacing: 16,
-                            childAspectRatio: 0.5,
-                          ),
-                      itemBuilder: (context, index) {
-                        return ProductCard(
-                          product: products[index],
-                          onTap: () {},
-                        );
-                      },
+                    SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 0),
+                      sliver: ProductGridView(products: products),
                     ),
-                    const SliverToBoxAdapter(child: SizedBox(height: 16)),
                   ],
                 );
               }
+
               return const SizedBox.shrink();
             },
           ),

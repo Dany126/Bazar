@@ -10,7 +10,12 @@ class GetAllProductsByCategoriesUseCase {
   Future<Either<Failure, List<ProductEntity>>> call({
     required int page,
     required int limit,
+    required String categoryId,
   }) {
-    return homeRepo.getAllProducts(page: page, limit: limit);
+    return homeRepo.getProductsByCategory(
+      category: categoryId,
+      page: 1,
+      limit: 10,
+    );
   }
 }

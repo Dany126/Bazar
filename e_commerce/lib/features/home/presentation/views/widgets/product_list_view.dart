@@ -11,7 +11,7 @@ class ProductListView extends StatelessWidget {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.of(context).size.height;
     // single derived value, clamped — can never produce min > max
-    final listHeight = (screenHeight * 0.4).clamp(280.0, 380.0);
+    final listHeight = (screenHeight * 0.3).clamp(280.0, 380.0);
 
     final screenWidth = MediaQuery.of(context).size.width;
     final cardWidth = (screenWidth * 0.42).clamp(150.0, 190.0);

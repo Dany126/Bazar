@@ -86,12 +86,14 @@ class GetProductsCubit extends Cubit<GetProductsState> {
   Future<Either<Failure, List<ProductEntity>>> fetchAllProductsByCategories({
     required int page,
     required int limit,
+    required String categoryId,
   }) async {
     emit(GetProductsLoading());
     try {
       final result = await getAllProductsByCategoriesUseCase.call(
         page: page,
         limit: limit,
+        categoryId: categoryId,
       );
       result.fold(
         (failure) => emit(GetProductsFailure(message: failure.toString())),
