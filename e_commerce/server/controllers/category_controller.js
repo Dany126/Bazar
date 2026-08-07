@@ -1,10 +1,9 @@
 import { Category } from "../models/category_model.js";
 
-export const createCategory = async (req, res, next) => {
+export const createCategory = async (req, res) => {
   try {
-    const { name } = req.body;
-    const data = await Category.create({ name });
-    if (!data) {
+    const category = await Category.create(req.body);
+    if (!category) {
       return res.status(400).json({
         status: "Failed",
         message: "Something went wrong",
@@ -13,9 +12,8 @@ export const createCategory = async (req, res, next) => {
     return res.status(200).json({
       status: "success",
       message: "Category Created Successfuly",
-      data,
+      category,
     });
-    next();
   } catch (err) {
     console.log(err);
     return res.status(500).json({
@@ -25,7 +23,7 @@ export const createCategory = async (req, res, next) => {
   }
 };
 
-export const getAllCategories = async (req, res, next) => {
+export const getAllCategories = async (req, res) => {
   try {
     const categories = await Category.find().select("-__v");
     if (!categories) {
@@ -36,11 +34,8 @@ export const getAllCategories = async (req, res, next) => {
     }
     return res.status(200).json({
       status: "Success",
-      data: {
-        categories,
-      },
+      categories,
     });
-    next();
   } catch (err) {
     console.log(err);
     return res.status(500).json({

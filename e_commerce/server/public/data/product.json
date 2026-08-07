@@ -10,42 +10,36 @@
     "stock": 25,
     "soldCount": 150,
     "ratingsQuantity": 90,
-    "category": "66b000000000000000000001"
+    "category": "6a75fa5ba93e14aa4f455f07"
   },
   {
     "name": "Samsung Galaxy S24 Ultra",
     "price": 1000,
-    "image": [
-      "https://images.unsplash.com/photo-1610945265064-0e34e5519bbf"
-    ],
+    "image": ["https://images.unsplash.com/photo-1610945265064-0e34e5519bbf"],
     "avg_rating": 4.7,
     "stock": 30,
     "soldCount": 120,
     "ratingsQuantity": 70,
-    "category": "66b000000000000000000001"
+    "category": "6a75fa5ba93e14aa4f455f07"
   },
   {
     "name": "MacBook Pro M3",
     "price": 2200,
-    "image": [
-      "https://images.unsplash.com/photo-1517336714731-489689fd1ca8"
-    ],
+    "image": ["https://images.unsplash.com/photo-1517336714731-489689fd1ca8"],
     "avg_rating": 4.9,
     "stock": 15,
     "soldCount": 80,
     "ratingsQuantity": 50,
-    "category": "66b000000000000000000002"
+    "category": "6a75fa64a93e14aa4f455f08"
   },
   {
     "name": "Wireless Headphones",
     "price": 150,
-    "image": [
-      "https://images.unsplash.com/photo-1505740420928-5e560c06d30e"
-    ],
+    "image": ["https://images.unsplash.com/photo-1505740420928-5e560c06d30e"],
     "avg_rating": 4.5,
     "stock": 50,
     "soldCount": 300,
     "ratingsQuantity": 200,
-    "category": "66b000000000000000000003"
+    "category": "6a75fa6ba93e14aa4f455f09"
   }
 ]

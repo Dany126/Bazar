@@ -3,8 +3,8 @@ import { apiFeatures } from "../utils/apiFeatures.js";
 
 export const createProduct = async (req, res) => {
   try {
-    const data = await Product.create(req.body);
-    if (!data) {
+    const product = await Product.create(req.body);
+    if (!product) {
       return res.status(400).json({
         status: "Failed",
         message: "Failed creating a product",
@@ -12,7 +12,7 @@ export const createProduct = async (req, res) => {
     }
     return res.status(200).json({
       status: "Success",
-      data,
+      product,
     });
   } catch (err) {
     console.log(err);
@@ -39,9 +39,7 @@ export const getAllProducts = async (req, res) => {
     }
     return res.status(200).json({
       status: "Success",
-      data: {
-        products,
-      },
+      products,
     });
   } catch (err) {
     console.log(err);
