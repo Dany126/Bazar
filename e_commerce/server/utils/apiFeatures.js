@@ -15,7 +15,6 @@ export const apiFeatures = (query) => {
   const pages = page || 1;
   const limits = limit || 10;
   const skip = (pages - 1) * limits;
-  console.log(filter);
   const obj = {
     filter,
     limits,

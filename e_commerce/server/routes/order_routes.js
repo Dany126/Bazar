@@ -7,10 +7,11 @@ import {
   updateOrder,
 } from "../controllers/order_controller.js";
 import { checkID } from "../middleware/checkID.js";
+import { checkStock } from "../middleware/checkStock.js";
 
 export const orderRouter = express.Router();
 
-orderRouter.route("/").post(createOrder).get(getAllOrders);
+orderRouter.route("/").post(checkStock, createOrder).get(getAllOrders);
 orderRouter
   .route("/:id")
   .get(checkID, getOrder)
