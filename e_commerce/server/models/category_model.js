@@ -1,9 +1,14 @@
 import mongoose from "mongoose";
 
-const categorySchema = new mongoose.Schema({
-  name: String,
-  image: String,
-});
+const categorySchema = new mongoose.Schema(
+  {
+    name: String,
+    image: String,
+  },
+  {
+    timestamps: true,
+  },
+);
 
 // categorySchema.pre(/^find/, function (next) {
 //   this.select("-__v");
