@@ -25,7 +25,7 @@ const loginSchema = joi.object({
   password: joi.string().min(6).required(),
 });
 
-export const register = async (req, res, next) => {
+export const register = async (req, res) => {
   try {
     const fcm_token = req.params;
     if (!fcm_token) {
@@ -93,7 +93,7 @@ export const register = async (req, res, next) => {
   }
 };
 
-export const login = async (req, res, next) => {
+export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
     const { error } = loginSchema.validate({ email, password });
@@ -150,7 +150,15 @@ export const login = async (req, res, next) => {
   }
 };
 
-export const refresh = async (req, res, next) => {
+export const logoutHandler = async (req, res) => {
+  res.clearCookie("refreshToken");
+
+  return res.status(200).json({
+    message: "Logged out successfully",
+  });
+};
+
+export const refresh = async (req, res) => {
   try {
     const token = req.cookies?.refreshToken;
     if (!token) {
@@ -201,7 +209,7 @@ export const refresh = async (req, res, next) => {
   }
 };
 
-export const forgetPassword = async (req, res, next) => {
+export const forgetPassword = async (req, res) => {
   try {
     const { email } = req.body;
     if (!email) {
@@ -255,7 +263,7 @@ export const forgetPassword = async (req, res, next) => {
   }
 };
 
-export const resetPassword = async (req, res, next) => {
+export const resetPassword = async (req, res) => {
   try {
     const { token, password } = req.body;
     if (!token) {
