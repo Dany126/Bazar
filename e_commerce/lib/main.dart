@@ -3,9 +3,10 @@ import 'package:e_commerce/core/helper_function/shared_prefs_helper.dart';
 import 'package:e_commerce/core/services/get_it_services.dart';
 import 'package:e_commerce/core/utils/app_theme.dart';
 import 'package:e_commerce/core/notifications/fcm_service.dart';
+import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
 import 'package:e_commerce/firebase_options.dart';
 
-import 'package:e_commerce/main_view.dart';
+// import 'package:e_commerce/main_view.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 // import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
@@ -32,7 +33,7 @@ class Bazar extends StatelessWidget {
       theme: AppTheme.light,
       debugShowCheckedModeBanner: false,
       onGenerateRoute: onGenerateRoute,
-      initialRoute: MainView.routeName,
+      initialRoute: SplashView.routeName,
     );
   }
 }

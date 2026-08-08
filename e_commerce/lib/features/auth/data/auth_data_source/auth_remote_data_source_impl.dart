@@ -1,5 +1,6 @@
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/core/error/failure.dart';
+import 'package:e_commerce/core/helper_function/shared_prefs_helper.dart';
 import 'package:e_commerce/core/services/api_services.dart';
 import 'package:e_commerce/features/auth/data/model/user_model.dart';
 import 'package:e_commerce/features/auth/domain/auth_data_source/auth_remote_data_source.dart';
@@ -61,7 +62,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   @override
   Future<Either<Failure, void>> resetPassword({required String email}) async {
     final response = await apiService.post(
-      '${apiService.baseUrl}/auth/reset-password',
+      '${apiService.baseUrl}/user/reset-password',
       data: {'email': email},
     );
 
@@ -78,16 +79,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
 
   @override
   Future<Either<Failure, void>> logout() async {
-    final response = await apiService.post('${apiService.baseUrl}/auth/logout');
+    final result = await apiService.post(
+      '${apiService.baseUrl}/user/logout',
+    ); // if your backend tracks sessions server-side
 
-    return response.fold(
-      (failure) {
-        return Left(failure);
-      },
+    await apiService
+        .clearAuthTokens(); // clear locally regardless of server response
+    SharedPrefsHelper.logout();
 
-      (_) {
-        return const Right(null);
-      },
-    );
+    return result.fold((failure) => Left(failure), (_) => const Right(null));
   }
 }

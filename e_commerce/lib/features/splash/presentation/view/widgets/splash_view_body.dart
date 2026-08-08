@@ -1,4 +1,5 @@
 import 'package:e_commerce/core/helper_function/shared_prefs_helper.dart';
+
 import 'package:e_commerce/core/utils/app_colors.dart';
 
 import 'package:e_commerce/core/utils/assets.dart';
@@ -78,15 +79,16 @@ class _SplashViewBodyState extends State<SplashViewBody>
   }
 
   void navigation(BuildContext context) async {
-    await Future.delayed(const Duration(seconds: 3), () {
-      final bool isLoggedIn = SharedPrefsHelper.isLoggedIn();
-      if (context.mounted) {
-        if (isLoggedIn) {
-          Navigator.pushReplacementNamed(context, MainView.routeName);
-        } else {
-          Navigator.pushReplacementNamed(context, SignInView.routeName);
-        }
+    await Future.delayed(const Duration(seconds: 3));
+
+    final loggedIn = SharedPrefsHelper.isLoggedIn();
+
+    if (context.mounted) {
+      if (loggedIn) {
+        Navigator.pushReplacementNamed(context, MainView.routeName);
+      } else {
+        Navigator.pushReplacementNamed(context, SignInView.routeName);
       }
-    });
+    }
   }
 }
