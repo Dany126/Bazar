@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "590050868894",
+    "project_id": "bazar-63c93",
+    "storage_bucket": "bazar-63c93.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:590050868894:android:7a40e375606521951f858f",
+        "android_client_info": {
+          "package_name": "com.example.e_commerce"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAORKJVM2nINl3CLa2EYAF7wsiaJxfJNAU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
