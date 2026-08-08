@@ -8,8 +8,11 @@ import {
 } from "../controllers/product_controller.js";
 import { checkID } from "../middleware/checkID.js";
 import { upload } from "../utils/imageStore.js";
+import { requireAuth } from "../middleware/requireAuth.js";
 
 export const productRouter = express.Router({ mergeParams: true });
+
+productRouter.use(requireAuth);
 
 productRouter
   .route("/")
