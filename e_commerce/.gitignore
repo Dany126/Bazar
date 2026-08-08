@@ -48,3 +48,4 @@ app.*.map.json
 # Node.js backend
 server/node_modules/
 server/.env
+server/firebase.json
