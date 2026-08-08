@@ -5,7 +5,6 @@ import 'package:e_commerce/features/home/data/datasources/home_remote_data_sourc
 import 'package:e_commerce/features/home/domain/entity/category_entity.dart';
 import 'package:e_commerce/features/home/domain/entity/product_entity.dart';
 import 'package:e_commerce/features/home/domain/repos/home_repo.dart';
-import '../../../../core/error/exceptions.dart';
 
 class HomeRepositoryImpl implements HomeRepo {
   final HomeRemoteDataSource remoteDataSource;
@@ -18,14 +17,11 @@ class HomeRepositoryImpl implements HomeRepo {
 
   @override
   Future<Either<Failure, List<CategoryEntity>>> getAllCategories() async {
-    try {
-      final result = await remoteDataSource.getAllCategories();
-      return Right(result);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
+    final result = await remoteDataSource.getAllCategories();
+    return result.fold(
+      (failure) => Left(failure),
+      (categories) => Right(categories),
+    );
   }
 
   @override
@@ -33,17 +29,14 @@ class HomeRepositoryImpl implements HomeRepo {
     required int page,
     required int limit,
   }) async {
-    try {
-      final result = await remoteDataSource.getAllProducts(
-        page: page,
-        limit: limit,
-      );
-      return Right(result);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
+    final result = await remoteDataSource.getAllProducts(
+      page: page,
+      limit: limit,
+    );
+    return result.fold(
+      (failure) => Left(failure),
+      (products) => Right(products),
+    );
   }
 
   @override
@@ -51,17 +44,14 @@ class HomeRepositoryImpl implements HomeRepo {
     required int page,
     required int limit,
   }) async {
-    try {
-      final result = await remoteDataSource.getBestSellingProducts(
-        page: page,
-        limit: limit,
-      );
-      return Right(result);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
+    final result = await remoteDataSource.getBestSellingProducts(
+      page: page,
+      limit: limit,
+    );
+    return result.fold(
+      (failure) => Left(failure),
+      (products) => Right(products),
+    );
   }
 
   @override
@@ -69,17 +59,14 @@ class HomeRepositoryImpl implements HomeRepo {
     required int page,
     required int limit,
   }) async {
-    try {
-      final result = await remoteDataSource.getNewestProducts(
-        page: page,
-        limit: limit,
-      );
-      return Right(result);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
+    final result = await remoteDataSource.getNewestProducts(
+      page: page,
+      limit: limit,
+    );
+    return result.fold(
+      (failure) => Left(failure),
+      (products) => Right(products),
+    );
   }
 
   @override
@@ -88,17 +75,14 @@ class HomeRepositoryImpl implements HomeRepo {
     required int page,
     required int limit,
   }) async {
-    try {
-      final result = await remoteDataSource.getProductsByCategory(
-        category: category,
-        page: page,
-        limit: limit,
-      );
-      return Right(result);
-    } on ServerException catch (e) {
-      return Left(ServerFailure(message: e.message));
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
+    final result = await remoteDataSource.getProductsByCategory(
+      category: category,
+      page: page,
+      limit: limit,
+    );
+    return result.fold(
+      (failure) => Left(failure),
+      (products) => Right(products),
+    );
   }
 }

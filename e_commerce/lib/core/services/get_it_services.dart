@@ -3,6 +3,8 @@ import 'package:dio/dio.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/network/dio_error_interceptor.dart';
 import 'package:e_commerce/core/network/network_info.dart';
+import 'package:e_commerce/core/notifications/fcm_service.dart';
+import 'package:e_commerce/core/notifications/socket_service.dart';
 import 'package:e_commerce/core/services/api_services.dart';
 import 'package:e_commerce/features/auth/data/auth_data_source/auth_remote_data_source_impl.dart';
 import 'package:e_commerce/features/auth/data/repo/auth_repo_auth.dart';
@@ -25,6 +27,12 @@ import 'package:e_commerce/features/home/domain/usecases/get_best_selling_produc
 import 'package:e_commerce/features/home/domain/usecases/get_newest_product_use_case.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/categories_cubit/get_categories_cubit.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_cubit.dart';
+import 'package:e_commerce/features/notification/data/repo/notification_repository_impl.dart';
+import 'package:e_commerce/features/notification/domain/repo/notification_repository.dart';
+import 'package:e_commerce/features/notification/domain/usecases/delete_notification.dart';
+import 'package:e_commerce/features/notification/domain/usecases/get_notifications.dart';
+import 'package:e_commerce/features/notification/domain/usecases/mark_notification_as_read.dart';
+import 'package:e_commerce/features/notification/presentation/cubit/notification_cubit.dart';
 
 import 'package:get_it/get_it.dart';
 
@@ -163,6 +171,50 @@ void setupServiceLocator() {
           getIt<GetAllProductsByCategoriesUseCase>(),
       getBestSellingProductsUseCase: getIt<GetBestSellingProductUseCase>(),
       getNewestProductsUseCase: getIt<GetNewtestProductUseCase>(),
+    ),
+  );
+
+  // =========================
+  // Notification: Repository
+  // =========================
+
+  getIt.registerLazySingleton<NotificationRepository>(
+    () => NotificationRepositoryImpl(getIt<ApiService>()),
+  );
+
+  // =========================
+  // Notification: Use Cases
+  // =========================
+
+  getIt.registerLazySingleton<GetNotifications>(
+    () => GetNotifications(getIt<NotificationRepository>()),
+  );
+
+  getIt.registerLazySingleton<MarkNotificationAsRead>(
+    () => MarkNotificationAsRead(getIt<NotificationRepository>()),
+  );
+
+  getIt.registerLazySingleton<DeleteNotification>(
+    () => DeleteNotification(getIt<NotificationRepository>()),
+  );
+
+  // =========================
+  // Notification: Core Services
+  // =========================
+
+  getIt.registerLazySingleton<SocketService>(() => SocketService());
+  getIt.registerLazySingleton<FcmService>(() => FcmService());
+
+  // =========================
+  // Notification: Cubit
+  // =========================
+
+  getIt.registerFactory<NotificationCubit>(
+    () => NotificationCubit(
+      getNotifications: getIt<GetNotifications>(),
+      markNotificationAsRead: getIt<MarkNotificationAsRead>(),
+      deleteNotificationUseCase: getIt<DeleteNotification>(),
+      socketService: getIt<SocketService>(),
     ),
   );
 }
