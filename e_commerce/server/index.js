@@ -4,6 +4,7 @@ import cors from "cors";
 import dotenv from "dotenv";
 dotenv.config({ path: "./.env" });
 
+import path from "path";
 import { connectToDB } from "./database/index.js";
 import { userRouter } from "./routes/user_routes.js";
 import { categoryRouter } from "./routes/category_routes.js";
@@ -19,6 +20,8 @@ app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(morgan("dev"));
+
+app.use("/public", express.static(path.join(import.meta.dirname, "./public")));
 
 app.use(
   cors({

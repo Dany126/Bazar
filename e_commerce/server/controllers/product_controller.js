@@ -3,14 +3,33 @@ import { apiFeatures } from "../utils/apiFeatures.js";
 
 export const createProduct = async (req, res) => {
   try {
-    const product = await Product.create(req.body);
+    if (!req.files) {
+      return res.status(400).json({
+        status: "Failed",
+        message: "Image is required",
+      });
+    }
+    const imageUrls = req.files.map(
+      (file) => `${req.protocol}://${req.get("host")}/public/${file.filename}`,
+    );
+    const body = {
+      image: imageUrls,
+      price: Number(req.body.price),
+      avg_rating: Number(req.body.avg_rating),
+      stock: Number(req.body.stock),
+      soldCount: Number(req.body.soldCount),
+      ratingsQuantity: Number(req.body.ratingsQuantity),
+      name: req.body.name,
+      category: req.body.category,
+    };
+    const product = await Product.create(body);
     if (!product) {
       return res.status(400).json({
         status: "Failed",
         message: "Failed creating a product",
       });
     }
-    return res.status(200).json({
+    return res.status(201).json({
       status: "Success",
       product,
     });
