@@ -27,8 +27,6 @@ export async function requireAuth(req, res, next) {
       id: user?.id,
       email: user?.email,
       name: user?.email,
-      role: user?.role,
-      isEmailVerified: user?.isEmailVerified,
     };
     next();
   } catch (err) {

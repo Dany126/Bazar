@@ -7,7 +7,12 @@ import {
   resetPassword,
   logoutHandler,
 } from "../controllers/auth_controller.js";
-import { getAllUsers } from "../controllers/user_controller.js";
+import {
+  deleteUser,
+  getAllUsers,
+  updateUser,
+} from "../controllers/user_controller.js";
+import { requireAuth } from "../middleware/requireAuth.js";
 
 export const userRouter = express.Router();
 
@@ -18,4 +23,9 @@ userRouter.post("/logout", logoutHandler);
 userRouter.post("/forget-password", forgetPassword);
 userRouter.post("/reset-password", resetPassword);
 
-userRouter.get("/", getAllUsers);
+userRouter.route("/", getAllUsers);
+
+userRouter
+  .route("/")
+  .patch(requireAuth, updateUser)
+  .delete(requireAuth, deleteUser);
