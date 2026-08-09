@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/core/services/api_services.dart';
 import 'package:e_commerce/features/notification/domain/entity/notification_entity.dart';
@@ -15,7 +16,7 @@ class NotificationRepositoryImpl implements NotificationRepository {
     required int offset,
   }) async {
     final result = await apiService.get(
-      '/notifications',
+      '$kBaseUrl/notifications',
       queryParameters: {'limit': limit, 'offset': offset},
     );
 
@@ -60,7 +61,9 @@ class NotificationRepositoryImpl implements NotificationRepository {
   Future<Either<Failure, void>> deleteNotification(
     String notificationId,
   ) async {
-    final result = await apiService.delete('/notifications/$notificationId');
+    final result = await apiService.delete(
+      '$kBaseUrl/notifications/$notificationId',
+    );
     return result.fold((failure) => Left(failure), (_) => const Right(null));
   }
 }

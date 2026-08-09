@@ -134,6 +134,7 @@ export const login = async (req, res) => {
       success: true,
       message: "Login successfuly",
       accessToken,
+      refreshToken,
       user: {
         id: user.id,
         name: user.name,
@@ -160,7 +161,7 @@ export const logoutHandler = async (req, res) => {
 
 export const refresh = async (req, res) => {
   try {
-    const token = req.cookies?.refreshToken;
+    const token = req.cookies?.refreshToken || req.body.refreshToken;
     if (!token) {
       return res.status(400).json({
         message: "refresh token is missing",
@@ -173,7 +174,7 @@ export const refresh = async (req, res) => {
         message: "User  not found",
       });
     }
-    if (user.tokenVersion !== payload.tokenversion) {
+    if (user.tokenVersion !== payload.tokenVersion) {
       return res.status(401).json({
         message: "Refresh token invalid",
       });

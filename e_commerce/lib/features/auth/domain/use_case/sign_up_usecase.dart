@@ -1,36 +1,31 @@
 import 'package:dartz/dartz.dart';
-import 'package:e_commerce/core/error/failure.dart';
-import 'package:e_commerce/core/use_case/use_case.dart';
-import 'package:e_commerce/features/auth/domain/entity/user_entity.dart';
-import 'package:e_commerce/features/auth/domain/repo/auth_repo.dart';
+import '../../../../core/error/failure.dart';
+import '../entity/user_entity.dart';
+import '../repo/auth_repo.dart';
 
-class SignUpUsecase extends UseCase<void, SignUpParams> {
-  final AuthRepository _authRepository;
+class SignUpParams {
+  final String name;
+  final String email;
+  final String password;
+  final String phone;
+  const SignUpParams({
+    required this.name,
+    required this.email,
+    required this.password,
+    required this.phone,
+  });
+}
 
-  SignUpUsecase({required AuthRepository authRepository})
-    : _authRepository = authRepository;
+class SignUpUsecase {
+  final AuthRepository authRepository;
+  SignUpUsecase({required this.authRepository});
 
-  @override
-  Future<Either<Failure, UserEntity>> call(SignUpParams params) async {
-    return await _authRepository.signUp(
+  Future<Either<Failure, UserEntity>> call(SignUpParams params) {
+    return authRepository.signUp(
       name: params.name,
       email: params.email,
       phone: params.phone,
       password: params.password,
     );
   }
-}
-
-class SignUpParams {
-  final String name;
-  final String email;
-  final String phone;
-  final String password;
-
-  SignUpParams({
-    required this.name,
-    required this.email,
-    required this.phone,
-    required this.password,
-  });
 }

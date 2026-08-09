@@ -14,7 +14,7 @@ import 'package:e_commerce/features/home/presentation/views/category_details_vie
 import 'package:e_commerce/features/home/presentation/views/widgets/category_list_view.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/custom_row.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/new_arrivals.dart';
-import 'package:e_commerce/features/home/presentation/views/widgets/product_grid_View.dart';
+import 'package:e_commerce/features/home/presentation/views/widgets/product_grid_view.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/product_list_view.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/search_bar.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/top_selling.dart';

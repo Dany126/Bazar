@@ -36,8 +36,7 @@ class ApiErrorHandler {
           message: error.message ?? 'An unexpected error occurred.',
         );
       case DioExceptionType.transformTimeout:
-        // TODO: Handle this case.
-        throw UnimplementedError();
+        return const TimeoutFailure();
     }
   }
 

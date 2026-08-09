@@ -5,9 +5,9 @@ import 'package:e_commerce/core/widgets/custom_button.dart';
 import 'package:e_commerce/core/widgets/custom_text_form_field.dart';
 import 'package:e_commerce/core/widgets/text_form_faild_validators.dart';
 import 'package:e_commerce/features/auth/presentation/view/sign_in_view.dart';
-import 'package:e_commerce/features/auth/presentation/view_model/reset_password/reset_password_cubit.dart';
+// import 'package:e_commerce/features/auth/presentation/view_model/reset_password/reset_password_cubit.dart';/
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
+// import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ResetPasswordViewBody extends StatefulWidget {
   const ResetPasswordViewBody({super.key});
@@ -57,9 +57,9 @@ class _ResetPasswordViewBodyState extends State<ResetPasswordViewBody> {
             CustomButton(
               onTap: () async {
                 if (formKey.currentState!.validate()) {
-                  await context.read<ResetPasswordCubit>().resetPassword(
-                    email: email!,
-                  );
+                  // await context.read<ResetPasswordCubit>().resetPassword(
+                  //   email: email!,
+                  // );
                   if (mounted) await showResetDialog(context);
                 }
               },

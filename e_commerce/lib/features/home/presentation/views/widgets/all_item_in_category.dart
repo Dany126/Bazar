@@ -4,7 +4,7 @@ import 'package:e_commerce/core/widgets/custom_app_bar.dart';
 import 'package:e_commerce/features/home/domain/entity/category_entity.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_cubit.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_state.dart';
-import 'package:e_commerce/features/home/presentation/views/widgets/product_grid_View.dart';
+import 'package:e_commerce/features/home/presentation/views/widgets/product_grid_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -26,7 +26,7 @@ class AllItemsInCategoryView extends StatelessWidget {
           limit: 10,
           categoryId: category.id,
         );
-        ;
+        
         return cubit;
       },
       child: Scaffold(

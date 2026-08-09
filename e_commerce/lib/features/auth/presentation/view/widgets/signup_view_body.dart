@@ -114,6 +114,7 @@ class _SignUpViewBodyState extends State<SignUpViewBody> {
                     if (mounted) {
                       await SharedPrefsHelper.setLoggedIn(true);
                       Navigator.pushReplacementNamed(
+                        // ignore: use_build_context_synchronously
                         context,
                         MainView.routeName,
                       );

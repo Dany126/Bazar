@@ -45,8 +45,9 @@ class NotificationCubit extends Cubit<NotificationState> {
   }
 
   Future<void> fetchMoreNotifications() async {
-    if (state.hasReachedMax || state.status == NotificationStatus.loadingMore)
+    if (state.hasReachedMax || state.status == NotificationStatus.loadingMore) {
       return;
+    }
     emit(state.copyWith(status: NotificationStatus.loadingMore));
 
     final result = await getNotifications(

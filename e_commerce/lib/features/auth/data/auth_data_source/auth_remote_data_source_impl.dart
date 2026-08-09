@@ -1,9 +1,27 @@
 import 'package:dartz/dartz.dart';
-import 'package:e_commerce/core/error/failure.dart';
-import 'package:e_commerce/core/helper_function/shared_prefs_helper.dart';
-import 'package:e_commerce/core/services/api_services.dart';
+import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/features/auth/data/model/user_model.dart';
-import 'package:e_commerce/features/auth/domain/auth_data_source/auth_remote_data_source.dart';
+import '../../../../core/error/failure.dart';
+import '../../../../core/services/api_services.dart';
+
+abstract class AuthRemoteDataSource {
+  Future<
+    Either<Failure, ({UserModel user, String accessToken, String refreshToken})>
+  >
+  signIn({required String email, required String password});
+
+  Future<
+    Either<Failure, ({UserModel user, String accessToken, String refreshToken})>
+  >
+  signUp({
+    required String name,
+    required String email,
+    required String password,
+    required String phone,
+  });
+
+  Future<Either<Failure, void>> logout({required String refreshToken});
+}
 
 class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   final ApiService apiService;
@@ -11,82 +29,87 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
   AuthRemoteDataSourceImpl({required this.apiService});
 
   @override
-  Future<Either<Failure, UserModel>> signIn({
-    required String email,
-    required String password,
-  }) async {
+  Future<
+    Either<Failure, ({UserModel user, String accessToken, String refreshToken})>
+  >
+  signIn({required String email, required String password}) async {
     final response = await apiService.post(
-      '${apiService.baseUrl}/user/login',
+      '${kBaseUrl}/user/login',
       data: {'email': email, 'password': password},
     );
 
     return response.fold(
       (failure) {
-        return Left(failure);
+        return Left<
+          Failure,
+          ({UserModel user, String accessToken, String refreshToken})
+        >(failure);
       },
-
       (data) {
-        return Right(UserModel.fromJson(data['user']));
+        final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
+
+        final accessToken = data['accessToken'] as String;
+        final refreshToken = data['refreshToken'] as String;
+
+        return Right<
+          Failure,
+          ({UserModel user, String accessToken, String refreshToken})
+        >((user: user, accessToken: accessToken, refreshToken: refreshToken));
       },
     );
   }
 
   @override
-  Future<Either<Failure, UserModel>> signUp({
+  Future<
+    Either<Failure, ({UserModel user, String accessToken, String refreshToken})>
+  >
+  signUp({
     required String name,
     required String email,
-    required String phone,
     required String password,
+    required String phone,
   }) async {
     final response = await apiService.post(
-      '${apiService.baseUrl}/user/register',
+      '$kBaseUrl/user/register',
       data: {
         'name': name,
         'email': email,
-        'phone': phone,
         'password': password,
+        'phone': phone,
       },
     );
 
     return response.fold(
       (failure) {
-        return Left(failure);
+        return Left<
+          Failure,
+          ({UserModel user, String accessToken, String refreshToken})
+        >(failure);
       },
-
       (data) {
-        return Right(UserModel.fromJson(data['user']));
+        final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
+
+        final accessToken = data['accessToken'] as String;
+        final refreshToken = data['refreshToken'] as String;
+
+        return Right<
+          Failure,
+          ({UserModel user, String accessToken, String refreshToken})
+        >((user: user, accessToken: accessToken, refreshToken: refreshToken));
       },
     );
   }
 
   @override
-  Future<Either<Failure, void>> resetPassword({required String email}) async {
+  Future<Either<Failure, void>> logout({required String refreshToken}) async {
     final response = await apiService.post(
-      '${apiService.baseUrl}/user/reset-password',
-      data: {'email': email},
+      '$kBaseUrl/user/logout',
+      data: {'refresh_token': refreshToken},
     );
 
     return response.fold(
-      (failure) {
-        return Left(failure);
-      },
-
-      (_) {
-        return const Right(null);
-      },
+      (failure) => Left<Failure, void>(failure),
+      (_) => const Right<Failure, void>(null),
     );
-  }
-
-  @override
-  Future<Either<Failure, void>> logout() async {
-    final result = await apiService.post(
-      '${apiService.baseUrl}/user/logout',
-    ); // if your backend tracks sessions server-side
-
-    await apiService
-        .clearAuthTokens(); // clear locally regardless of server response
-    SharedPrefsHelper.logout();
-
-    return result.fold((failure) => Left(failure), (_) => const Right(null));
   }
 }

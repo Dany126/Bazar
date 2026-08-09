@@ -1,6 +1,7 @@
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 
+// ignore: strict_top_level_inference
 AppBar customAppBar(context) {
   return AppBar(
     backgroundColor: Colors.transparent,

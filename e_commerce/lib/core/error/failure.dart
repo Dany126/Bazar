@@ -1,6 +1,7 @@
 import 'package:equatable/equatable.dart';
 
 /// Base class for all Failures returned to the presentation layer.
+// ignore: unintended_html_in_doc_comment
 /// Every repository/service method returns Either<Failure, T>, so the UI
 /// never deals with try/catch — only pattern matching via fold().
 abstract class Failure extends Equatable {
