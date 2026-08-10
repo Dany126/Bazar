@@ -32,7 +32,7 @@ const notificationSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
-    isFavorite: {
+    isFavourite: {
       type: Boolean,
       deefault: false,
     },
