@@ -34,7 +34,7 @@ const notificationSchema = new mongoose.Schema(
     },
     isFavourite: {
       type: Boolean,
-      deefault: false,
+      default: false,
     },
   },
   {

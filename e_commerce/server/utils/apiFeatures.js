@@ -1,5 +1,6 @@
 export const apiFeatures = (query) => {
-  const { categoryId, name, price, page, limit, sort } = query;
+  const { categoryId, name, price, isRead, isFavourite, page, limit, sort } =
+    query;
   let filter = {};
   if (name) {
     filter.name = name;
@@ -9,6 +10,14 @@ export const apiFeatures = (query) => {
   }
   if (price) {
     filter.price = price;
+  }
+
+  if (isRead) {
+    filter.isRead = isRead;
+  }
+
+  if (isFavourite) {
+    filter.isFavourite = isFavourite;
   }
 
   const sortBy = sort || "name";
