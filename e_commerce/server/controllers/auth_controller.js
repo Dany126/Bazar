@@ -27,14 +27,6 @@ const loginSchema = joi.object({
 
 export const register = async (req, res) => {
   try {
-    // const fcm_token = req.params;
-    // if (!fcm_token) {
-    //   return res.status(400).json({
-    //     status: "Failed",
-    //     message: "Provide fcm-token",
-    //   });
-    // }
-
     const { name, email, phone, password, fcmToken } = req.body;
     const { error } = registerSchema.validate({ name, email, phone, password });
     if (error) {
@@ -133,7 +125,6 @@ export const login = async (req, res) => {
       success: true,
       message: "Login successfuly",
       accessToken,
-      refreshToken,
       user: {
         id: user.id,
         name: user.name,
@@ -160,7 +151,7 @@ export const logoutHandler = async (req, res) => {
 
 export const refresh = async (req, res) => {
   try {
-    const token = req.body?.refreshToken || req.cookies?.refreshToken;
+    const token = req.cookies?.refreshToken;
 
     if (!token) {
       return res.status(400).json({
@@ -198,7 +189,6 @@ export const refresh = async (req, res) => {
     return res.status(200).json({
       message: "TokenRefreshed",
       accessToken: newAccessToken,
-      refreshToken: newRefreshToken,
       user: {
         id: user.id,
         name: user.name,
