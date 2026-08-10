@@ -1,5 +1,7 @@
 import { Order } from "../models/order_model.js";
 import { Product } from "../models/product_model.js";
+import { User } from "../models/user_model.js";
+import { createNotification } from "./notification_controller.js";
 
 export const createOrder = async (req, res) => {
   try {
@@ -10,7 +12,15 @@ export const createOrder = async (req, res) => {
         message: "Cannot make order without products",
       });
     }
+    let totalPrice = 0;
     for (const el of products) {
+      const product = await Product.findById(el.product);
+      if (!product) {
+        return res.status(404).json({
+          message: "Product not found",
+        });
+      }
+      totalPrice += el.price * el.quantity;
       await Product.findByIdAndUpdate(el.product, {
         $inc: {
           stock: -el.quantity,
@@ -18,13 +28,29 @@ export const createOrder = async (req, res) => {
         },
       });
     }
-    const order = await Order.create(req.body);
+
+    const order = await Order.create({
+      ...req.body,
+      totalPrice,
+    });
     if (!order) {
       return res.status(400).json({
         status: "Failed",
         message: "Failed creating an order",
       });
     }
+
+    const user = await User.findById(req.body.user);
+    console.log("user", user);
+    console.log("token", user.fcm_token);
+    await createNotification({
+      title: "Order Created Successfuly",
+      body: `Order Status is ${order.orderStatus}`,
+      fcm_token: user.fcm_token,
+      userId: user.id,
+      type: "ORDER",
+    });
+
     return res.status(200).json({
       status: "Success",
       order,
@@ -93,6 +119,14 @@ export const updateOrder = async (req, res) => {
       return res.status(404).json({
         status: "Failed",
         message: "No Order Found With This ID",
+      });
+    }
+    if (req.body?.orderStatus) {
+      const user = await User.findById(updateOrder.user);
+      await createNotification({
+        title: "Order Status Changed",
+        body: `Order Status is ${req.body.orderStatus}`,
+        token: user.fcm_token,
       });
     }
     return res.status(200).json({
