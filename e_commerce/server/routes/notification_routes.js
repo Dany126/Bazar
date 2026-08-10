@@ -3,9 +3,9 @@ import { checkID } from "../middleware/checkID.js";
 import {
   deleteNotification,
   getAllNotifications,
-} from "../controllers/notification_controller";
+} from "../controllers/notification_controller.js";
 
-const notificationRouter = express.Router();
+export const notificationRouter = express.Router();
 
 notificationRouter.route("/").get(getAllNotifications);
 

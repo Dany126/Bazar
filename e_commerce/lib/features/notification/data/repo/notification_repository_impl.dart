@@ -16,8 +16,8 @@ class NotificationRepositoryImpl implements NotificationRepository {
     required int offset,
   }) async {
     final result = await apiService.get(
-      '$kBaseUrl/notifications',
-      queryParameters: {'limit': limit, 'offset': offset},
+      '$kBaseUrl/notification',
+      // queryParameters: {'limit': limit, 'offset': offset},
     );
 
     return result.fold(
@@ -30,15 +30,13 @@ class NotificationRepositoryImpl implements NotificationRepository {
 
   @override
   Future<Either<Failure, void>> markAsRead(String notificationId) async {
-    final result = await apiService.patch(
-      '/notifications/$notificationId/read',
-    );
+    final result = await apiService.patch('/notification/$notificationId/read');
     return result.fold((failure) => Left(failure), (_) => const Right(null));
   }
 
   @override
   Future<Either<Failure, int>> getUnreadCount() async {
-    final result = await apiService.get('/notifications/unread-count');
+    final result = await apiService.get('/notification/unread-count');
     return result.fold(
       (failure) => Left(failure),
       (data) => Right(data['count'] as int),
@@ -62,7 +60,7 @@ class NotificationRepositoryImpl implements NotificationRepository {
     String notificationId,
   ) async {
     final result = await apiService.delete(
-      '$kBaseUrl/notifications/$notificationId',
+      '$kBaseUrl/notification/$notificationId',
     );
     return result.fold((failure) => Left(failure), (_) => const Right(null));
   }

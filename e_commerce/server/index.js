@@ -11,6 +11,7 @@ import { categoryRouter } from "./routes/category_routes.js";
 import { productRouter } from "./routes/product_routes.js";
 import morgan from "morgan";
 import { orderRouter } from "./routes/order_routes.js";
+import { notificationRouter } from "./routes/notification_routes.js";
 
 const app = express();
 
@@ -38,6 +39,8 @@ app.use("/api/user", userRouter);
 app.use("/api/category", categoryRouter);
 app.use("/api/product", productRouter);
 app.use("/api/order", orderRouter);
+app.use("/api/notification", notificationRouter);
+
 
 app.all("*not", (req, res) => {
   return res.status(404).json({
