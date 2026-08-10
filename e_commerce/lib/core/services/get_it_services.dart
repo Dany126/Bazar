@@ -46,7 +46,12 @@ void setupServiceLocator() {
   // =========================
 
   getIt.registerLazySingleton<ApiService>(
-    () => ApiService(dio: getIt<Dio>(), cookieJar: getIt<CookieJar>() , refreshTokenUrl: kRefreshTokenUrl),
+    () => ApiService(
+      dio: getIt<Dio>(),
+      cookieJar: getIt<CookieJar>(),
+
+      refreshTokenUrl: kRefreshTokenUrl,
+    ),
   );
 
   getIt.registerLazySingleton<CookieJar>(() => CookieJar());

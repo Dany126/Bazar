@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:developer';
 
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 
 import '../error/failure.dart';
 
@@ -46,7 +46,6 @@ class ApiService {
           if (_accessToken != null && _accessToken!.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $_accessToken';
           }
-          log('HEADERS SENT: ${options.headers}');
 
           handler.next(options);
         },
@@ -218,6 +217,29 @@ class ApiService {
       rethrow;
     } finally {
       _isRefreshing = false;
+    }
+  }
+
+  // ============================================================
+  // FCM TOKEN
+  // ============================================================
+
+  /// Fetches the device's FCM token and sends it to the backend.
+  /// Call this right after register (or login) succeeds.
+  Future<Either<Failure, dynamic>> sendFcmToken(String url) async {
+    try {
+      final fcmToken = await FirebaseMessaging.instance.getToken();
+
+      if (fcmToken == null || fcmToken.isEmpty) {
+        print('FCM TOKEN: could not get device token');
+        return Left(ServerFailure(message: 'Could not get FCM token'));
+      }
+
+      print('FCM TOKEN: $fcmToken');
+
+      return await post(url, data: {'fcmToken': fcmToken});
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
     }
   }
 

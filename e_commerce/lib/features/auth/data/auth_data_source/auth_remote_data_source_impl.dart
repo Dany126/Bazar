@@ -21,22 +21,16 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       data: {'email': email, 'password': password},
     );
 
-    return response.fold(
-      (failure) {
-        return Left(failure);
-      },
-      (data) {
-        try {
-          final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
+    return response.fold((failure) => Left(failure), (data) {
+      try {
+        final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
+        final accessToken = data['accessToken'] as String;
 
-          final accessToken = data['accessToken'] as String;
-
-          return Right((user: user, accessToken: accessToken));
-        } catch (e) {
-          return Left(ServerFailure(message: 'Invalid login response: $e'));
-        }
-      },
-    );
+        return Right((user: user, accessToken: accessToken));
+      } catch (e) {
+        return Left(ServerFailure(message: 'Invalid login response: $e'));
+      }
+    });
   }
 
   @override
