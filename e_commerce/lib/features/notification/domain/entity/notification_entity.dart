@@ -9,6 +9,7 @@ class NotificationEntity extends Equatable {
   final bool isRead;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool isFavourite;
 
   const NotificationEntity({
     required this.id,
@@ -19,6 +20,7 @@ class NotificationEntity extends Equatable {
     required this.isRead,
     required this.createdAt,
     required this.updatedAt,
+    required this.isFavourite,
   });
 
   NotificationEntity copyWith({
@@ -28,6 +30,7 @@ class NotificationEntity extends Equatable {
     String? body,
     String? type,
     bool? isRead,
+    bool? isFavourite,
     DateTime? createdAt,
     DateTime? updatedAt,
   }) {
@@ -40,6 +43,7 @@ class NotificationEntity extends Equatable {
       isRead: isRead ?? this.isRead,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      isFavourite: isFavourite ?? this.isFavourite,
     );
   }
 

@@ -13,7 +13,7 @@ class NotificationView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => getIt<NotificationCubit>()..fetchNotifications(),
+      create: (context) => getIt<NotificationCubit>()..fetchAllNotifications(),
       child: Scaffold(
         appBar: AppBar(
           elevation: 0,
