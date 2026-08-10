@@ -16,7 +16,7 @@ import { requireAuth } from "../middleware/requireAuth.js";
 
 export const userRouter = express.Router();
 
-userRouter.post("/register/:fcm-token", register);
+userRouter.post("/register", register);
 userRouter.post("/login", login);
 userRouter.post("/refresh", refresh);
 userRouter.post("/logout", logoutHandler);
