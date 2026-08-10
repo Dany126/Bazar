@@ -158,12 +158,7 @@ class NotificationRepositoryImpl implements NotificationRepository {
   }) async {
     final result = await apiService.get(
       '$kBaseUrl/notification',
-      queryParameters: {
-        'limit': limit,
-        'offset': offset,
-        'sort': '-createdAt',
-        'isFavourite': true,
-      },
+      queryParameters: {'limit': limit, 'offset': offset, 'sort': '-createdAt'},
     );
 
     return result.fold((failure) => Left(failure), (data) {
