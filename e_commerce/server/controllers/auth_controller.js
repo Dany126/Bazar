@@ -117,7 +117,6 @@ export const login = async (req, res) => {
         message: "Incorrect password",
       });
     }
-
     const accessToken = generateAccessToken(user._id);
     const refreshToken = generateRefreshToken({
       id: user._id,
@@ -161,7 +160,8 @@ export const logoutHandler = async (req, res) => {
 
 export const refresh = async (req, res) => {
   try {
-    const token = req.cookies?.refreshToken || req.body.refreshToken;
+    const token = req.body?.refreshToken || req.cookies?.refreshToken;
+
     if (!token) {
       return res.status(400).json({
         message: "refresh token is missing",
@@ -174,11 +174,14 @@ export const refresh = async (req, res) => {
         message: "User  not found",
       });
     }
+
     if (user.tokenVersion !== payload.tokenVersion) {
       return res.status(401).json({
         message: "Refresh token invalid",
       });
     }
+    user.tokenVersion += 1;
+    await user.save();
 
     const newAccessToken = generateAccessToken(user.id);
     const newRefreshToken = generateRefreshToken({
@@ -195,6 +198,7 @@ export const refresh = async (req, res) => {
     return res.status(200).json({
       message: "TokenRefreshed",
       accessToken: newAccessToken,
+      refreshToken: newRefreshToken,
       user: {
         id: user.id,
         name: user.name,
