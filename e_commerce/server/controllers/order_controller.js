@@ -1,7 +1,11 @@
 import { Order } from "../models/order_model.js";
 import { Product } from "../models/product_model.js";
 import { User } from "../models/user_model.js";
-import { createNotification } from "./notification_controller.js";
+import {
+  createNotification,
+  deleteNotification,
+  updateNotification,
+} from "./notification_controller.js";
 
 export const createOrder = async (req, res) => {
   try {
@@ -122,11 +126,13 @@ export const updateOrder = async (req, res) => {
       });
     }
     if (req.body?.orderStatus) {
-      const user = await User.findById(updateOrder.user);
+      const user = await User.findById(updatedOrder.user);
       await createNotification({
         title: "Order Status Changed",
         body: `Order Status is ${req.body.orderStatus}`,
-        token: user.fcm_token,
+        fcm_token: user.fcm_token,
+        userId: user.id,
+        type: "ORDER",
       });
     }
     return res.status(200).json({
