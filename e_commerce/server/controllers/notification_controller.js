@@ -62,6 +62,7 @@ export const updateNotification = async (req, res) => {
     const updatedNotification = await Notification.findByIdAndUpdate(
       id,
       req.body,
+      { returnDocument: "after" },
     );
     if (!updatedNotification) {
       return res.status(404).json({
