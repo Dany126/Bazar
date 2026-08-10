@@ -10,6 +10,7 @@ enum NotificationStatus {
   error,
   deleting,
   markingAsRead,
+  markingAsFavourite,
 }
 
 class NotificationState extends Equatable {
@@ -17,6 +18,7 @@ class NotificationState extends Equatable {
   final List<NotificationEntity> notifications;
   final int unreadCount;
   final bool hasReachedMax;
+  final int IsFavouriteCount;
   final String? errorMessage;
 
   const NotificationState({
@@ -25,6 +27,7 @@ class NotificationState extends Equatable {
     this.unreadCount = 0,
     this.hasReachedMax = false,
     this.errorMessage,
+    this.IsFavouriteCount = 0,
   });
 
   NotificationState copyWith({
@@ -33,13 +36,15 @@ class NotificationState extends Equatable {
     int? unreadCount,
     bool? hasReachedMax,
     String? errorMessage,
+    int? IsFavouriteCount,
   }) {
     return NotificationState(
       status: status ?? this.status,
       notifications: notifications ?? this.notifications,
       unreadCount: unreadCount ?? this.unreadCount,
       hasReachedMax: hasReachedMax ?? this.hasReachedMax,
-      errorMessage: errorMessage,
+      errorMessage: errorMessage ?? this.errorMessage,
+      IsFavouriteCount: IsFavouriteCount ?? this.IsFavouriteCount,
     );
   }
 
@@ -50,5 +55,6 @@ class NotificationState extends Equatable {
     unreadCount,
     hasReachedMax,
     errorMessage,
+    IsFavouriteCount,
   ];
 }

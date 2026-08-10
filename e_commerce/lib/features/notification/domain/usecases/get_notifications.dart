@@ -18,7 +18,7 @@ class GetNotifications {
   Future<Either<Failure, List<NotificationEntity>>> call(
     GetNotificationsParams params,
   ) {
-    return repository.getNotifications(
+    return repository.getAllNotifications(
       limit: params.limit,
       offset: params.offset,
     );

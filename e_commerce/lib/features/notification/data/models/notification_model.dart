@@ -10,6 +10,7 @@ class NotificationModel extends NotificationEntity {
     required super.isRead,
     required super.createdAt,
     required super.updatedAt,
+    required super.isFavourite,
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
@@ -22,6 +23,7 @@ class NotificationModel extends NotificationEntity {
       isRead: json['isRead'] as bool,
       createdAt: DateTime.parse(json['createdAt'] as String),
       updatedAt: DateTime.parse(json['updatedAt'] as String),
+      isFavourite: json['isFavourite'] as bool,
     );
   }
 }

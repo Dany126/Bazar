@@ -32,7 +32,11 @@ import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/g
 import 'package:e_commerce/features/notification/data/repo/notification_repository_impl.dart';
 import 'package:e_commerce/features/notification/domain/repo/notification_repository.dart';
 import 'package:e_commerce/features/notification/domain/usecases/delete_notification.dart';
+import 'package:e_commerce/features/notification/domain/usecases/get_fav_notification.dart';
 import 'package:e_commerce/features/notification/domain/usecases/get_notifications.dart';
+import 'package:e_commerce/features/notification/domain/usecases/get_read_notification.dart';
+import 'package:e_commerce/features/notification/domain/usecases/get_unread_notification.dart';
+import 'package:e_commerce/features/notification/domain/usecases/mark_notification_as_fav.dart';
 import 'package:e_commerce/features/notification/domain/usecases/mark_notification_as_read.dart';
 import 'package:e_commerce/features/notification/presentation/cubit/notification_cubit.dart';
 
@@ -230,6 +234,22 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
     () => MarkNotificationAsRead(getIt<NotificationRepository>()),
   );
 
+  getIt.registerLazySingleton<MarkNotificationAsFav>(
+    () => MarkNotificationAsFav(getIt<NotificationRepository>()),
+  );
+
+  getIt.registerLazySingleton<GetUnReadNotifications>(
+    () => GetUnReadNotifications(getIt<NotificationRepository>()),
+  );
+
+  getIt.registerLazySingleton<GetReadNotifications>(
+    () => GetReadNotifications(getIt<NotificationRepository>()),
+  );
+
+  getIt.registerLazySingleton<GetFavNotifications>(
+    () => GetFavNotifications(getIt<NotificationRepository>()),
+  );
+
   getIt.registerLazySingleton<DeleteNotification>(
     () => DeleteNotification(getIt<NotificationRepository>()),
   );
@@ -248,10 +268,15 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
 
   getIt.registerFactory<NotificationCubit>(
     () => NotificationCubit(
+      getReadNotifications: getIt<GetReadNotifications>(),
+
+      getFavNotifications: getIt<GetFavNotifications>(),
       getNotifications: getIt<GetNotifications>(),
       markNotificationAsRead: getIt<MarkNotificationAsRead>(),
       deleteNotificationUseCase: getIt<DeleteNotification>(),
       socketService: getIt<SocketService>(),
+      markNotificationAsFav: getIt<MarkNotificationAsFav>(),
+      getUnReadNotifications: getIt<GetUnReadNotifications>(),
     ),
   );
 }
