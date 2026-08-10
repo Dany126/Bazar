@@ -32,6 +32,10 @@ const notificationSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isFavorite: {
+      type: Boolean,
+      deefault: false,
+    },
   },
   {
     timestamps: true,
