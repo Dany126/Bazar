@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:socket_io_client/socket_io_client.dart' as io;
 
 class SocketService {
@@ -8,18 +10,38 @@ class SocketService {
     required String authToken,
     required void Function(Map<String, dynamic> data) onNotification,
   }) {
+    disconnect();
+
     _socket = io.io(
       baseUrl,
-      io.OptionBuilder().setTransports(['websocket']).setAuth({
-        'token': authToken,
-      }).build(),
+      io.OptionBuilder()
+          .setTransports(['websocket'])
+          .setAuth({'token': authToken})
+          .enableAutoConnect()
+          .build(),
     );
 
     _socket!.connect();
-    _socket!.on(
-      'notification',
-      (data) => onNotification(Map<String, dynamic>.from(data)),
-    );
+
+    _socket!.onConnect((_) {
+      log('SOCKET CONNECTED');
+    });
+
+    _socket!.onDisconnect((_) {
+      log('SOCKET DISCONNECTED');
+    });
+
+    _socket!.onConnectError((error) {
+      log('SOCKET ERROR: $error');
+    });
+
+    _socket!.on('notification', (data) {
+      log('SOCKET NOTIFICATION');
+
+      if (data is Map) {
+        onNotification(Map<String, dynamic>.from(data));
+      }
+    });
   }
 
   void disconnect() {

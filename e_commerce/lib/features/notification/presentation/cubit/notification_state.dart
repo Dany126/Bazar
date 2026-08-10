@@ -1,7 +1,16 @@
-import 'package:e_commerce/features/notification/domain/entity/notification_entity.dart';
 import 'package:equatable/equatable.dart';
 
-enum NotificationStatus { initial, loading, loaded, loadingMore, error }
+import '../../domain/entity/notification_entity.dart';
+
+enum NotificationStatus {
+  initial,
+  loading,
+  loaded,
+  loadingMore,
+  error,
+  deleting,
+  markingAsRead,
+}
 
 class NotificationState extends Equatable {
   final NotificationStatus status;

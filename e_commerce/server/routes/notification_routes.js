@@ -10,3 +10,5 @@ export const notificationRouter = express.Router();
 notificationRouter.route("/").get(getAllNotifications);
 
 notificationRouter.route("/:id").delete(checkID, deleteNotification);
+
+

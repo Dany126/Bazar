@@ -26,7 +26,7 @@ export const getAllNotifications = async (req, res) => {
   try {
     const notifications = await Notification.find();
     if (!notifications || notifications.length <= 0) {
-      return res.status(400).json({
+      return res.status(204).json({
         status: "Failed",
         message: "No Notifications Found",
       });

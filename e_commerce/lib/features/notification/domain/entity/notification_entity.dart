@@ -2,33 +2,56 @@ import 'package:equatable/equatable.dart';
 
 class NotificationEntity extends Equatable {
   final String id;
+  final String userId;
   final String title;
   final String body;
   final String type;
-  final Map<String, dynamic> data;
   final bool isRead;
   final DateTime createdAt;
+  final DateTime updatedAt;
 
   const NotificationEntity({
     required this.id,
+    required this.userId,
     required this.title,
     required this.body,
     required this.type,
-    required this.data,
     required this.isRead,
     required this.createdAt,
+    required this.updatedAt,
   });
 
-  NotificationEntity copyWith({bool? isRead}) => NotificationEntity(
-    id: id,
-    title: title,
-    body: body,
-    type: type,
-    data: data,
-    isRead: isRead ?? this.isRead,
-    createdAt: createdAt,
-  );
+  NotificationEntity copyWith({
+    String? id,
+    String? userId,
+    String? title,
+    String? body,
+    String? type,
+    bool? isRead,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) {
+    return NotificationEntity(
+      id: id ?? this.id,
+      userId: userId ?? this.userId,
+      title: title ?? this.title,
+      body: body ?? this.body,
+      type: type ?? this.type,
+      isRead: isRead ?? this.isRead,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+    );
+  }
 
   @override
-  List<Object?> get props => [id, title, body, type, data, isRead, createdAt];
+  List<Object?> get props => [
+    id,
+    userId,
+    title,
+    body,
+    type,
+    isRead,
+    createdAt,
+    updatedAt,
+  ];
 }

@@ -1,26 +1,66 @@
+import 'package:cookie_jar/cookie_jar.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/material.dart';
+import 'package:path_provider/path_provider.dart';
+
 import 'package:e_commerce/core/helper_function/go_route.dart';
 import 'package:e_commerce/core/helper_function/shared_prefs_helper.dart';
+import 'package:e_commerce/core/notifications/fcm_service.dart';
+import 'package:e_commerce/core/services/api_services.dart';
 import 'package:e_commerce/core/services/get_it_services.dart';
 import 'package:e_commerce/core/utils/app_theme.dart';
-import 'package:e_commerce/core/notifications/fcm_service.dart';
 import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
 import 'package:e_commerce/firebase_options.dart';
 
-// import 'package:e_commerce/main_view.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_messaging/firebase_messaging.dart';
-// import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
-import 'package:flutter/material.dart';
-
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  // ==========================================================
+  // FIREBASE
+  // ==========================================================
+
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+
+  // ==========================================================
+  // SHARED PREFERENCES
+  // ==========================================================
 
   await SharedPrefsHelper.init();
 
-  setupServiceLocator();
+  // ==========================================================
+  // COOKIE STORAGE
+  // ==========================================================
+
+  final appDirectory = await getApplicationDocumentsDirectory();
+
+  final cookieDirectory = '${appDirectory.path}/cookies';
+
+  debugPrint('======================================');
+  debugPrint('COOKIE DIRECTORY: $cookieDirectory');
+
+  final cookieJar = PersistCookieJar(storage: FileStorage(cookieDirectory));
+
+  // ==========================================================
+  // GET IT
+  // ==========================================================
+
+  setupServiceLocator(cookieJar: cookieJar);
+
+  // ==========================================================
+  // RESTORE SESSION BEFORE APP STARTS
+  // ==========================================================
+
+  final apiService = getIt<ApiService>();
+
+  await apiService.restoreSession();
+
+  // ==========================================================
+  // START APP
+  // ==========================================================
+
   runApp(const Bazar());
 }
 

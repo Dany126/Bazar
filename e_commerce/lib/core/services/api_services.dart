@@ -11,21 +11,17 @@ import '../error/failure.dart';
 
 class ApiService {
   final Dio dio;
-  final CookieJar cookieJar;
-
-  /// Endpoint that reads the refresh token (sent automatically as a cookie
-  /// by CookieManager) and returns a new access token.
-  /// Example: '/auth/refresh'
+  final PersistCookieJar cookieJar;
   final String refreshTokenUrl;
 
   String? _accessToken;
 
-  // ----- refresh-token coordination -----
   bool _isRefreshing = false;
+
   final List<Completer<void>> _refreshQueue = [];
+
   Timer? _refreshTimer;
 
-  /// How long before expiry to trigger a proactive refresh.
   static const Duration _refreshBuffer = Duration(seconds: 30);
 
   ApiService({
@@ -33,60 +29,86 @@ class ApiService {
     required this.cookieJar,
     required this.refreshTokenUrl,
   }) {
-    // IMPORTANT:
-    // This automatically saves Set-Cookie from the server
-    // and automatically sends cookies (incl. the refresh token) with
-    // future requests.
+    // ======================================================
+    // COOKIE MANAGER
+    // ======================================================
+
     dio.interceptors.add(CookieManager(cookieJar));
+
+    // ======================================================
+    // AUTH INTERCEPTOR
+    // ======================================================
 
     dio.interceptors.add(
       InterceptorsWrapper(
-        // Automatically add access token to requests.
         onRequest: (options, handler) {
           if (_accessToken != null && _accessToken!.isNotEmpty) {
             options.headers['Authorization'] = 'Bearer $_accessToken';
           }
 
+          print('======================================');
+          print('REQUEST: ${options.method} ${options.uri}');
+          print('ACCESS TOKEN: $_accessToken');
+
           handler.next(options);
         },
 
-        // Automatically refresh the access token on 401 and retry once.
         onError: (error, handler) async {
-          final isUnauthorized = error.response?.statusCode == 401;
-          final isRefreshCall = error.requestOptions.path == refreshTokenUrl;
-          final alreadyRetried = error.requestOptions.extra['retried'] == true;
+          final statusCode = error.response?.statusCode;
 
-          if (isUnauthorized && !isRefreshCall && !alreadyRetried) {
+          final request = error.requestOptions;
+
+          final isRefreshRequest =
+              request.path == refreshTokenUrl ||
+              request.uri.toString() == refreshTokenUrl;
+
+          final alreadyRetried = request.extra['retried'] == true;
+
+          print('======================================');
+          print('ERROR STATUS: $statusCode');
+          print('ERROR URL: ${request.uri}');
+
+          if (statusCode == 401 && !isRefreshRequest && !alreadyRetried) {
             try {
+              print('401 DETECTED -> REFRESHING TOKEN');
+
               await _refreshAccessToken();
 
-              // Retry the original request with the new access token.
-              final retryOptions = error.requestOptions;
-              retryOptions.extra['retried'] = true;
+              final retryOptions = request.copyWith(
+                extra: {...request.extra, 'retried': true},
+              );
+
               if (_accessToken != null && _accessToken!.isNotEmpty) {
                 retryOptions.headers['Authorization'] = 'Bearer $_accessToken';
               }
 
+              print(
+                'RETRYING: '
+                '${retryOptions.method} '
+                '${retryOptions.uri}',
+              );
+
               final response = await dio.fetch(retryOptions);
+
               return handler.resolve(response);
             } catch (e) {
               print('TOKEN REFRESH FAILED: $e');
 
-              // Refresh failed (e.g. refresh token also expired) -> log out.
               await clearAuthTokens();
+
               return handler.next(error);
             }
           }
 
-          return handler.next(error);
+          handler.next(error);
         },
       ),
     );
   }
 
-  // ============================================================
+  // ==========================================================
   // ACCESS TOKEN
-  // ============================================================
+  // ==========================================================
 
   Future<void> setAccessToken(String accessToken) async {
     _accessToken = accessToken;
@@ -98,33 +120,69 @@ class ApiService {
 
   String? get accessToken => _accessToken;
 
-  // ============================================================
-  // PROACTIVE REFRESH (listens for the access token expiring)
-  // ============================================================
+  // ==========================================================
+  // JWT EXPIRATION
+  // ==========================================================
 
-  /// Decodes the JWT's `exp` claim (seconds since epoch) and schedules
-  /// a timer to refresh the access token shortly before it expires,
-  /// instead of waiting for a request to fail with 401.
+  DateTime? _getJwtExpiry(String jwt) {
+    try {
+      final parts = jwt.split('.');
+
+      if (parts.length != 3) {
+        return null;
+      }
+
+      var payload = parts[1];
+
+      payload = payload.padRight((payload.length + 3) ~/ 4 * 4, '=');
+
+      final decoded = utf8.decode(base64Url.decode(payload));
+
+      final map = jsonDecode(decoded) as Map<String, dynamic>;
+
+      final exp = map['exp'];
+
+      if (exp == null) {
+        return null;
+      }
+
+      return DateTime.fromMillisecondsSinceEpoch((exp as num).toInt() * 1000);
+    } catch (e) {
+      print('FAILED TO DECODE JWT: $e');
+
+      return null;
+    }
+  }
+
+  // ==========================================================
+  // PROACTIVE REFRESH
+  // ==========================================================
+
   void _scheduleProactiveRefresh(String jwt) {
     _refreshTimer?.cancel();
 
     final expiry = _getJwtExpiry(jwt);
+
     if (expiry == null) {
-      print('COULD NOT READ TOKEN EXPIRY - proactive refresh disabled');
+      print('JWT EXPIRY NOT FOUND');
       return;
     }
 
     final timeUntilExpiry = expiry.difference(DateTime.now());
+
     final delay = timeUntilExpiry - _refreshBuffer;
 
+    print('ACCESS TOKEN EXPIRES: $expiry');
+
     if (delay.isNegative) {
-      // Token is already expired or about to expire - refresh right away.
-      print('ACCESS TOKEN ALREADY NEAR/PAST EXPIRY - refreshing now');
+      print('TOKEN IS EXPIRED/NEAR EXPIRY -> REFRESH');
+
       unawaited(_safeProactiveRefresh());
+
       return;
     }
 
-    print('ACCESS TOKEN EXPIRES AT $expiry - scheduling refresh in $delay');
+    print('PROACTIVE REFRESH IN: $delay');
 
     _refreshTimer = Timer(delay, () {
       unawaited(_safeProactiveRefresh());
@@ -135,48 +193,20 @@ class ApiService {
     try {
       await _refreshAccessToken();
     } catch (e) {
-      print('PROACTIVE TOKEN REFRESH FAILED: $e');
-      // Leave it to the 401 interceptor / caller to handle logout,
-      // since a proactive refresh failing doesn't necessarily mean
-      // the session is dead (could just be offline).
+      print('PROACTIVE REFRESH FAILED: $e');
     }
   }
 
-  /// Parses a JWT's payload and returns its `exp` claim as a DateTime,
-  /// or null if it can't be read.
-  DateTime? _getJwtExpiry(String jwt) {
-    try {
-      final parts = jwt.split('.');
-      if (parts.length != 3) return null;
+  // ==========================================================
+  // REFRESH ACCESS TOKEN
+  // ==========================================================
 
-      var payload = parts[1];
-      // base64Url requires padding to a multiple of 4.
-      payload = payload.padRight((payload.length + 3) ~/ 4 * 4, '=');
-
-      final decoded = utf8.decode(base64Url.decode(payload));
-      final map = jsonDecode(decoded) as Map<String, dynamic>;
-
-      final exp = map['exp'];
-      if (exp == null) return null;
-
-      return DateTime.fromMillisecondsSinceEpoch((exp as num).toInt() * 1000);
-    } catch (e) {
-      print('FAILED TO DECODE JWT EXPIRY: $e');
-      return null;
-    }
-  }
-
-  // ============================================================
-  // REFRESH TOKEN FLOW
-  // ============================================================
-
-  /// Refreshes the access token using the refresh token cookie.
-  /// If a refresh is already in progress, callers just wait on it
-  /// instead of firing a duplicate request.
   Future<void> _refreshAccessToken() async {
     if (_isRefreshing) {
       final completer = Completer<void>();
+
       _refreshQueue.add(completer);
+
       return completer.future;
     }
 
@@ -184,68 +214,190 @@ class ApiService {
 
     try {
       print('======================================');
-      print('REQUEST: POST $refreshTokenUrl (refreshing access token)');
+      print('REFRESH ACCESS TOKEN');
+      print('URL: $refreshTokenUrl');
 
-      // Use dio directly (not this.post) so this call never gets
-      // caught in its own retry logic.
+      // ======================================================
+      // LOAD COOKIES
+      // ======================================================
+
+      final cookies = await cookieJar.loadForRequest(
+        Uri.parse(refreshTokenUrl),
+      );
+
+      print('COOKIES BEFORE REFRESH:');
+
+      for (final cookie in cookies) {
+        print('${cookie.name} = ${cookie.value}');
+      }
+
+      // IMPORTANT:
+      // Your server cookie is called refreshToken.
+      final refreshCookie = cookies.where(
+        (cookie) => cookie.name == 'refreshToken' && cookie.value.isNotEmpty,
+      );
+
+      if (refreshCookie.isEmpty) {
+        throw Exception('Refresh token cookie not found');
+      }
+
+      // ======================================================
+      // REFRESH REQUEST
+      // ======================================================
+
       final response = await dio.post(refreshTokenUrl);
 
-      print('STATUS CODE: ${response.statusCode}');
-      print('RESPONSE: ${response.data}');
+      print(
+        'REFRESH STATUS: '
+        '${response.statusCode}',
+      );
 
-      final newAccessToken = response.data is Map
-          ? response.data['accessToken']?.toString()
-          : null;
+      print(
+        'REFRESH RESPONSE: '
+        '${response.data}',
+      );
+
+      // ======================================================
+      // RESPONSE
+      // ======================================================
+
+      if (response.data is! Map) {
+        throw Exception('Invalid refresh response');
+      }
+
+      final newAccessToken = response.data['accessToken']?.toString();
 
       if (newAccessToken == null || newAccessToken.isEmpty) {
-        throw Exception('Refresh endpoint did not return an accessToken');
+        throw Exception('Refresh response does not contain accessToken');
       }
+
+      // ======================================================
+      // SAVE ACCESS TOKEN
+      // ======================================================
 
       await setAccessToken(newAccessToken);
 
-      print('ACCESS TOKEN REFRESHED');
+      print('ACCESS TOKEN REFRESHED SUCCESSFULLY');
+
+      // ======================================================
+      // RELEASE WAITING REQUESTS
+      // ======================================================
 
       for (final completer in _refreshQueue) {
-        completer.complete();
+        if (!completer.isCompleted) {
+          completer.complete();
+        }
       }
+
       _refreshQueue.clear();
     } catch (e) {
+      print('REFRESH ERROR: $e');
+
       for (final completer in _refreshQueue) {
-        completer.completeError(e);
+        if (!completer.isCompleted) {
+          completer.completeError(e);
+        }
       }
+
       _refreshQueue.clear();
+
       rethrow;
     } finally {
       _isRefreshing = false;
     }
   }
 
-  // ============================================================
-  // FCM TOKEN
-  // ============================================================
+  // ==========================================================
+  // RESTORE SESSION
+  // ==========================================================
 
-  /// Fetches the device's FCM token and sends it to the backend.
-  /// Call this right after register (or login) succeeds.
-  Future<Either<Failure, dynamic>> sendFcmToken(String url) async {
+  Future<bool> restoreSession() async {
+    print('======================================');
+    print('CHECKING SESSION');
+
     try {
-      final fcmToken = await FirebaseMessaging.instance.getToken();
+      final cookies = await cookieJar.loadForRequest(
+        Uri.parse(refreshTokenUrl),
+      );
 
-      if (fcmToken == null || fcmToken.isEmpty) {
-        print('FCM TOKEN: could not get device token');
+      print('STORED COOKIES: $cookies');
+
+      for (final cookie in cookies) {
+        print(
+          'COOKIE: '
+          '${cookie.name} = ${cookie.value}',
+        );
+      }
+
+      // IMPORTANT:
+      // Server sends refreshToken
+      final hasRefreshToken = cookies.any(
+        (cookie) => cookie.name == 'refreshToken' && cookie.value.isNotEmpty,
+      );
+
+      if (!hasRefreshToken) {
+        print('NO REFRESH TOKEN COOKIE');
+
+        return false;
+      }
+
+      print('REFRESH TOKEN FOUND');
+
+      // ======================================================
+      // GET NEW ACCESS TOKEN
+      // ======================================================
+
+      await _refreshAccessToken();
+
+      print('SESSION RESTORED');
+
+      return true;
+    } catch (e) {
+      print('SESSION RESTORE FAILED: $e');
+
+      // Don't allow cookie filesystem errors
+      // to crash the application.
+      await clearAuthTokens();
+
+      return false;
+    }
+  }
+
+  // ==========================================================
+  // FCM TOKEN
+  // ==========================================================
+
+  Future<Either<Failure, String>> getFcmToken() async {
+    try {
+      final token = await FirebaseMessaging.instance.getToken();
+
+      if (token == null || token.isEmpty) {
         return Left(ServerFailure(message: 'Could not get FCM token'));
       }
 
-      print('FCM TOKEN: $fcmToken');
+      print('FCM TOKEN: $token');
 
-      return await post(url, data: {'fcmToken': fcmToken});
+      return Right(token);
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }
   }
 
-  // ============================================================
+  // ==========================================================
+  // SEND FCM TOKEN
+  // ==========================================================
+
+  Future<Either<Failure, dynamic>> sendFcmToken(String url) async {
+    final result = await getFcmToken();
+
+    return result.fold((failure) => Left(failure), (token) {
+      return post(url, data: {'fcm_token': token});
+    });
+  }
+
+  // ==========================================================
   // POST
-  // ============================================================
+  // ==========================================================
 
   Future<Either<Failure, dynamic>> post(
     String url, {
@@ -253,80 +405,42 @@ class ApiService {
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
-      print('======================================');
-      print('REQUEST: POST $url');
-      print('ACCESS TOKEN: $_accessToken');
-
       final response = await dio.post(
         url,
         data: data,
         queryParameters: queryParameters,
       );
 
-      print('STATUS CODE: ${response.statusCode}');
-      print('RESPONSE: ${response.data}');
-
       return Right(response.data);
     } on DioException catch (e) {
-      print('DIO ERROR: ${e.message}');
-      print('STATUS CODE: ${e.response?.statusCode}');
-      print('ERROR RESPONSE: ${e.response?.data}');
-
-      return Left(
-        ServerFailure(
-          message: e.response?.data is Map
-              ? e.response?.data['message']?.toString() ??
-                    e.message ??
-                    'Something went wrong'
-              : e.message ?? 'Something went wrong',
-        ),
-      );
+      return Left(_handleDioError(e));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }
   }
 
-  // ============================================================
+  // ==========================================================
   // GET
-  // ============================================================
+  // ==========================================================
 
   Future<Either<Failure, dynamic>> get(
     String url, {
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
-      print('======================================');
-      print('REQUEST: GET $url');
-      print('ACCESS TOKEN: $_accessToken');
-
       final response = await dio.get(url, queryParameters: queryParameters);
-
-      print('STATUS CODE: ${response.statusCode}');
-      print('RESPONSE: ${response.data}');
 
       return Right(response.data);
     } on DioException catch (e) {
-      print('DIO ERROR: ${e.message}');
-      print('STATUS CODE: ${e.response?.statusCode}');
-      print('ERROR RESPONSE: ${e.response?.data}');
-
-      return Left(
-        ServerFailure(
-          message: e.response?.data is Map
-              ? e.response?.data['message']?.toString() ??
-                    e.message ??
-                    'Something went wrong'
-              : e.message ?? 'Something went wrong',
-        ),
-      );
+      return Left(_handleDioError(e));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }
   }
 
-  // ============================================================
+  // ==========================================================
   // PUT
-  // ============================================================
+  // ==========================================================
 
   Future<Either<Failure, dynamic>> put(
     String url, {
@@ -334,42 +448,23 @@ class ApiService {
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
-      print('======================================');
-      print('REQUEST: PUT $url');
-      print('ACCESS TOKEN: $_accessToken');
-
       final response = await dio.put(
         url,
         data: data,
         queryParameters: queryParameters,
       );
 
-      print('STATUS CODE: ${response.statusCode}');
-      print('RESPONSE: ${response.data}');
-
       return Right(response.data);
     } on DioException catch (e) {
-      print('DIO ERROR: ${e.message}');
-      print('STATUS CODE: ${e.response?.statusCode}');
-      print('ERROR RESPONSE: ${e.response?.data}');
-
-      return Left(
-        ServerFailure(
-          message: e.response?.data is Map
-              ? e.response?.data['message']?.toString() ??
-                    e.message ??
-                    'Something went wrong'
-              : e.message ?? 'Something went wrong',
-        ),
-      );
+      return Left(_handleDioError(e));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }
   }
 
-  // ============================================================
+  // ==========================================================
   // PATCH
-  // ============================================================
+  // ==========================================================
 
   Future<Either<Failure, dynamic>> patch(
     String url, {
@@ -377,42 +472,23 @@ class ApiService {
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
-      print('======================================');
-      print('REQUEST: PATCH $url');
-      print('ACCESS TOKEN: $_accessToken');
-
       final response = await dio.patch(
         url,
         data: data,
         queryParameters: queryParameters,
       );
 
-      print('STATUS CODE: ${response.statusCode}');
-      print('RESPONSE: ${response.data}');
-
       return Right(response.data);
     } on DioException catch (e) {
-      print('DIO ERROR: ${e.message}');
-      print('STATUS CODE: ${e.response?.statusCode}');
-      print('ERROR RESPONSE: ${e.response?.data}');
-
-      return Left(
-        ServerFailure(
-          message: e.response?.data is Map
-              ? e.response?.data['message']?.toString() ??
-                    e.message ??
-                    'Something went wrong'
-              : e.message ?? 'Something went wrong',
-        ),
-      );
+      return Left(_handleDioError(e));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }
   }
 
-  // ============================================================
+  // ==========================================================
   // DELETE
-  // ============================================================
+  // ==========================================================
 
   Future<Either<Failure, dynamic>> delete(
     String url, {
@@ -420,49 +496,56 @@ class ApiService {
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
-      print('======================================');
-      print('REQUEST: DELETE $url');
-      print('ACCESS TOKEN: $_accessToken');
-
       final response = await dio.delete(
         url,
         data: data,
         queryParameters: queryParameters,
       );
 
-      print('STATUS CODE: ${response.statusCode}');
-      print('RESPONSE: ${response.data}');
-
       return Right(response.data);
     } on DioException catch (e) {
-      print('DIO ERROR: ${e.message}');
-      print('STATUS CODE: ${e.response?.statusCode}');
-      print('ERROR RESPONSE: ${e.response?.data}');
-
-      return Left(
-        ServerFailure(
-          message: e.response?.data is Map
-              ? e.response?.data['message']?.toString() ??
-                    e.message ??
-                    'Something went wrong'
-              : e.message ?? 'Something went wrong',
-        ),
-      );
+      return Left(_handleDioError(e));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }
   }
 
-  // ============================================================
-  // COOKIE
-  // ============================================================
+  // ==========================================================
+  // DIO ERROR
+  // ==========================================================
 
-  /// Get all cookies for a URL.
-  Future<List<Cookie>> getCookies(String url) async {
-    return await cookieJar.loadForRequest(Uri.parse(url));
+  ServerFailure _handleDioError(DioException e) {
+    String message = 'Something went wrong';
+
+    if (e.response?.data is Map) {
+      final data = e.response!.data as Map;
+
+      message = data['message']?.toString() ?? e.message ?? message;
+    } else {
+      message = e.message ?? message;
+    }
+
+    print('DIO ERROR: $message');
+
+    print('STATUS: ${e.response?.statusCode}');
+
+    print('URL: ${e.requestOptions.uri}');
+
+    return ServerFailure(message: message);
   }
 
-  /// Get one specific cookie.
+  // ==========================================================
+  // GET ALL COOKIES
+  // ==========================================================
+
+  Future<List<Cookie>> getCookies(String url) async {
+    return cookieJar.loadForRequest(Uri.parse(url));
+  }
+
+  // ==========================================================
+  // GET SPECIFIC COOKIE
+  // ==========================================================
+
   Future<String?> getCookie(String url, String cookieName) async {
     final cookies = await cookieJar.loadForRequest(Uri.parse(url));
 
@@ -475,36 +558,66 @@ class ApiService {
     return null;
   }
 
-  // ============================================================
+  // ==========================================================
+  // DEBUG COOKIES
+  // ==========================================================
+
+  Future<void> debugCookies() async {
+    final cookies = await cookieJar.loadForRequest(Uri.parse(refreshTokenUrl));
+
+    print('======================================');
+    print('STORED COOKIES');
+
+    if (cookies.isEmpty) {
+      print('NO COOKIES FOUND');
+    }
+
+    for (final cookie in cookies) {
+      print('${cookie.name} = ${cookie.value}');
+    }
+
+    print('======================================');
+  }
+
+  // ==========================================================
   // CLEAR AUTH
-  // ============================================================
+  // ==========================================================
 
   Future<void> clearAuthTokens() async {
-    // Stop any scheduled proactive refresh.
     _refreshTimer?.cancel();
+
     _refreshTimer = null;
 
-    // Remove access token from memory.
     _accessToken = null;
 
-    // Remove refresh token cookie.
-    await cookieJar.deleteAll();
+    try {
+      await cookieJar.deleteAll();
+    } catch (e) {
+      print('ERROR CLEARING COOKIES: $e');
+    }
 
     print('AUTH TOKENS CLEARED');
   }
 
+  // ==========================================================
+  // CLEAR COOKIES
+  // ==========================================================
+
   Future<void> clearCookies() async {
-    await cookieJar.deleteAll();
+    try {
+      await cookieJar.deleteAll();
+    } catch (e) {
+      print('ERROR CLEARING COOKIES: $e');
+    }
   }
 
-  // ============================================================
+  // ==========================================================
   // DISPOSE
-  // ============================================================
+  // ==========================================================
 
-  /// Call this when the ApiService is no longer needed
-  /// (e.g. in a top-level provider's dispose) to cancel the timer.
   void dispose() {
     _refreshTimer?.cancel();
+
     _refreshTimer = null;
   }
 }

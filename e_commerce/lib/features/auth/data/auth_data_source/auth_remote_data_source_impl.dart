@@ -21,16 +21,22 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       data: {'email': email, 'password': password},
     );
 
-    return response.fold((failure) => Left(failure), (data) {
-      try {
-        final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
-        final accessToken = data['accessToken'] as String;
+    return response.fold(
+      (failure) {
+        return Left(failure);
+      },
+      (data) {
+        try {
+          final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
 
-        return Right((user: user, accessToken: accessToken));
-      } catch (e) {
-        return Left(ServerFailure(message: 'Invalid login response: $e'));
-      }
-    });
+          final accessToken = data['accessToken'] as String;
+
+          return Right((user: user, accessToken: accessToken));
+        } catch (e) {
+          return Left(ServerFailure(message: 'Invalid login response: $e'));
+        }
+      },
+    );
   }
 
   @override
@@ -40,6 +46,11 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
     required String password,
     required String phone,
   }) async {
+    // FCM token is best-effort - don't block registration if it fails
+    // (e.g. no Firebase config, permissions denied, emulator issues).
+    final fcmTokenResult = await apiService.getFcmToken();
+    final fcmToken = fcmTokenResult.fold((_) => null, (token) => token);
+
     final response = await apiService.post(
       '$kBaseUrl/user/register',
       data: {
@@ -47,6 +58,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'email': email,
         'password': password,
         'phone': phone,
+        'fcmToken': ?fcmToken,
       },
     );
 
@@ -57,7 +69,6 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       (data) {
         try {
           final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
-
           final accessToken = data['accessToken'] as String;
 
           return Right((user: user, accessToken: accessToken));

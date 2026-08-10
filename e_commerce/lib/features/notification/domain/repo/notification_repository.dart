@@ -16,5 +16,6 @@ abstract class NotificationRepository {
     required String fcmToken,
     required String platform,
   });
+
   Future<Either<Failure, void>> deleteNotification(String notificationId);
 }
