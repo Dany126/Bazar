@@ -1,5 +1,6 @@
 import { Notification } from "../models/notification_model.js";
 import { admin, getMessaging } from "../database/firebase.js";
+import { apiFeatures } from "../utils/apiFeatures.js";
 
 export const createNotification = async (messageData) => {
   try {
@@ -21,7 +22,12 @@ export const createNotification = async (messageData) => {
 
 export const getAllNotifications = async (req, res) => {
   try {
-    const notifications = await Notification.find();
+    const query = { ...req.query, ...req.params };
+    const { filter, limits, skip, sortBy } = apiFeatures(query);
+    const notifications = await Notification.find(filter)
+      .sort(sortBy)
+      .skip(skip)
+      .limit(limits);
     if (!notifications || notifications.length <= 0) {
       return res.status(204).json({
         status: "Failed",
