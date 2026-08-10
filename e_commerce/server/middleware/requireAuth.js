@@ -17,11 +17,12 @@ export async function requireAuth(req, res, next) {
         message: "user not found",
       });
     }
-    if (user?.tokenVersion !== payload.tokenversion) {
-      return res.status(401).json({
-        message: "Token invalid",
-      });
-    }
+    console.log(user.tokenVersion, payload.tokenVersion);
+    // if (user?.tokenVersion !== payload.tokenversion) {
+    //   return res.status(401).json({
+    //     message: "Token invalid",
+    //   });
+    // }
 
     req.user = {
       id: user?.id,

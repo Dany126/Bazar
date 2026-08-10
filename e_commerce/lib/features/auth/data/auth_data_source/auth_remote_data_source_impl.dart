@@ -107,6 +107,8 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       data: {'refresh_token': refreshToken},
     );
 
+    await apiService.clearAuthTokens();
+
     return response.fold(
       (failure) => Left<Failure, void>(failure),
       (_) => const Right<Failure, void>(null),
