@@ -1,4 +1,5 @@
 import { Notification } from "../models/notification_model.js";
+import { admin, getMessaging } from "../database/firebase.js";
 
 export const createNotification = async (messageData) => {
   try {
@@ -11,14 +12,10 @@ export const createNotification = async (messageData) => {
       data: messageData.data || {},
     };
 
-    const response = await admin.messaging().send(message);
+    const response = await getMessaging(admin).send(message);
     await Notification.create(messageData);
   } catch (err) {
     console.log(err);
-    return res.status(500).json({
-      status: "Failed",
-      message: "Something went wrong",
-    });
   }
 };
 
@@ -57,4 +54,31 @@ export const deleteNotification = async (req, res) => {
     status: "success",
     message: "Notification deleted successfuly",
   });
+};
+
+export const updateNotification = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedNotification = await Notification.findByIdAndUpdate(
+      id,
+      req.body,
+      { returnDocument: "after" },
+    );
+    if (!updatedNotification) {
+      return res.status(404).json({
+        status: "Failed",
+        message: "Notification With This ID Not Found",
+      });
+    }
+    return res.status(200).json({
+      status: "Success",
+      updatedNotification,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      status: "Failed",
+      message: "Something went wrong`",
+    });
+  }
 };
