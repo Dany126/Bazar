@@ -54,6 +54,8 @@ dependencies:
   socket_io_client: ^3.1.6
   firebase_core: ^4.13.0
   bloc: ^9.2.1
+  cookie_jar: ^4.0.9
+  dio_cookie_manager: ^3.5.0
 
 dev_dependencies:
   flutter_test:

@@ -1,17 +1,22 @@
 import 'package:dartz/dartz.dart';
+
 import '../../../../core/error/failure.dart';
-import '../entity/user_entity.dart';
+import '../../data/model/user_model.dart';
 
 abstract class AuthRemoteDataSource {
-  Future<Either<Failure, UserEntity>> signIn({
+  Future<Either<Failure, ({UserModel user, String accessToken})>> signIn({
     required String email,
     required String password,
   });
-  Future<Either<Failure, UserEntity>> signUp({
+
+  Future<Either<Failure, ({UserModel user, String accessToken})>> signUp({
     required String name,
     required String email,
     required String password,
     required String phone,
   });
-  Future<Either<Failure, UserEntity>> logout({required String refreshToken});
+
+  Future<Either<Failure, String>> refreshToken();
+
+  Future<Either<Failure, void>> logout();
 }

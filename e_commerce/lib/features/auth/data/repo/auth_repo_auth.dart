@@ -1,9 +1,10 @@
 import 'package:dartz/dartz.dart';
-import 'package:e_commerce/features/auth/data/auth_data_source/auth_remote_data_source_impl.dart';
+import 'package:e_commerce/features/auth/domain/auth_data_source/auth_remote_data_source.dart';
+import 'package:e_commerce/features/auth/domain/repo/auth_repo.dart';
+
 import '../../../../core/error/failure.dart';
 import '../../../../core/services/api_services.dart';
 import '../../domain/entity/user_entity.dart';
-import '../../domain/repo/auth_repo.dart';
 
 class AuthRepositoryImpl implements AuthRepository {
   final AuthRemoteDataSource remoteDataSource;
@@ -25,20 +26,14 @@ class AuthRepositoryImpl implements AuthRepository {
     );
 
     if (result.isLeft()) {
-      return result.fold(
-        (failure) => Left<Failure, UserEntity>(failure),
-        (_) => throw Exception(),
-      );
+      return Left(result.fold((failure) => failure, (_) => throw Exception()));
     }
 
     final success = result.fold((_) => throw Exception(), (data) => data);
 
-    await apiService.setAuthTokens(
-      accessToken: success.accessToken,
-      refreshToken: success.refreshToken,
-    );
+    await apiService.setAccessToken(success.accessToken);
 
-    return Right<Failure, UserEntity>(success.user);
+    return Right(success.user);
   }
 
   @override
@@ -56,32 +51,31 @@ class AuthRepositoryImpl implements AuthRepository {
     );
 
     if (result.isLeft()) {
-      return result.fold(
-        (failure) => Left<Failure, UserEntity>(failure),
-        (_) => throw Exception(),
-      );
+      return Left(result.fold((failure) => failure, (_) => throw Exception()));
     }
 
     final success = result.fold((_) => throw Exception(), (data) => data);
 
-    await apiService.setAuthTokens(
-      accessToken: success.accessToken,
-      refreshToken: success.refreshToken,
-    );
+    await apiService.setAccessToken(success.accessToken);
 
-    return Right<Failure, UserEntity>(success.user);
+    return Right(success.user);
   }
 
   @override
   Future<Either<Failure, void>> logout() async {
-    final refreshToken = apiService.refreshTokenPath;
+    // CookieManager automatically sends the refreshToken cookie.
+    final result = await remoteDataSource.logout();
 
-    if (refreshToken.isNotEmpty) {
-      await remoteDataSource.logout(refreshToken: refreshToken);
-    }
-
+    // Remove access token and refresh-token cookie locally.
     await apiService.clearAuthTokens();
 
-    return const Right<Failure, void>(null);
+    return result.fold(
+      (failure) {
+        return Left(failure);
+      },
+      (_) {
+        return const Right(null);
+      },
+    );
   }
 }

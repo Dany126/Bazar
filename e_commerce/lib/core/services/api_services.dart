@@ -1,285 +1,89 @@
+import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
-import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 
-import 'package:e_commerce/core/error/api_error_handler.dart';
-import 'package:e_commerce/core/error/failure.dart';
+import '../error/failure.dart';
 
 class ApiService {
-  late final Dio _dio;
-
-  final String baseUrl;
-  final FlutterSecureStorage _storage;
-
-  final String refreshTokenPath;
-
-  static const String _accessTokenKey = 'accessToken';
-  static const String _refreshTokenKey = 'refreshToken';
+  final Dio dio;
+  final CookieJar cookieJar;
 
   String? _accessToken;
-  String? _refreshToken;
 
-  ApiService({
-    required this.baseUrl,
-    required this.refreshTokenPath,
-    FlutterSecureStorage? storage,
-  }) : _storage = storage ?? const FlutterSecureStorage() {
-    _dio = Dio(
-      BaseOptions(
-        baseUrl: baseUrl,
-        connectTimeout: const Duration(seconds: 15),
-        receiveTimeout: const Duration(seconds: 15),
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-        },
-      ),
-    );
+  ApiService({required this.dio, required this.cookieJar}) {
+    // IMPORTANT:
+    // This automatically saves Set-Cookie from the server
+    // and automatically sends cookies with future requests.
+    dio.interceptors.add(CookieManager(cookieJar));
 
-    _setupInterceptors();
-  }
-
-  // ============================================================
-  // INTERCEPTORS
-  // ============================================================
-
-  void _setupInterceptors() {
-    // ----------------------------------------------------------
-    // DEBUG LOGGING ONLY (no header logic here — single source
-    // of truth for attaching the Authorization header lives in
-    // the QueuedInterceptorsWrapper below).
-    // ----------------------------------------------------------
-    _dio.interceptors.add(
+    // Automatically add access token to requests.
+    dio.interceptors.add(
       InterceptorsWrapper(
         onRequest: (options, handler) {
-          print('======================================');
-          print('REQUEST: ${options.method} ${options.uri}');
-          print('ACCESS TOKEN (in memory): $_accessToken');
-          print('AUTH HEADER: ${options.headers['Authorization']}');
-          print('======================================');
+          if (_accessToken != null && _accessToken!.isNotEmpty) {
+            options.headers['Authorization'] = 'Bearer $_accessToken';
+          }
 
           handler.next(options);
         },
       ),
     );
-
-    _dio.interceptors.add(
-      QueuedInterceptorsWrapper(
-        // ========================================================
-        // REQUEST
-        // ========================================================
-        onRequest: (options, handler) async {
-          final isAuthRequest = _isAuthRequest(options.path);
-
-          if (!isAuthRequest) {
-            _accessToken ??= await _storage.read(key: _accessTokenKey);
-
-            if (_accessToken != null && _accessToken!.isNotEmpty) {
-              options.headers['Authorization'] = 'Bearer $_accessToken';
-            }
-          }
-
-          handler.next(options);
-        },
-
-        // ========================================================
-        // ERROR
-        // ========================================================
-        onError: (error, handler) async {
-          final statusCode = error.response?.statusCode;
-
-          final alreadyRetried = error.requestOptions.extra['retried'] == true;
-
-          final isRefreshRequest = _isRefreshRequest(error.requestOptions.path);
-
-          if (statusCode == 401 && !alreadyRetried && !isRefreshRequest) {
-            print('>>> Got 401, attempting token refresh...');
-
-            final refreshed = await _refreshAccessToken();
-
-            print('>>> Refresh result: $refreshed');
-
-            if (refreshed) {
-              final requestOptions = error.requestOptions;
-
-              requestOptions.headers['Authorization'] = 'Bearer $_accessToken';
-
-              requestOptions.extra['retried'] = true;
-
-              try {
-                final response = await _dio.fetch(requestOptions);
-
-                return handler.resolve(response);
-              } on DioException catch (e) {
-                return handler.next(e);
-              }
-            }
-
-            // Refresh failed.
-            await clearAuthTokens();
-          }
-
-          handler.next(error);
-        },
-      ),
-    );
-
-    // ============================================================
-    // LOGGING
-    // ============================================================
-
-    _dio.interceptors.add(
-      LogInterceptor(requestBody: true, responseBody: true, error: true),
-    );
-  }
-
-  // ============================================================
-  // AUTH REQUEST
-  // ============================================================
-
-  bool _isAuthRequest(String path) {
-    return path.contains('/user/login') ||
-        path.contains('/user/register') ||
-        path.contains('/user/signup') ||
-        path.contains(refreshTokenPath);
-  }
-
-  bool _isRefreshRequest(String path) {
-    return path.contains(refreshTokenPath);
-  }
-
-  // ============================================================
-  // SAVE TOKENS
-  // ============================================================
-
-  Future<void> setAuthTokens({
-    required String accessToken,
-    required String refreshToken,
-  }) async {
-    _accessToken = accessToken;
-    _refreshToken = refreshToken;
-
-    await _storage.write(key: _accessTokenKey, value: accessToken);
-
-    await _storage.write(key: _refreshTokenKey, value: refreshToken);
   }
 
   // ============================================================
   // ACCESS TOKEN
   // ============================================================
 
-  Future<String?> getAccessToken() async {
-    _accessToken ??= await _storage.read(key: _accessTokenKey);
+  Future<void> setAccessToken(String accessToken) async {
+    _accessToken = accessToken;
 
-    return _accessToken;
+    print('ACCESS TOKEN SAVED: $_accessToken');
   }
 
-  // ============================================================
-  // REFRESH TOKEN
-  // ============================================================
-
-  Future<String?> getRefreshToken() async {
-    _refreshToken ??= await _storage.read(key: _refreshTokenKey);
-
-    return _refreshToken;
-  }
+  String? get accessToken => _accessToken;
 
   // ============================================================
-  // REFRESH ACCESS TOKEN
+  // POST
   // ============================================================
 
-  Future<bool> _refreshAccessToken() async {
+  Future<Either<Failure, dynamic>> post(
+    String url, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+  }) async {
     try {
-      final refreshToken = await getRefreshToken();
+      print('======================================');
+      print('REQUEST: POST $url');
+      print('ACCESS TOKEN: $_accessToken');
 
-      if (refreshToken == null || refreshToken.isEmpty) {
-        print('>>> No refresh token available in storage.');
-        return false;
-      }
-
-      // IMPORTANT:
-      // Separate Dio instance.
-      // This prevents an infinite refresh loop.
-
-      final refreshDio =
-          Dio(
-              BaseOptions(
-                baseUrl: baseUrl,
-                connectTimeout: const Duration(seconds: 15),
-                receiveTimeout: const Duration(seconds: 15),
-                headers: {
-                  'Content-Type': 'application/json',
-                  'Accept': 'application/json',
-                },
-              ),
-            )
-            ..interceptors.add(
-              // TEMP DIAGNOSTIC LOGGING — remove once refresh flow is confirmed working.
-              LogInterceptor(
-                requestBody: true,
-                responseBody: true,
-                error: true,
-              ),
-            );
-
-      final response = await refreshDio.post(
-        refreshTokenPath,
-        data: {'refreshToken': refreshToken},
+      final response = await dio.post(
+        url,
+        data: data,
+        queryParameters: queryParameters,
       );
 
-      final data = response.data;
+      print('STATUS CODE: ${response.statusCode}');
+      print('RESPONSE: ${response.data}');
 
-      if (data is! Map<String, dynamic>) {
-        print('>>> Refresh response was not a JSON object: $data');
-        return false;
-      }
+      return Right(response.data);
+    } on DioException catch (e) {
+      print('DIO ERROR: ${e.message}');
+      print('STATUS CODE: ${e.response?.statusCode}');
+      print('ERROR RESPONSE: ${e.response?.data}');
 
-      final newAccessToken = data['accessToken'] as String?;
-
-      final newRefreshToken = data['refreshToken'] as String?;
-
-      if (newAccessToken == null || newAccessToken.isEmpty) {
-        print('>>> Refresh response had no accessToken: $data');
-        return false;
-      }
-
-      await setAuthTokens(
-        accessToken: newAccessToken,
-        refreshToken: newRefreshToken ?? refreshToken,
+      return Left(
+        ServerFailure(
+          message: e.response?.data is Map
+              ? e.response?.data['message']?.toString() ??
+                    e.message ??
+                    'Something went wrong'
+              : e.message ?? 'Something went wrong',
+        ),
       );
-
-      return true;
     } catch (e) {
-      print('>>> Refresh threw an exception: $e');
-      return false;
+      return Left(ServerFailure(message: e.toString()));
     }
-  }
-
-  // ============================================================
-  // LOGOUT
-  // ============================================================
-
-  Future<void> clearAuthTokens() async {
-    _accessToken = null;
-    _refreshToken = null;
-
-    await _storage.delete(key: _accessTokenKey);
-
-    await _storage.delete(key: _refreshTokenKey);
-  }
-
-  // ============================================================
-  // IS LOGGED IN
-  // ============================================================
-
-  Future<bool> get isLoggedIn async {
-    final accessToken = await getAccessToken();
-    final refreshToken = await getRefreshToken();
-
-    return accessToken != null &&
-        accessToken.isNotEmpty &&
-        refreshToken != null &&
-        refreshToken.isNotEmpty;
   }
 
   // ============================================================
@@ -287,37 +91,36 @@ class ApiService {
   // ============================================================
 
   Future<Either<Failure, dynamic>> get(
-    String path, {
+    String url, {
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
-      final response = await _dio.get(path, queryParameters: queryParameters);
+      print('======================================');
+      print('REQUEST: GET $url');
+      print('ACCESS TOKEN: $_accessToken');
+
+      final response = await dio.get(url, queryParameters: queryParameters);
+
+      print('STATUS CODE: ${response.statusCode}');
+      print('RESPONSE: ${response.data}');
 
       return Right(response.data);
-    } catch (e) {
-      return Left(ApiErrorHandler.handle(e));
-    }
-  }
+    } on DioException catch (e) {
+      print('DIO ERROR: ${e.message}');
+      print('STATUS CODE: ${e.response?.statusCode}');
+      print('ERROR RESPONSE: ${e.response?.data}');
 
-  // ============================================================
-  // POST
-  // ============================================================
-
-  Future<Either<Failure, dynamic>> post(
-    String path, {
-    dynamic data,
-    Map<String, dynamic>? queryParameters,
-  }) async {
-    try {
-      final response = await _dio.post(
-        path,
-        data: data,
-        queryParameters: queryParameters,
+      return Left(
+        ServerFailure(
+          message: e.response?.data is Map
+              ? e.response?.data['message']?.toString() ??
+                    e.message ??
+                    'Something went wrong'
+              : e.message ?? 'Something went wrong',
+        ),
       );
-
-      return Right(response.data);
     } catch (e) {
-      return Left(ApiErrorHandler.handle(e));
+      return Left(ServerFailure(message: e.toString()));
     }
   }
 
@@ -326,20 +129,41 @@ class ApiService {
   // ============================================================
 
   Future<Either<Failure, dynamic>> put(
-    String path, {
+    String url, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
-      final response = await _dio.put(
-        path,
+      print('======================================');
+      print('REQUEST: PUT $url');
+      print('ACCESS TOKEN: $_accessToken');
+
+      final response = await dio.put(
+        url,
         data: data,
         queryParameters: queryParameters,
       );
 
+      print('STATUS CODE: ${response.statusCode}');
+      print('RESPONSE: ${response.data}');
+
       return Right(response.data);
+    } on DioException catch (e) {
+      print('DIO ERROR: ${e.message}');
+      print('STATUS CODE: ${e.response?.statusCode}');
+      print('ERROR RESPONSE: ${e.response?.data}');
+
+      return Left(
+        ServerFailure(
+          message: e.response?.data is Map
+              ? e.response?.data['message']?.toString() ??
+                    e.message ??
+                    'Something went wrong'
+              : e.message ?? 'Something went wrong',
+        ),
+      );
     } catch (e) {
-      return Left(ApiErrorHandler.handle(e));
+      return Left(ServerFailure(message: e.toString()));
     }
   }
 
@@ -348,20 +172,41 @@ class ApiService {
   // ============================================================
 
   Future<Either<Failure, dynamic>> patch(
-    String path, {
+    String url, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
-      final response = await _dio.patch(
-        path,
+      print('======================================');
+      print('REQUEST: PATCH $url');
+      print('ACCESS TOKEN: $_accessToken');
+
+      final response = await dio.patch(
+        url,
         data: data,
         queryParameters: queryParameters,
       );
 
+      print('STATUS CODE: ${response.statusCode}');
+      print('RESPONSE: ${response.data}');
+
       return Right(response.data);
+    } on DioException catch (e) {
+      print('DIO ERROR: ${e.message}');
+      print('STATUS CODE: ${e.response?.statusCode}');
+      print('ERROR RESPONSE: ${e.response?.data}');
+
+      return Left(
+        ServerFailure(
+          message: e.response?.data is Map
+              ? e.response?.data['message']?.toString() ??
+                    e.message ??
+                    'Something went wrong'
+              : e.message ?? 'Something went wrong',
+        ),
+      );
     } catch (e) {
-      return Left(ApiErrorHandler.handle(e));
+      return Left(ServerFailure(message: e.toString()));
     }
   }
 
@@ -370,20 +215,83 @@ class ApiService {
   // ============================================================
 
   Future<Either<Failure, dynamic>> delete(
-    String path, {
+    String url, {
     dynamic data,
     Map<String, dynamic>? queryParameters,
   }) async {
     try {
-      final response = await _dio.delete(
-        path,
+      print('======================================');
+      print('REQUEST: DELETE $url');
+      print('ACCESS TOKEN: $_accessToken');
+
+      final response = await dio.delete(
+        url,
         data: data,
         queryParameters: queryParameters,
       );
 
+      print('STATUS CODE: ${response.statusCode}');
+      print('RESPONSE: ${response.data}');
+
       return Right(response.data);
+    } on DioException catch (e) {
+      print('DIO ERROR: ${e.message}');
+      print('STATUS CODE: ${e.response?.statusCode}');
+      print('ERROR RESPONSE: ${e.response?.data}');
+
+      return Left(
+        ServerFailure(
+          message: e.response?.data is Map
+              ? e.response?.data['message']?.toString() ??
+                    e.message ??
+                    'Something went wrong'
+              : e.message ?? 'Something went wrong',
+        ),
+      );
     } catch (e) {
-      return Left(ApiErrorHandler.handle(e));
+      return Left(ServerFailure(message: e.toString()));
     }
+  }
+
+  // ============================================================
+  // COOKIE
+  // ============================================================
+
+  /// Get all cookies for a URL.
+  Future<List<Cookie>> getCookies(String url) async {
+    return await cookieJar.loadForRequest(Uri.parse(url));
+  }
+
+  /// Get one specific cookie.
+  Future<String?> getCookie(String url, String cookieName) async {
+    final cookies = await cookieJar.loadForRequest(Uri.parse(url));
+
+    for (final cookie in cookies) {
+      if (cookie.name == cookieName) {
+        return cookie.value;
+      }
+    }
+
+    return null;
+  }
+
+  // ============================================================
+  // CLEAR AUTH
+  // ============================================================
+
+  Future<void> clearAuthTokens() async {
+    // Remove access token from memory.
+    _accessToken = null;
+
+    // Remove refresh token cookie.
+    await cookieJar.deleteAll();
+
+    print('AUTH TOKENS CLEARED');
+  }
+
+  Future<void> clearCookies() async {
+    await cookieJar.deleteAll();
+
+    print('COOKIES CLEARED');
   }
 }

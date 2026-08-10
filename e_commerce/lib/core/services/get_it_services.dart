@@ -1,4 +1,5 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
+import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/network/dio_error_interceptor.dart';
@@ -8,6 +9,7 @@ import 'package:e_commerce/core/notifications/socket_service.dart';
 import 'package:e_commerce/core/services/api_services.dart';
 import 'package:e_commerce/features/auth/data/auth_data_source/auth_remote_data_source_impl.dart';
 import 'package:e_commerce/features/auth/data/repo/auth_repo_auth.dart';
+import 'package:e_commerce/features/auth/domain/auth_data_source/auth_remote_data_source.dart';
 
 import 'package:e_commerce/features/auth/domain/repo/auth_repo.dart';
 import 'package:e_commerce/features/auth/domain/use_case/log_out_use_case.dart';
@@ -44,11 +46,10 @@ void setupServiceLocator() {
   // =========================
 
   getIt.registerLazySingleton<ApiService>(
-    () => ApiService(
-      baseUrl: kBaseUrl,
-      refreshTokenPath: '$kBaseUrl/user/refresh',
-    ),
+    () => ApiService(dio: getIt<Dio>(), cookieJar: getIt<CookieJar>()),
   );
+
+  getIt.registerLazySingleton<CookieJar>(() => CookieJar());
 
   getIt.registerLazySingleton<NetworkInfo>(() => NetworkInfoImpl(getIt()));
   getIt.registerLazySingleton(() => Connectivity());
@@ -80,8 +81,8 @@ void setupServiceLocator() {
 
   getIt.registerLazySingleton<AuthRepository>(
     () => AuthRepositoryImpl(
-      remoteDataSource: getIt<AuthRemoteDataSource>(),
       apiService: getIt<ApiService>(),
+      remoteDataSource: getIt<AuthRemoteDataSource>(),
     ),
   );
 
