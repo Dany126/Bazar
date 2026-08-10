@@ -7,6 +7,7 @@ const String kGetAllProducts = "$kBaseUrl/product";
 const String kGetProductByCategory = "$kBaseUrl/category";
 const String kGetNewProductByCategory = "$kBaseUrl/product";
 const String kGetBestSellerProductByCategory = "$kBaseUrl/product";
+const String kRefreshTokenUrl = "$kBaseUrl/user/refresh";
 // // Categoty
 // POST /http://localhost:5000/api/category
 // GET  /http://localhost:5000/api/category
