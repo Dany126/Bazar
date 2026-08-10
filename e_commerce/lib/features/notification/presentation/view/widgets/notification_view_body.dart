@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/assets.dart';
+import 'package:e_commerce/core/widgets/custom_button.dart';
 import 'package:e_commerce/features/notification/domain/entity/notification_entity.dart';
 import 'package:e_commerce/features/notification/presentation/cubit/notification_cubit.dart';
 import 'package:e_commerce/features/notification/presentation/cubit/notification_state.dart';
@@ -118,6 +119,19 @@ class _NotificationViewBodyState extends State<NotificationViewBody> {
     }
   }
 
+  String get _emptyMessage {
+    switch (selectedFilter) {
+      case NotificationFilter.all:
+        return 'No notifications';
+      case NotificationFilter.read:
+        return 'No read notifications';
+      case NotificationFilter.unread:
+        return 'No unread notifications';
+      case NotificationFilter.favourite:
+        return 'No favourite notifications';
+    }
+  }
+
   @override
   void dispose() {
     _fcmSubscription?.cancel();
@@ -196,9 +210,9 @@ class _NotificationViewBodyState extends State<NotificationViewBody> {
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 16),
-                        ElevatedButton(
-                          onPressed: _refreshCurrentFilter,
-                          child: const Text('Retry'),
+                        CustomButton(
+                          onTap: _refreshCurrentFilter,
+                          text: 'Retry',
                         ),
                       ],
                     ),
@@ -223,13 +237,24 @@ class _NotificationViewBodyState extends State<NotificationViewBody> {
                         height: 100,
                       ),
                       const SizedBox(height: 30),
-                      const Text(
-                        'No notifications',
-                        style: TextStyle(
+                      Text(
+                        _emptyMessage,
+                        style: const TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
+                      if (selectedFilter != NotificationFilter.all) ...[
+                        const SizedBox(height: 16),
+                        SizedBox(
+                          width: MediaQuery.of(context).size.width * 0.3,
+                          child: CustomButton(
+                            onTap: () =>
+                                _onFilterSelected(NotificationFilter.all),
+                            text: 'Explore All',
+                          ),
+                        ),
+                      ],
                     ],
                   ),
                 );

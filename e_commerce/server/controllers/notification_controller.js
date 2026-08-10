@@ -29,9 +29,10 @@ export const getAllNotifications = async (req, res) => {
       .skip(skip)
       .limit(limits);
     if (!notifications || notifications.length <= 0) {
-      return res.status(204).json({
+      return res.status(200).json({
         status: "Failed",
         message: "No Notifications Found",
+        notifications,
       });
     }
     return res.status(200).json({
