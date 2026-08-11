@@ -1,11 +1,28 @@
-class OrderModel {
-  final String id;
-  final int itemsCount;
-  final String status; // Processing, Shipped, Delivered, Returned, Cancelled
+import 'package:e_commerce/features/order/domin/entity/order_product_entity.dart';
+import 'package:e_commerce/features/order/domin/entity/shipping_adress_entity.dart';
 
-  const OrderModel({
+class OrderEntity {
+  final String id;
+  final String user;
+  final List<OrderProductEntity> products;
+  final double totalPrice;
+  final ShippingAddressEntity? shippingAddress;
+  final String paymentMethod;
+  final String paymentStatus;
+  final String orderStatus;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
+
+  const OrderEntity({
     required this.id,
-    required this.itemsCount,
-    required this.status,
+    required this.user,
+    required this.products,
+    required this.totalPrice,
+    this.shippingAddress,
+    required this.paymentMethod,
+    required this.paymentStatus,
+    required this.orderStatus,
+    this.createdAt,
+    this.updatedAt,
   });
 }

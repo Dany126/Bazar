@@ -1,0 +1,57 @@
+import 'package:e_commerce/features/order/domin/use_case/create_order_use_case.dart';
+import 'package:e_commerce/features/order/domin/use_case/get_order_use_case.dart';
+import 'package:e_commerce/features/order/presenation/view/widgets/order_view_body.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'order_state.dart';
+
+class OrderCubit extends Cubit<OrderState> {
+  final CreateOrderUseCase createOrderUseCase;
+  final GetOrdersUseCase getOrdersUseCase;
+
+  OrderCubit({required this.createOrderUseCase, required this.getOrdersUseCase})
+    : super(OrderInitial());
+
+  Future<void> createOrder({
+    required List<Map<String, dynamic>> products,
+    required double totalPrice,
+    required Map<String, dynamic> shippingAddress,
+    required String paymentMethod,
+  }) async {
+    emit(OrderLoading());
+
+    final result = await createOrderUseCase(
+      products: products,
+      totalPrice: totalPrice,
+      shippingAddress: shippingAddress,
+      paymentMethod: paymentMethod,
+    );
+
+    result.fold(
+      (failure) {
+        emit(OrderError(failure.message));
+      },
+      (order) {
+        emit(OrderCreated(order));
+      },
+    );
+  }
+
+  Future<void> getMyOrders({
+    required String userId,
+    required OrderStatus filter,
+  }) async {
+    emit(OrderLoading());
+
+    final result = await getOrdersUseCase(userId: userId, filter: filter);
+
+    result.fold(
+      (failure) {
+        emit(OrderError(failure.message));
+      },
+      (orders) {
+        emit(OrdersLoaded(orders));
+      },
+    );
+  }
+}

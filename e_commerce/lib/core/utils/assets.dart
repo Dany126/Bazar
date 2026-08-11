@@ -22,6 +22,10 @@ class Assets {
   /// assets/images/Apple.png
   static const String assetsImagesApple = "assets/images/Apple.png";
 
+  /// Assets for assetsImagesArrowright
+  /// assets/images/arrowright.png
+  static const String assetsImagesArrowright = "assets/images/arrowright.png";
+
   /// Assets for assetsImagesBagIcon
   /// assets/images/bagIcon.png
   static const String assetsImagesBagIcon = "assets/images/bagIcon.png";
@@ -49,6 +53,10 @@ class Assets {
   /// Assets for assetsImagesC5
   /// assets/images/c5.png
   static const String assetsImagesC5 = "assets/images/c5.png";
+
+  /// Assets for assetsImagesCheckOut
+  /// assets/images/check-out.png
+  static const String assetsImagesCheckOut = "assets/images/check-out.png";
 
   /// Assets for assetsImagesD1
   /// assets/images/d1.png
@@ -94,6 +102,10 @@ class Assets {
   /// assets/images/Message.png
   static const String assetsImagesMessage = "assets/images/Message.png";
 
+  /// Assets for assetsImagesNoSucc
+  /// assets/images/noSucc.png
+  static const String assetsImagesNoSucc = "assets/images/noSucc.png";
+
   /// Assets for assetsImagesProfile
   /// assets/images/profile.png
   static const String assetsImagesProfile = "assets/images/profile.png";
@@ -101,6 +113,10 @@ class Assets {
   /// Assets for assetsImagesSearchIcon
   /// assets/images/searchIcon.png
   static const String assetsImagesSearchIcon = "assets/images/searchIcon.png";
+
+  /// Assets for assetsImagesSucc
+  /// assets/images/Succ.png
+  static const String assetsImagesSucc = "assets/images/Succ.png";
 
   /// Assets for assetsImagesUnSeennotificationbing
   /// assets/images/UnSeennotificationbing.png
