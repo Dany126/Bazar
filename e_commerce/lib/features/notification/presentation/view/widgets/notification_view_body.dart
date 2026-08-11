@@ -3,16 +3,15 @@ import 'dart:async';
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/assets.dart';
 import 'package:e_commerce/core/widgets/custom_button.dart';
-import 'package:e_commerce/features/notification/domain/entity/notification_entity.dart';
 import 'package:e_commerce/features/notification/presentation/cubit/notification_cubit.dart';
 import 'package:e_commerce/features/notification/presentation/cubit/notification_state.dart';
+import 'package:e_commerce/features/notification/presentation/view/widgets/notification_filter_bar.dart';
+import 'package:e_commerce/features/notification/presentation/view/widgets/notification_list_view.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:lottie/lottie.dart';
 import 'package:skeletonizer/skeletonizer.dart';
-
-import 'notification_item.dart';
 
 enum NotificationFilter { all, read, unread, favourite }
 
@@ -44,13 +43,6 @@ class _NotificationViewBodyState extends State<NotificationViewBody> {
     _fcmSubscription = FirebaseMessaging.onMessage.listen((
       RemoteMessage message,
     ) {
-      debugPrint('================================');
-      debugPrint('FCM notification received (foreground)');
-      debugPrint('Title: ${message.notification?.title}');
-      debugPrint('Body: ${message.notification?.body}');
-      debugPrint('Data: ${message.data}');
-      debugPrint('================================');
-
       if (!mounted) return;
 
       // FCM received a new notification - refresh using whichever
@@ -143,7 +135,7 @@ class _NotificationViewBodyState extends State<NotificationViewBody> {
   Widget build(BuildContext context) {
     return Column(
       children: [
-        _NotificationFilterBar(
+        NotificationFilterBar(
           selectedFilter: selectedFilter,
           onFilterSelected: _onFilterSelected,
         ),
@@ -318,166 +310,6 @@ class _NotificationViewBodyState extends State<NotificationViewBody> {
           ),
         ),
       ],
-    );
-  }
-}
-
-class _NotificationFilterBar extends StatelessWidget {
-  final NotificationFilter selectedFilter;
-  final void Function(NotificationFilter filter) onFilterSelected;
-
-  const _NotificationFilterBar({
-    required this.selectedFilter,
-    required this.onFilterSelected,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-      child: Row(
-        children: [
-          Expanded(
-            child: _FilterButton(
-              label: 'All',
-              isSelected: selectedFilter == NotificationFilter.all,
-              onTap: () => onFilterSelected(NotificationFilter.all),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _FilterButton(
-              label: 'Read',
-              isSelected: selectedFilter == NotificationFilter.read,
-              onTap: () => onFilterSelected(NotificationFilter.read),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _FilterButton(
-              label: 'Unread',
-              isSelected: selectedFilter == NotificationFilter.unread,
-              onTap: () => onFilterSelected(NotificationFilter.unread),
-            ),
-          ),
-          const SizedBox(width: 8),
-          Expanded(
-            child: _FilterButton(
-              label: 'Star',
-              icon: Icons.star,
-              isSelected: selectedFilter == NotificationFilter.favourite,
-              onTap: () => onFilterSelected(NotificationFilter.favourite),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _FilterButton extends StatelessWidget {
-  final String label;
-  final bool isSelected;
-  final VoidCallback onTap;
-  final IconData? icon;
-
-  const _FilterButton({
-    required this.label,
-    required this.isSelected,
-    required this.onTap,
-    this.icon,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 200),
-        padding: const EdgeInsets.symmetric(vertical: 10),
-        decoration: BoxDecoration(
-          color: isSelected
-              ? AppColors.kPrimaryColor
-              : AppColors.kPrimaryColor.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(10),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            if (icon != null) ...[
-              Icon(
-                icon,
-                size: 16,
-                color: isSelected ? Colors.white : AppColors.kPrimaryColor,
-              ),
-              const SizedBox(width: 4),
-            ],
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.white : AppColors.kPrimaryColor,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class NotificationListView extends StatelessWidget {
-  final List<NotificationEntity> notifications;
-
-  final void Function(String id) onDelete;
-
-  const NotificationListView({
-    super.key,
-    required this.notifications,
-    required this.onDelete,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      itemCount: notifications.length,
-      itemBuilder: (context, index) {
-        final notification = notifications[index];
-
-        return Dismissible(
-          key: ValueKey(notification.id),
-          direction: DismissDirection.endToStart,
-
-          confirmDismiss: (_) async {
-            onDelete(notification.id);
-
-            return false;
-          },
-
-          background: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 20),
-            decoration: BoxDecoration(
-              color: Colors.red,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.delete, color: Colors.white),
-          ),
-
-          child: NotificationItem(
-            notification: notification,
-            onTap: () {
-              context.read<NotificationCubit>().markAsRead(notification.id);
-            },
-            onTapStar: () {
-              context.read<NotificationCubit>().isFavourite(notification.id);
-            },
-          ),
-        );
-      },
     );
   }
 }
