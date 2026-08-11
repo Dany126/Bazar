@@ -11,6 +11,7 @@ import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/g
 import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_state.dart';
 
 import 'package:e_commerce/features/home/presentation/views/category_details_view.dart';
+import 'package:e_commerce/features/home/presentation/views/search_view.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/category_list_view.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/custom_row.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/new_arrivals.dart';
@@ -86,7 +87,14 @@ class _HomeViewBodyState extends State<HomeViewBody> {
           ],
         ),
 
-        const SliverToBoxAdapter(child: CustomSearchBar()),
+        SliverToBoxAdapter(
+          child: CustomSearchBar(
+            isSearch: false,
+            onTap: () {
+              Navigator.pushNamed(context, SearchView.routeName);
+            },
+          ),
+        ),
 
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
 

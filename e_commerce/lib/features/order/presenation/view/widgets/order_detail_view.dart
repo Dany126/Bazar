@@ -82,6 +82,7 @@ class OrderDetailView extends StatelessWidget {
               ),
             ),
           ),
+          
         ),
       ),
       body: SafeArea(

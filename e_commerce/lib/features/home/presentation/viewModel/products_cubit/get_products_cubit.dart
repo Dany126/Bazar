@@ -105,4 +105,6 @@ class GetProductsCubit extends Cubit<GetProductsState> {
       return Left(ServerFailure(message: e.toString()));
     }
   }
+
+  
 }
