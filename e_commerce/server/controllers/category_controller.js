@@ -1,4 +1,5 @@
 import { Category } from "../models/category_model.js";
+import { apiFeatures } from "../utils/apiFeatures.js";
 
 export const createCategory = async (req, res) => {
   try {
@@ -34,7 +35,9 @@ export const createCategory = async (req, res) => {
 
 export const getAllCategories = async (req, res) => {
   try {
-    const categories = await Category.find().select("-__v");
+    const { filter, skip, limit, sortBy } = apiFeatures(req.query);
+    console.log(filter);
+    const categories = await Category.find(filter).select("-__v");
     if (!categories) {
       return res.status(400).json({
         status: "Failed",
@@ -44,6 +47,29 @@ export const getAllCategories = async (req, res) => {
     return res.status(200).json({
       status: "Success",
       categories,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      status: "Failed",
+      message: "Something went wrong",
+    });
+  }
+};
+
+export const deleteCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const category = await Category.findByIdAndDelete(id);
+    if (!category) {
+      return res.status(400).json({
+        status: "Failed",
+        message: "Category Not Found",
+      });
+    }
+    return res.status(200).json({
+      status: "Success",
+      message: "Category deleted successfuly",
     });
   } catch (err) {
     console.log(err);

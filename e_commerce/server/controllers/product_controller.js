@@ -44,7 +44,7 @@ export const createProduct = async (req, res) => {
 
 export const getAllProducts = async (req, res) => {
   try {
-    const query = { ...req.query, ...req.params };
+    const query = { ...req.params, ...req.query };
     const { filter, limits, skip, sortBy } = apiFeatures(query);
     const products = await Product.find(filter)
       .sort(sortBy)

@@ -1,6 +1,7 @@
 import express from "express";
 import {
   createCategory,
+  deleteCategory,
   getAllCategories,
 } from "../controllers/category_controller.js";
 import { requireAuth } from "../middleware/requireAuth.js";
@@ -18,4 +19,4 @@ categoryRouter
   .post(upload.single("image"), createCategory)
   .get(getAllCategories);
 
-// requireAuth,
+categoryRouter.route("/:id").delete(deleteCategory);

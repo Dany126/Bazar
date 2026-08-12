@@ -1,28 +1,24 @@
 export const apiFeatures = (query) => {
-  const { categoryId, name, price, isRead, isFavourite, page, limit, sort } =
-    query;
-  let filter = {};
-  if (name) {
-    filter.name = name;
-  }
-  if (categoryId) {
-    filter.category = categoryId;
-  }
-  if (price) {
-    filter.price = price;
+  const allowedFilters = ["name", "category", "price", "isRead", "isFavourite"];
+
+  const filter = {};
+
+  for (const field of allowedFilters) {
+    if (query[field] !== undefined) {
+      if (field === "name") {
+        filter[field] = {
+          $regex: query.name,
+          $options: "i",
+        };
+      } else {
+        filter[field] = query[field];
+      }
+    }
   }
 
-  if (isRead) {
-    filter.isRead = isRead;
-  }
-
-  if (isFavourite) {
-    filter.isFavourite = isFavourite;
-  }
-
-  const sortBy = sort || "name";
-  const pages = page || 1;
-  const limits = limit || 10;
+  const sortBy = query.sort || "name";
+  const pages = Number(query.page) || 1;
+  const limits = Number(query.limit) || 10;
   const skip = (pages - 1) * limits;
   const obj = {
     filter,
