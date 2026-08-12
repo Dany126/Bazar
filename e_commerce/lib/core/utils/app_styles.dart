@@ -54,6 +54,13 @@ class AppStyles {
     color: AppColors.kPrimaryAccentColorDark,
   );
 
+  static TextStyle textStylesBold16Mono(BuildContext context) => TextStyle(
+    fontFamily: 'Gabarito',
+    fontSize: getFontSize(16, context),
+    fontWeight: FontWeight.w700,
+    color: Colors.black,
+  );
+
   static TextStyle textStylesBold13Mono(BuildContext context) => TextStyle(
     fontFamily: 'Gabarito',
     fontSize: getFontSize(13, context),

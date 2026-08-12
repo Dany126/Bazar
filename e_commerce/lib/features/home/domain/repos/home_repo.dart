@@ -24,4 +24,10 @@ abstract class HomeRepo {
     required int page,
     required int limit,
   });
+
+  Future<Either<Failure, List<ProductEntity>>> search({
+    required String query,
+    required int page,
+    required int limit,
+  });
 }

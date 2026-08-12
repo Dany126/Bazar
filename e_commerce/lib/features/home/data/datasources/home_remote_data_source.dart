@@ -1,4 +1,3 @@
-
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/error/failure.dart';
@@ -25,6 +24,11 @@ abstract class HomeRemoteDataSource {
 
   Future<Either<Failure, List<ProductModel>>> getProductsByCategory({
     required String category,
+    required int page,
+    required int limit,
+  });
+  Future<Either<Failure, List<ProductModel>>> search({
+    required String query,
     required int page,
     required int limit,
   });
@@ -120,6 +124,28 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     final response = await apiService.get(
       "$kGetProductByCategory/$category/product",
       queryParameters: {'page': page, 'limit': limit},
+    );
+
+    return response.fold((failure) => Left(failure), (data) {
+      final List<dynamic> productsJson = data['products'] as List<dynamic>;
+
+      final products = productsJson
+          .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+
+      return Right(products);
+    });
+  }
+
+  @override
+  Future<Either<Failure, List<ProductModel>>> search({
+    required String query,
+    required int page,
+    required int limit,
+  }) async {
+    final response = await apiService.get(
+      "$kBaseUrl/search",
+      queryParameters: {'page': page, 'limit': limit, 'q': query},
     );
 
     return response.fold((failure) => Left(failure), (data) {

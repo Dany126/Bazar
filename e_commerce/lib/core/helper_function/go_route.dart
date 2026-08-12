@@ -3,6 +3,7 @@ import 'package:e_commerce/features/auth/presentation/view/sign_in_view.dart';
 import 'package:e_commerce/features/auth/presentation/view/signup_view.dart';
 import 'package:e_commerce/features/home/presentation/views/category_details_view.dart';
 import 'package:e_commerce/features/home/presentation/views/home_view.dart';
+import 'package:e_commerce/features/home/presentation/views/search_view.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/all_item_in_category.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/new_arrivals.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/top_selling.dart';
@@ -52,6 +53,9 @@ Route onGenerateRoute(RouteSettings settings) {
 
     case NewArrivals.routeName:
       return MaterialPageRoute(builder: (context) => const NewArrivals());
+
+    case SearchView.routeName:
+      return MaterialPageRoute(builder: (context) => const SearchView());
 
     default:
       return MaterialPageRoute(

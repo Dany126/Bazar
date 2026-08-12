@@ -85,4 +85,21 @@ class HomeRepositoryImpl implements HomeRepo {
       (products) => Right(products),
     );
   }
+
+  @override
+  Future<Either<Failure, List<ProductEntity>>> search({
+    required String query,
+    required int page,
+    required int limit,
+  }) async {
+    final result = await remoteDataSource.search(
+      query: query,
+      page: page,
+      limit: limit,
+    );
+    return result.fold(
+      (failure) => Left(failure),
+      (products) => Right(products),
+    );
+  }
 }
