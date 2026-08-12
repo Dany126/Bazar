@@ -28,16 +28,20 @@ export const createCategory = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: "Failed",
-      message: "Something went wrong",
+      message: "Internal Server Error",
     });
   }
 };
 
 export const getAllCategories = async (req, res) => {
   try {
-    const { filter, skip, limit, sortBy } = apiFeatures(req.query);
+    const { filter, skip, limits, sortBy } = apiFeatures(req.query);
     console.log(filter);
-    const categories = await Category.find(filter).select("-__v");
+    const categories = await Category.find(filter)
+      .limit(limits)
+      .skip(skip)
+      .sort(sortBy)
+      .select("-__v");
     if (!categories) {
       return res.status(400).json({
         status: "Failed",
@@ -52,7 +56,7 @@ export const getAllCategories = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: "Failed",
-      message: "Something went wrong",
+      message: "Internal Server Error",
     });
   }
 };
@@ -75,7 +79,7 @@ export const deleteCategory = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: "Failed",
-      message: "Something went wrong",
+      message: "Internal Server Error",
     });
   }
 };

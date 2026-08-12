@@ -1,5 +1,12 @@
 export const apiFeatures = (query) => {
-  const allowedFilters = ["name", "category", "price", "isRead", "isFavourite"];
+  const allowedFilters = [
+    "name",
+    "category",
+    "price",
+    "isRead",
+    "isFavourite",
+    "rating",
+  ];
 
   const filter = {};
 
@@ -16,6 +23,17 @@ export const apiFeatures = (query) => {
     }
   }
 
+  if (query.minPrice !== undefined || query.maxPrice !== undefined) {
+    filter.price = {};
+
+    if (query.minPrice !== undefined) {
+      filter.price.$gte = Number(query.minPrice);
+    }
+
+    if (query.maxPrice !== undefined) {
+      filter.price.$lte = Number(query.maxPrice);
+    }
+  }
   const sortBy = query.sort || "name";
   const pages = Number(query.page) || 1;
   const limits = Number(query.limit) || 10;

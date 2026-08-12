@@ -12,7 +12,7 @@ import { requireAuth } from "../middleware/requireAuth.js";
 
 export const orderRouter = express.Router();
 
-// orderRouter.use(requireAuth);
+orderRouter.use(requireAuth);
 
 orderRouter.route("/").post(checkStock, createOrder).get(getAllOrders);
 orderRouter

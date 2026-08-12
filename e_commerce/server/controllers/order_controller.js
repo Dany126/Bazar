@@ -63,7 +63,7 @@ export const createOrder = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: "Failed",
-      message: "Something went wrong",
+      message: "Internal Server Error",
     });
   }
 };
@@ -85,7 +85,7 @@ export const getAllOrders = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: "Failed",
-      message: "Something went wrong",
+      message: "Internal Server Error",
     });
   }
 };
@@ -108,7 +108,7 @@ export const getOrder = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: "Failed",
-      message: "Something went wrong",
+      message: "Internal Server Error",
     });
   }
 };
@@ -143,7 +143,7 @@ export const updateOrder = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: "Failed",
-      message: "Something went wrong",
+      message: "Internal Server Error",
     });
   }
 };
@@ -166,7 +166,7 @@ export const deleteOrder = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: "Failed",
-      message: "Something went wrong",
+      message: "Internal Server Error",
     });
   }
 };

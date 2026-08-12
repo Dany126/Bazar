@@ -16,10 +16,10 @@ export const getAllUsers = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    return res.status(500).json({
-      status: "Failed",
-      message: "Something went wrong",
-    });
+return res.status(500).json({
+            status: "Failed",
+            message: "Internal Server Error"
+        })
   }
 };
 
@@ -86,10 +86,10 @@ export const updateUser = async (req, res) => {
   } catch (err) {
     console.log(err);
 
-    return res.status(500).json({
-      status: "Failed",
-      message: "Something went wrong",
-    });
+return res.status(500).json({
+            status: "Failed",
+            message: "Internal Server Error"
+        })
   }
 };
 

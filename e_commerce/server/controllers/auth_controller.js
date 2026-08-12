@@ -79,8 +79,8 @@ export const register = async (req, res) => {
   } catch (err) {
     console.log(err);
     return res.status(500).json({
-      status: "failed",
-      message: "Some Error Occurred",
+      status: "Failed",
+      message: "Internal Server Error",
     });
   }
 };
@@ -135,8 +135,8 @@ export const login = async (req, res) => {
   } catch (err) {
     console.log(err);
     return res.status(500).json({
-      success: false,
-      message: "Something went wrong! Please try again later",
+      status: "Failed",
+      message: "Internal Server Error",
     });
   }
 };
@@ -198,9 +198,10 @@ export const refresh = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    return res.status(500).json({
-      messsage: "internal server error",
-    });
+return res.status(500).json({
+            status: "Failed",
+            message: "Internal Server Error"
+        })
   }
 };
 
@@ -251,10 +252,10 @@ export const forgetPassword = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    return res.status(500).json({
-      status: "failed",
-      message: "Some Error Occurred",
-    });
+return res.status(500).json({
+            status: "Failed",
+            message: "Internal Server Error"
+        })
   }
 };
 
@@ -293,8 +294,9 @@ export const resetPassword = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-    return res.status(500).json({
-      messsage: "internal server error",
-    });
+return res.status(500).json({
+            status: "Failed",
+            message: "Internal Server Error"
+        })
   }
 };

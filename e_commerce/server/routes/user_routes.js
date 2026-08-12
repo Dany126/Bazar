@@ -1,4 +1,4 @@
-import express from "express";
+import express, { application } from "express";
 import {
   register,
   login,
@@ -23,9 +23,8 @@ userRouter.post("/logout", logoutHandler);
 userRouter.post("/forget-password", forgetPassword);
 userRouter.post("/reset-password", resetPassword);
 
-userRouter.route("/", getAllUsers);
+userRouter.use(requireAuth);
 
-userRouter
-  .route("/")
-  .patch(requireAuth, updateUser)
-  .delete(requireAuth, deleteUser);
+userRouter.route("/").get(getAllUsers);
+
+userRouter.route("/:id").patch(updateUser).delete(deleteUser);

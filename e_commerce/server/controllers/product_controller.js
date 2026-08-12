@@ -37,7 +37,7 @@ export const createProduct = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: "Failed",
-      message: "Something went wrong",
+      message: "Internal Server Error",
     });
   }
 };
@@ -64,7 +64,7 @@ export const getAllProducts = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: "Failed",
-      message: "Something went wrong",
+      message: "Internal Server Error",
     });
   }
 };
@@ -87,7 +87,7 @@ export const getProduct = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: "Failed",
-      message: "Something went wrong",
+      message: "Internal Server Error",
     });
   }
 };
@@ -112,7 +112,7 @@ export const updateProduct = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: "Failed",
-      message: "Something went wrong",
+      message: "Internal Server Error",
     });
   }
 };
@@ -135,7 +135,7 @@ export const deleteProduct = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: "Failed",
-      message: "Something went wrong",
+      message: "Internal Server Error",
     });
   }
 };

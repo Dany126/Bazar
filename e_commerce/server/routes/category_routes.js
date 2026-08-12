@@ -12,7 +12,7 @@ export const categoryRouter = express.Router();
 
 categoryRouter.use(requireAuth);
 
-categoryRouter.use("/:categoryId/product", productRouter);
+categoryRouter.use("/:category/product", productRouter);
 
 categoryRouter
   .route("/")

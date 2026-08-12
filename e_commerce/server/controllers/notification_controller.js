@@ -43,7 +43,7 @@ export const getAllNotifications = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: "Failed",
-      message: "Something went wrong",
+      message: "Internal Server Error",
     });
   }
 };
@@ -85,7 +85,7 @@ export const updateNotification = async (req, res) => {
     console.log(err);
     return res.status(500).json({
       status: "Failed",
-      message: "Something went wrong`",
+      message: "Internal Server Error",
     });
   }
 };
