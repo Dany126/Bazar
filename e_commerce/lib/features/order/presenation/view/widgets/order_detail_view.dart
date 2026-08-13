@@ -1,7 +1,7 @@
 import 'package:e_commerce/core/utils/app_styles.dart';
 
 import 'package:e_commerce/features/order/domin/entity/order_entity.dart';
-import 'package:e_commerce/features/order/presenation/modelview/cubit/time_line_step_model_data.dart';
+import 'package:e_commerce/features/order/data/model/time_line_step_model_data.dart';
 import 'package:e_commerce/features/order/presenation/view/widgets/cancelled_order_card.dart';
 import 'package:e_commerce/features/order/presenation/view/widgets/order_items_card.dart';
 import 'package:e_commerce/features/order/presenation/view/widgets/payment_details.dart';

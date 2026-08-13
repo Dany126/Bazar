@@ -1,4 +1,7 @@
+import 'dart:developer';
+
 import 'package:dartz/dartz.dart';
+import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/core/services/api_services.dart';
 import 'package:e_commerce/features/order/data/model/order_model.dart';
@@ -17,7 +20,7 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
     required String paymentMethod,
   }) async {
     final result = await apiService.post(
-      '/api/orders',
+      '$kBaseUrl/order',
       data: {
         'products': products,
         'totalPrice': totalPrice,
@@ -44,23 +47,37 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
     required String orderStatus,
   }) async {
     final result = await apiService.get(
-      '/api/orders',
+      '$kBaseUrl/order',
       queryParameters: {'userId': userId, 'orderStatus': orderStatus},
     );
+    log(result.toString());
 
-    return result.fold((failure) => Left(failure), (response) {
-      try {
-        final List ordersJson = response is Map
-            ? (response['orders'] ?? []) as List
-            : response as List;
+    return result.fold(
+      (failure) {
+        // Backend returns 400 + "No Orders Found" style message when the list is empty,
+        // instead of 200 + []. Treat that as an empty list, not a real error.
+        final message = failure.message.toLowerCase();
+        if (message.contains('no order') || message.contains('not found')) {
+          return const Right(<OrderModel>[]);
+        }
+        return Left(failure);
+      },
+      (response) {
+        try {
+          final List ordersJson = response is Map
+              ? (response['orders'] ?? []) as List
+              : response as List;
 
-        final orders = ordersJson
-            .map((order) => OrderModel.fromJson(order as Map<String, dynamic>))
-            .toList();
-        return Right(orders);
-      } catch (e) {
-        return Left(ServerFailure(message: e.toString()));
-      }
-    });
+          final orders = ordersJson
+              .map(
+                (order) => OrderModel.fromJson(order as Map<String, dynamic>),
+              )
+              .toList();
+          return Right(orders);
+        } catch (e) {
+          return Left(ServerFailure(message: e.toString()));
+        }
+      },
+    );
   }
 }

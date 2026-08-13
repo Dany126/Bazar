@@ -20,12 +20,11 @@ class _MainViewState extends State<MainView> {
   final List<Widget> screens = const [
     HomeView(),
     NotificationView(),
-    OrderView(),
+    OrderView(userId: '6a79c81d8a67e79b3d94c9f4'),
     ProfileView(),
   ];
 
   @override
-
   Widget build(BuildContext context) {
     return Scaffold(
       body: IndexedStack(index: currentIndex, children: screens),

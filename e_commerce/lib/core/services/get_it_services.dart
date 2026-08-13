@@ -39,6 +39,13 @@ import 'package:e_commerce/features/notification/domain/usecases/get_unread_noti
 import 'package:e_commerce/features/notification/domain/usecases/mark_notification_as_fav.dart';
 import 'package:e_commerce/features/notification/domain/usecases/mark_notification_as_read.dart';
 import 'package:e_commerce/features/notification/presentation/cubit/notification_cubit.dart';
+import 'package:e_commerce/features/order/data/data_source/remote_data_source/order_remo_data_source_impl.dart';
+import 'package:e_commerce/features/order/data/repo/order_repo_impl.dart';
+import 'package:e_commerce/features/order/domin/data_source/remote_data_source/order_remo_data_source.dart';
+import 'package:e_commerce/features/order/domin/repo/order_repo.dart';
+import 'package:e_commerce/features/order/domin/use_case/create_order_use_case.dart';
+import 'package:e_commerce/features/order/domin/use_case/get_order_use_case.dart';
+import 'package:e_commerce/features/order/presenation/modelview/cubit/order_cubit.dart';
 import 'package:e_commerce/features/search/data/data_source/search_remote_data_impl.dart';
 import 'package:e_commerce/features/search/data/repo/search_repo_impl.dart';
 import 'package:e_commerce/features/search/domain/data_source/search_remote_data.dart';
@@ -297,5 +304,44 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
   );
   getIt.registerFactory<SearchCubit>(
     () => SearchCubit(getIt<SearchProductsUsecase>()),
+  );
+
+  // ==========================================================
+  // ORDER DATA SOURCE
+  // ==========================================================
+
+  getIt.registerLazySingleton<OrderRemoteDataSource>(
+    () => OrderRemoteDataSourceImpl(getIt<ApiService>()),
+  );
+
+  // ==========================================================
+  // ORDER REPOSITORY
+  // ==========================================================
+
+  getIt.registerLazySingleton<OrderRepository>(
+    () => OrderRepositoryImpl(getIt<OrderRemoteDataSource>()),
+  );
+
+  // ==========================================================
+  // ORDER USE CASES
+  // ==========================================================
+
+  getIt.registerLazySingleton<CreateOrderUseCase>(
+    () => CreateOrderUseCase(getIt<OrderRepository>()),
+  );
+
+  getIt.registerLazySingleton<GetOrdersUseCase>(
+    () => GetOrdersUseCase(getIt<OrderRepository>()),
+  );
+
+  // ==========================================================
+  // ORDER CUBIT
+  // ==========================================================
+
+  getIt.registerFactory<OrderCubit>(
+    () => OrderCubit(
+      createOrderUseCase: getIt<CreateOrderUseCase>(),
+      getOrdersUseCase: getIt<GetOrdersUseCase>(),
+    ),
   );
 }

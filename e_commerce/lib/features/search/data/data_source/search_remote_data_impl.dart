@@ -1,4 +1,7 @@
+import 'dart:developer';
+
 import 'package:dartz/dartz.dart';
+import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/core/services/api_services.dart';
 import 'package:e_commerce/features/home/data/models/product_model.dart';
@@ -16,12 +19,14 @@ class SearchRemoteDataSourceImpl implements SearchRemoteDataSource {
     required SearchFilterEntity filter,
   }) async {
     final result = await apiService.get(
-      '/product/',
+      '$kBaseUrl/product',
       queryParameters: _buildQuery(query, filter),
     );
 
     return result.fold((failure) => Left(failure), (response) {
-      final List<dynamic> data = response['data'] ?? response['results'] ?? [];
+      log(response.toString());
+      final List<dynamic> data =
+          response['products'] ?? response['results'] ?? [];
       final products = data.map((json) => ProductModel.fromJson(json)).toList();
       return Right(products);
     });
@@ -29,9 +34,9 @@ class SearchRemoteDataSourceImpl implements SearchRemoteDataSource {
 
   Map<String, dynamic> _buildQuery(String query, SearchFilterEntity filter) {
     return {
-      'search': query,
+      'name': query,
       'sort': _sortParam(filter.sortBy),
-      if (filter.gender != null) 'gender': filter.gender!.name,
+      // if (filter.gender != null) 'gender': filter.gender!.name,
       if (filter.deals != null) 'deals': filter.deals!.name,
       if (filter.minPrice != null) 'minPrice': filter.minPrice,
       if (filter.maxPrice != null) 'maxPrice': filter.maxPrice,

@@ -48,7 +48,10 @@ Route onGenerateRoute(RouteSettings settings) {
     case MainView.routeName:
       return MaterialPageRoute(builder: (context) => const MainView());
     case OrderView.routeName:
-      return MaterialPageRoute(builder: (context) => const OrderView());
+      return MaterialPageRoute(
+        builder: (context) =>
+            const OrderView(userId: '6a79c81d8a67e79b3d94c9f4'),
+      );
     case TopSelling.routeName:
       return MaterialPageRoute(builder: (context) => const TopSelling());
 

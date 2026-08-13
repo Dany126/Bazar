@@ -19,7 +19,6 @@ import 'package:e_commerce/features/home/presentation/views/widgets/product_grid
 import 'package:e_commerce/features/home/presentation/views/widgets/product_list_view.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/search_bar.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/top_selling.dart';
-import 'package:e_commerce/features/search/presentation/views/search_view.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -88,14 +87,7 @@ class _HomeViewBodyState extends State<HomeViewBody> {
           ],
         ),
 
-        SliverToBoxAdapter(
-          child: CustomSearchBar(
-            isSearch: false,
-            onTap: () {
-              Navigator.pushNamed(context, SearchView.routeName);
-            },
-          ),
-        ),
+        SliverToBoxAdapter(child: CustomSearchBar()),
 
         const SliverToBoxAdapter(child: SizedBox(height: 24)),
 
