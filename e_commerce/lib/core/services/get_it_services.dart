@@ -39,6 +39,12 @@ import 'package:e_commerce/features/notification/domain/usecases/get_unread_noti
 import 'package:e_commerce/features/notification/domain/usecases/mark_notification_as_fav.dart';
 import 'package:e_commerce/features/notification/domain/usecases/mark_notification_as_read.dart';
 import 'package:e_commerce/features/notification/presentation/cubit/notification_cubit.dart';
+import 'package:e_commerce/features/search/data/data_source/search_remote_data_impl.dart';
+import 'package:e_commerce/features/search/data/repo/search_repo_impl.dart';
+import 'package:e_commerce/features/search/domain/data_source/search_remote_data.dart';
+import 'package:e_commerce/features/search/domain/repo/search_repo.dart';
+import 'package:e_commerce/features/search/domain/use_case/search_products_use_case.dart';
+import 'package:e_commerce/features/search/presentation/cubit/search_cubit.dart';
 
 import 'package:get_it/get_it.dart';
 
@@ -278,5 +284,18 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
       markNotificationAsFav: getIt<MarkNotificationAsFav>(),
       getUnReadNotifications: getIt<GetUnReadNotifications>(),
     ),
+  );
+
+  getIt.registerLazySingleton<SearchRemoteDataSource>(
+    () => SearchRemoteDataSourceImpl(getIt<ApiService>()),
+  );
+  getIt.registerLazySingleton<SearchRepository>(
+    () => SearchRepositoryImpl(getIt<SearchRemoteDataSource>()),
+  );
+  getIt.registerLazySingleton<SearchProductsUsecase>(
+    () => SearchProductsUsecase(getIt<SearchRepository>()),
+  );
+  getIt.registerFactory<SearchCubit>(
+    () => SearchCubit(getIt<SearchProductsUsecase>()),
   );
 }

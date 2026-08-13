@@ -11,7 +11,7 @@ import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/g
 import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_state.dart';
 
 import 'package:e_commerce/features/home/presentation/views/category_details_view.dart';
-import 'package:e_commerce/features/home/presentation/views/search_view.dart';
+
 import 'package:e_commerce/features/home/presentation/views/widgets/category_list_view.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/custom_row.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/new_arrivals.dart';
@@ -19,6 +19,7 @@ import 'package:e_commerce/features/home/presentation/views/widgets/product_grid
 import 'package:e_commerce/features/home/presentation/views/widgets/product_list_view.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/search_bar.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/top_selling.dart';
+import 'package:e_commerce/features/search/presentation/views/search_view.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';

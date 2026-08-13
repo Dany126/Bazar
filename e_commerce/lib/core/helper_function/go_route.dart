@@ -3,12 +3,13 @@ import 'package:e_commerce/features/auth/presentation/view/sign_in_view.dart';
 import 'package:e_commerce/features/auth/presentation/view/signup_view.dart';
 import 'package:e_commerce/features/home/presentation/views/category_details_view.dart';
 import 'package:e_commerce/features/home/presentation/views/home_view.dart';
-import 'package:e_commerce/features/home/presentation/views/search_view.dart';
+
 import 'package:e_commerce/features/home/presentation/views/widgets/all_item_in_category.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/new_arrivals.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/top_selling.dart';
 import 'package:e_commerce/features/notification/presentation/view/notification_view.dart';
 import 'package:e_commerce/features/order/presenation/view/order_view.dart';
+import 'package:e_commerce/features/search/presentation/views/search_view.dart';
 import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
 import 'package:e_commerce/main_view.dart';
 import 'package:flutter/material.dart';

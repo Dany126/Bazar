@@ -1,5 +1,6 @@
-
 import 'package:cookie_jar/cookie_jar.dart';
+// import 'package:e_commerce/features/search/presentation/views/search_view.dart';
+import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
@@ -11,7 +12,6 @@ import 'package:e_commerce/core/notifications/fcm_service.dart';
 import 'package:e_commerce/core/services/api_services.dart';
 import 'package:e_commerce/core/services/get_it_services.dart';
 import 'package:e_commerce/core/utils/app_theme.dart';
-import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
 import 'package:e_commerce/firebase_options.dart';
 
 Future<void> main() async {
@@ -21,14 +21,10 @@ Future<void> main() async {
   // FIREBASE
   // ==========================================================
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
 
   // Background FCM handler
-  FirebaseMessaging.onBackgroundMessage(
-    firebaseMessagingBackgroundHandler,
-  );
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
 
   // ==========================================================
   // SHARED PREFERENCES
@@ -40,27 +36,19 @@ Future<void> main() async {
   // COOKIE STORAGE
   // ==========================================================
 
-  final appDirectory =
-      await getApplicationDocumentsDirectory();
+  final appDirectory = await getApplicationDocumentsDirectory();
 
-  final cookieDirectory =
-      '${appDirectory.path}/cookies';
+  final cookieDirectory = '${appDirectory.path}/cookies';
 
-  debugPrint(
-    'COOKIE DIRECTORY: $cookieDirectory',
-  );
+  debugPrint('COOKIE DIRECTORY: $cookieDirectory');
 
-  final cookieJar = PersistCookieJar(
-    storage: FileStorage(cookieDirectory),
-  );
+  final cookieJar = PersistCookieJar(storage: FileStorage(cookieDirectory));
 
   // ==========================================================
   // GET IT
   // ==========================================================
 
-  setupServiceLocator(
-    cookieJar: cookieJar,
-  );
+  setupServiceLocator(cookieJar: cookieJar);
 
   // ==========================================================
   // RESTORE SESSION
@@ -76,9 +64,7 @@ Future<void> main() async {
 
   final fcmService = FcmService(
     onNotificationTap: (data) {
-      debugPrint(
-        'NOTIFICATION TAP DATA: $data',
-      );
+      debugPrint('NOTIFICATION TAP DATA: $data');
 
       // You can navigate here later.
       //
@@ -87,9 +73,7 @@ Future<void> main() async {
       // navigatorKey.currentState?.pushNamed(...);
     },
     onForegroundMessage: (data) {
-      debugPrint(
-        'FOREGROUND NOTIFICATION DATA: $data',
-      );
+      debugPrint('FOREGROUND NOTIFICATION DATA: $data');
     },
   );
 
@@ -99,18 +83,14 @@ Future<void> main() async {
   // TOKEN REFRESH
   // ==========================================================
 
-  fcmService.onTokenRefresh(
-    (token) async {
-      debugPrint(
-        'NEW FCM TOKEN: $token',
-      );
+  fcmService.onTokenRefresh((token) async {
+    debugPrint('NEW FCM TOKEN: $token');
 
-      // IMPORTANT:
-      // Send this token to your Express backend.
-      //
-      // await registerDeviceToken(token);
-    },
-  );
+    // IMPORTANT:
+    // Send this token to your Express backend.
+    //
+    // await registerDeviceToken(token);
+  });
 
   // ==========================================================
   // START APP
@@ -132,4 +112,3 @@ class Bazar extends StatelessWidget {
     );
   }
 }
-
