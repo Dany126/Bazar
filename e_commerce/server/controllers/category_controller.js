@@ -36,7 +36,6 @@ export const createCategory = async (req, res) => {
 export const getAllCategories = async (req, res) => {
   try {
     const { filter, skip, limits, sortBy } = apiFeatures(req.query);
-    console.log(filter);
     const categories = await Category.find(filter)
       .limit(limits)
       .skip(skip)

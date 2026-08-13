@@ -10,7 +10,7 @@ import { upload } from "../utils/imageStore.js";
 
 export const categoryRouter = express.Router();
 
-categoryRouter.use(requireAuth);
+// categoryRouter.use(requireAuth);
 
 categoryRouter.use("/:category/product", productRouter);
 

@@ -1,6 +1,7 @@
 import { Order } from "../models/order_model.js";
 import { Product } from "../models/product_model.js";
 import { User } from "../models/user_model.js";
+import { apiFeatures } from "../utils/apiFeatures.js";
 import {
   createNotification,
   deleteNotification,
@@ -70,7 +71,13 @@ export const createOrder = async (req, res) => {
 
 export const getAllOrders = async (req, res) => {
   try {
-    const orders = await Order.find();
+    const query = { ...req.params, ...req.query };
+    const { filter, limits, skip, sortBy } = apiFeatures(query);
+    const orders = await Order.find(filter)
+      .limit(limits)
+      .skip(skip)
+      .sort(sortBy)
+      .populate("products.product");
     if (!orders) {
       return res.status(400).json({
         status: "Failed",

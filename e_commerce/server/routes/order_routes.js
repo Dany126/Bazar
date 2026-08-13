@@ -10,9 +10,9 @@ import { checkID } from "../middleware/checkID.js";
 import { checkStock } from "../middleware/checkStock.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 
-export const orderRouter = express.Router();
+export const orderRouter = express.Router({ mergeParams: true });
 
-orderRouter.use(requireAuth);
+// orderRouter.use(requireAuth);
 
 orderRouter.route("/").post(checkStock, createOrder).get(getAllOrders);
 orderRouter

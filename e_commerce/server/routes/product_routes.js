@@ -12,7 +12,7 @@ import { requireAuth } from "../middleware/requireAuth.js";
 
 export const productRouter = express.Router({ mergeParams: true });
 
-productRouter.use(requireAuth);
+// productRouter.use(requireAuth);
 
 productRouter
   .route("/")

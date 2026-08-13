@@ -13,6 +13,7 @@ import {
   updateUser,
 } from "../controllers/user_controller.js";
 import { requireAuth } from "../middleware/requireAuth.js";
+import { orderRouter } from "./order_routes.js";
 
 export const userRouter = express.Router();
 
@@ -23,7 +24,9 @@ userRouter.post("/logout", logoutHandler);
 userRouter.post("/forget-password", forgetPassword);
 userRouter.post("/reset-password", resetPassword);
 
-userRouter.use(requireAuth);
+// userRouter.use(requireAuth);
+
+userRouter.use("/:user/order", orderRouter);
 
 userRouter.route("/").get(getAllUsers);
 

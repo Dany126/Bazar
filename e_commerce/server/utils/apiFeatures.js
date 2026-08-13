@@ -3,6 +3,7 @@ export const apiFeatures = (query) => {
     "name",
     "category",
     "price",
+    "user",
     "isRead",
     "isFavourite",
     "rating",
