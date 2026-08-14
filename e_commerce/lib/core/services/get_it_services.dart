@@ -7,6 +7,14 @@ import 'package:e_commerce/core/network/network_info.dart';
 import 'package:e_commerce/core/notifications/fcm_service.dart';
 import 'package:e_commerce/core/notifications/socket_service.dart';
 import 'package:e_commerce/core/services/api_services.dart';
+import 'package:e_commerce/features/address/data/data_source/address_remote_data_source_impl.dart';
+import 'package:e_commerce/features/address/data/repo/address_repo_impl.dart';
+import 'package:e_commerce/features/address/domain/data_source/address_remote_data_source.dart';
+import 'package:e_commerce/features/address/domain/repo/address_repo.dart';
+import 'package:e_commerce/features/address/domain/use_case/add_address_use_case.dart';
+import 'package:e_commerce/features/address/domain/use_case/delete_address_use_case.dart';
+import 'package:e_commerce/features/address/domain/use_case/get_addresses_use_case.dart';
+import 'package:e_commerce/features/address/presentation/model_view/cubit/address_cubit.dart';
 import 'package:e_commerce/features/auth/data/auth_data_source/auth_remote_data_source_impl.dart';
 import 'package:e_commerce/features/auth/data/repo/auth_repo_auth.dart';
 import 'package:e_commerce/features/auth/domain/auth_data_source/auth_remote_data_source.dart';
@@ -17,6 +25,17 @@ import 'package:e_commerce/features/auth/domain/use_case/sign_up_usecase.dart';
 import 'package:e_commerce/features/auth/presentation/view_model/sign_in_cubit/sign_in_cubit.dart';
 import 'package:e_commerce/features/auth/presentation/view_model/sign_out/cubit/sign_out_cubit.dart';
 import 'package:e_commerce/features/auth/presentation/view_model/sign_up_cubit/sign_up_cubit.dart';
+import 'package:e_commerce/features/cart/data/data_source/remote_data_source_impl.dart';
+import 'package:e_commerce/features/cart/data/repo/cart_repo_impl.dart';
+import 'package:e_commerce/features/cart/domain/data_source/remote_data_source.dart';
+import 'package:e_commerce/features/cart/domain/repo/cart_repo.dart';
+import 'package:e_commerce/features/cart/domain/use_case/add_to_cart_use_case.dart';
+import 'package:e_commerce/features/cart/domain/use_case/apply_coupon_use_case.dart';
+import 'package:e_commerce/features/cart/domain/use_case/get_cart_use_case.dart';
+import 'package:e_commerce/features/cart/domain/use_case/remove_all_from_cart_use_case.dart';
+import 'package:e_commerce/features/cart/domain/use_case/remove_from_cart_use_case.dart';
+import 'package:e_commerce/features/cart/domain/use_case/update_cart_item_quantity_use_case.dart';
+import 'package:e_commerce/features/cart/presentation/cubit/cart_cubit.dart';
 
 import 'package:e_commerce/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:e_commerce/features/home/data/repo/home_repo_impl.dart';
@@ -46,6 +65,14 @@ import 'package:e_commerce/features/order/domin/repo/order_repo.dart';
 import 'package:e_commerce/features/order/domin/use_case/create_order_use_case.dart';
 import 'package:e_commerce/features/order/domin/use_case/get_order_use_case.dart';
 import 'package:e_commerce/features/order/presenation/modelview/cubit/order_cubit.dart';
+import 'package:e_commerce/features/payment_method/data/data_source/payment_method_remote_data_source_impl.dart';
+import 'package:e_commerce/features/payment_method/data/repo/payment_method_repo_impl.dart';
+import 'package:e_commerce/features/payment_method/domain/data_source/payment_method_remote_data_source.dart';
+import 'package:e_commerce/features/payment_method/domain/repo/payment_method_repo.dart';
+import 'package:e_commerce/features/payment_method/domain/use_case/add_payment_method_use_case.dart';
+import 'package:e_commerce/features/payment_method/domain/use_case/delete_payment_method_use_case.dart';
+import 'package:e_commerce/features/payment_method/domain/use_case/get_payment_methods_use_case.dart';
+import 'package:e_commerce/features/payment_method/presentation/model_view/cubit/payment_method_cubit.dart';
 import 'package:e_commerce/features/product_details/data/data_source/remote_data_source_impl.dart';
 import 'package:e_commerce/features/product_details/data/repo/product_details_repo_impl.dart';
 import 'package:e_commerce/features/product_details/domain/data_source/remote_data_source.dart';
@@ -388,6 +415,96 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
     () => ProductDetailsCubit(
       getProductDetailsUseCase: getIt<GetProductDetailsUseCase>(),
       addProductReviewUseCase: getIt<AddProductReviewUseCase>(),
+    ),
+  );
+
+  // ==========================================================
+  // CART
+  // ==========================================================
+  getIt.registerLazySingleton<CartRemoteDataSource>(
+    () => CartRemoteDataSourceImpl(getIt<ApiService>()),
+  );
+  getIt.registerLazySingleton<CartRepository>(
+    () => CartRepositoryImpl(getIt<CartRemoteDataSource>()),
+  );
+  getIt.registerLazySingleton<GetCartUseCase>(
+    () => GetCartUseCase(getIt<CartRepository>()),
+  );
+  getIt.registerLazySingleton<AddToCartUseCase>(
+    () => AddToCartUseCase(getIt<CartRepository>()),
+  );
+  getIt.registerLazySingleton<UpdateCartItemQuantityUseCase>(
+    () => UpdateCartItemQuantityUseCase(getIt<CartRepository>()),
+  );
+  getIt.registerLazySingleton<RemoveFromCartUseCase>(
+    () => RemoveFromCartUseCase(getIt<CartRepository>()),
+  );
+  getIt.registerLazySingleton<RemoveAllFromCartUseCase>(
+    () => RemoveAllFromCartUseCase(getIt<CartRepository>()),
+  );
+  getIt.registerLazySingleton<ApplyCouponUseCase>(
+    () => ApplyCouponUseCase(getIt<CartRepository>()),
+  );
+  getIt.registerFactory<CartCubit>(
+    () => CartCubit(
+      getCartUseCase: getIt<GetCartUseCase>(),
+      addToCartUseCase: getIt<AddToCartUseCase>(),
+      updateCartItemQuantityUseCase: getIt<UpdateCartItemQuantityUseCase>(),
+      removeFromCartUseCase: getIt<RemoveFromCartUseCase>(),
+      removeAllFromCartUseCase: getIt<RemoveAllFromCartUseCase>(),
+      applyCouponUseCase: getIt<ApplyCouponUseCase>(),
+    ),
+  );
+
+  // ==========================================================
+  // ADDRESS
+  // ==========================================================
+  getIt.registerLazySingleton<AddressRemoteDataSource>(
+    () => AddressRemoteDataSourceImpl(getIt<ApiService>()),
+  );
+  getIt.registerLazySingleton<AddressRepository>(
+    () => AddressRepositoryImpl(getIt<AddressRemoteDataSource>()),
+  );
+  getIt.registerLazySingleton<GetAddressesUseCase>(
+    () => GetAddressesUseCase(getIt<AddressRepository>()),
+  );
+  getIt.registerLazySingleton<AddAddressUseCase>(
+    () => AddAddressUseCase(getIt<AddressRepository>()),
+  );
+  getIt.registerLazySingleton<DeleteAddressUseCase>(
+    () => DeleteAddressUseCase(getIt<AddressRepository>()),
+  );
+  getIt.registerFactory<AddressCubit>(
+    () => AddressCubit(
+      getAddressesUseCase: getIt<GetAddressesUseCase>(),
+      addAddressUseCase: getIt<AddAddressUseCase>(),
+      deleteAddressUseCase: getIt<DeleteAddressUseCase>(),
+    ),
+  );
+
+  // ==========================================================
+  // PAYMENT METHOD
+  // ==========================================================
+  getIt.registerLazySingleton<PaymentMethodRemoteDataSource>(
+    () => PaymentMethodRemoteDataSourceImpl(getIt<ApiService>()),
+  );
+  getIt.registerLazySingleton<PaymentMethodRepository>(
+    () => PaymentMethodRepositoryImpl(getIt<PaymentMethodRemoteDataSource>()),
+  );
+  getIt.registerLazySingleton<GetPaymentMethodsUseCase>(
+    () => GetPaymentMethodsUseCase(getIt<PaymentMethodRepository>()),
+  );
+  getIt.registerLazySingleton<AddPaymentMethodUseCase>(
+    () => AddPaymentMethodUseCase(getIt<PaymentMethodRepository>()),
+  );
+  getIt.registerLazySingleton<DeletePaymentMethodUseCase>(
+    () => DeletePaymentMethodUseCase(getIt<PaymentMethodRepository>()),
+  );
+  getIt.registerFactory<PaymentMethodCubit>(
+    () => PaymentMethodCubit(
+      getPaymentMethodsUseCase: getIt<GetPaymentMethodsUseCase>(),
+      addPaymentMethodUseCase: getIt<AddPaymentMethodUseCase>(),
+      deletePaymentMethodUseCase: getIt<DeletePaymentMethodUseCase>(),
     ),
   );
 }
