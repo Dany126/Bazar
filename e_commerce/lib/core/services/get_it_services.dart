@@ -46,6 +46,13 @@ import 'package:e_commerce/features/order/domin/repo/order_repo.dart';
 import 'package:e_commerce/features/order/domin/use_case/create_order_use_case.dart';
 import 'package:e_commerce/features/order/domin/use_case/get_order_use_case.dart';
 import 'package:e_commerce/features/order/presenation/modelview/cubit/order_cubit.dart';
+import 'package:e_commerce/features/product_details/data/data_source/remote_data_source_impl.dart';
+import 'package:e_commerce/features/product_details/data/repo/product_details_repo_impl.dart';
+import 'package:e_commerce/features/product_details/domain/data_source/remote_data_source.dart';
+import 'package:e_commerce/features/product_details/domain/repo/product_details_repo.dart';
+import 'package:e_commerce/features/product_details/domain/use_case/add_product_review_use_case.dart';
+import 'package:e_commerce/features/product_details/domain/use_case/get_product_details_use_case.dart';
+import 'package:e_commerce/features/product_details/presentation/model_view/cubit/product_details_cubit.dart';
 import 'package:e_commerce/features/search/data/data_source/search_remote_data_impl.dart';
 import 'package:e_commerce/features/search/data/repo/search_repo_impl.dart';
 import 'package:e_commerce/features/search/domain/data_source/search_remote_data.dart';
@@ -342,6 +349,45 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
     () => OrderCubit(
       createOrderUseCase: getIt<CreateOrderUseCase>(),
       getOrdersUseCase: getIt<GetOrdersUseCase>(),
+    ),
+  );
+
+  // ==========================================================
+  // PRODUCT DETAILS DATA SOURCE
+  // ==========================================================
+
+  getIt.registerLazySingleton<ProductDetailsRemoteDataSource>(
+    () => ProductDetailsRemoteDataSourceImpl(getIt<ApiService>()),
+  );
+
+  // ==========================================================
+  // PRODUCT DETAILS REPOSITORY
+  // ==========================================================
+
+  getIt.registerLazySingleton<ProductDetailsRepository>(
+    () => ProductDetailsRepositoryImpl(getIt<ProductDetailsRemoteDataSource>()),
+  );
+
+  // ==========================================================
+  // PRODUCT DETAILS USE CASES
+  // ==========================================================
+
+  getIt.registerLazySingleton<GetProductDetailsUseCase>(
+    () => GetProductDetailsUseCase(getIt<ProductDetailsRepository>()),
+  );
+
+  getIt.registerLazySingleton<AddProductReviewUseCase>(
+    () => AddProductReviewUseCase(getIt<ProductDetailsRepository>()),
+  );
+
+  // ==========================================================
+  // PRODUCT DETAILS CUBIT
+  // ==========================================================
+
+  getIt.registerFactory<ProductDetailsCubit>(
+    () => ProductDetailsCubit(
+      getProductDetailsUseCase: getIt<GetProductDetailsUseCase>(),
+      addProductReviewUseCase: getIt<AddProductReviewUseCase>(),
     ),
   );
 }
