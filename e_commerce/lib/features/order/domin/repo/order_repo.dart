@@ -13,7 +13,6 @@ abstract class OrderRepository {
   });
 
   Future<Either<Failure, List<OrderEntity>>> getMyOrders({
-    required String userId,
     required OrderStatus orderStatus,
   });
 }

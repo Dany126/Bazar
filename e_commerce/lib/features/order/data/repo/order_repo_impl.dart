@@ -28,12 +28,8 @@ class OrderRepositoryImpl implements OrderRepository {
 
   @override
   Future<Either<Failure, List<OrderEntity>>> getMyOrders({
-    required String userId,
     required OrderStatus orderStatus,
   }) {
-    return remoteDataSource.getMyOrders(
-      userId: userId,
-      orderStatus: orderStatus.toString(),
-    );
+    return remoteDataSource.getMyOrders(orderStatus: orderStatus.toString());
   }
 }

@@ -4,6 +4,7 @@ import 'package:dartz/dartz.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/core/services/api_services.dart';
+import 'package:e_commerce/core/services/hive_server.dart';
 import 'package:e_commerce/features/order/data/model/order_model.dart';
 import 'package:e_commerce/features/order/domin/data_source/remote_data_source/order_remo_data_source.dart';
 
@@ -43,9 +44,9 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
 
   @override
   Future<Either<Failure, List<OrderModel>>> getMyOrders({
-    required String userId,
     required String orderStatus,
   }) async {
+    var userId = HiveService.authBox.get('userId');
     final result = await apiService.get(
       '$kBaseUrl/order',
       queryParameters: {'userId': userId, 'orderStatus': orderStatus},

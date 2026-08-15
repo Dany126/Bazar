@@ -1,6 +1,7 @@
 import 'package:dartz/dartz.dart';
-import 'package:hive/hive.dart';
+import 'package:e_commerce/core/services/hive_server.dart';
 import '../../../../core/error/failure.dart';
+
 import '../../domain/entity/user_entity.dart';
 import '../model/user_model.dart';
 
@@ -13,12 +14,10 @@ abstract class AuthLocalDataSource {
 class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   static const _userKey = 'user';
 
-  Box get _box => Hive.box('authBox');
-
   @override
   Future<Either<Failure, void>> cacheUser(UserModel user) async {
     try {
-      await _box.put(_userKey, user.toMap());
+      await HiveService.authBox.put(_userKey, user.toMap());
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(message: 'Failed to cache user: $e'));
@@ -27,7 +26,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
 
   @override
   Either<Failure, UserEntity> getCachedUser() {
-    final data = _box.get(_userKey);
+    final data = HiveService.authBox.get(_userKey);
     if (data == null) {
       return Left(CacheFailure(message: 'No cached user found'));
     }
@@ -41,7 +40,7 @@ class AuthLocalDataSourceImpl implements AuthLocalDataSource {
   @override
   Future<Either<Failure, void>> clearUser() async {
     try {
-      await _box.delete(_userKey);
+      await HiveService.authBox.delete(_userKey);
       return const Right(null);
     } catch (e) {
       return Left(CacheFailure(message: 'Failed to clear cache: $e'));

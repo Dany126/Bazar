@@ -13,6 +13,6 @@ class GetOrdersUseCase {
     required String userId,
     required OrderStatus filter,
   }) {
-    return repository.getMyOrders(userId: userId, orderStatus: filter);
+    return repository.getMyOrders(orderStatus: filter);
   }
 }

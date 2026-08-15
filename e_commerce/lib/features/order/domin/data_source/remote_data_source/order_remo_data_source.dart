@@ -11,7 +11,6 @@ abstract class OrderRemoteDataSource {
   });
 
   Future<Either<Failure, List<OrderModel>>> getMyOrders({
-    required String userId,
     required String orderStatus,
   });
 }
