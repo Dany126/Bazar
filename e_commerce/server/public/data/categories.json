@@ -1,14 +1,22 @@
 [
   {
-    "name": "Mobiles",
-    "image": "https://images.unsplash.com/photo-1511707171634-5f897ff02aa9"
+    "name": "Hoodies",
+    "image": "8d40b2ff9a729542c316774eec94b994b83da2b9.png"
   },
   {
-    "name": "Laptops",
-    "image": "https://images.unsplash.com/photo-1496181133206-80ce9b88a853"
+    "name": "Shorts",
+    "image": "45e089256a445baf6dc836e4a2a98d570af8e828.png"
+  },
+  {
+    "name": "Shoes",
+    "image": "d6a2b2a1513152eaec5478f821dc7d462a3e0d10.png"
+  },
+  {
+    "name": "Bag",
+    "image": "Ellipse 4.png"
   },
   {
     "name": "Accessories",
-    "image": "https://images.unsplash.com/photo-1505740420928-5e560c06d30e"
+    "image": "e35065d555b8804e24889a7e678b8503269047e8.png"
   }
 ]
