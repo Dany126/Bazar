@@ -1,9 +1,11 @@
 import { Variant } from "../models/product_variants_model.js";
 import { apiFeatures } from "../utils/apiFeatures.js";
+import convert from "color-convert";
 
 export const createVariant = async (req, res) => {
   try {
-    const variant = await Variant.create(req.body);
+    const color = `#${convert.keyword.hex(req.body.color)}`;
+    const variant = await Variant.create(req.body, color);
     if (!variant) {
       return res.status(400).json({
         status: "Failed",
@@ -78,7 +80,12 @@ export const getVariant = async (req, res) => {
 export const updateVariant = async (req, res) => {
   try {
     const { id } = req.params;
-    const updatedVariant = await Variant.findByIdAndUpdate(id, req.body, {
+    let body = { ...req.body };
+    if (req.body.color) {
+      const color = `#${convert.keyword.hex(req.body.color)}`;
+      body = { ...req.body, color: color };
+    }
+    const updatedVariant = await Variant.findByIdAndUpdate(id, body, {
       returnDocument: "after",
     });
     if (!updatedVariant) {
