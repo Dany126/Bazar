@@ -109,7 +109,7 @@ export const getAllCarts = async (req, res) => {
       .skip(skip)
       .sort(sortBy)
       .select("-__v");
-    if (!carts) {
+    if (!carts || carts.length <= 0) {
       return res.status(400).json({
         status: "Failed",
         message: "No cart found",
@@ -118,6 +118,31 @@ export const getAllCarts = async (req, res) => {
     return res.status(200).json({
       status: "Success",
       carts,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      status: "Failed",
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const updateCart = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedCart = await Cart.findByIdAndUpdate(id, req.body, {
+      returnDocument: "after",
+    });
+    if (!updatedCart) {
+      return res.status(400).json({
+        status: "Failed",
+        message: "Something went wrong while updating cart!",
+      });
+    }
+    return res.status(200).json({
+      status: "Success",
+      updatedCart,
     });
   } catch (err) {
     console.log(err);

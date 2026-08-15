@@ -3,6 +3,7 @@ import {
   createCart,
   deleteCart,
   getAllCarts,
+  updateCart,
 } from "../controllers/cart_controller.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { checkStock } from "../middleware/checkStock.js";
@@ -14,4 +15,4 @@ export const cartRouter = express.Router();
 
 cartRouter.route("/").post(checkStock, createCart).get(getAllCarts);
 
-cartRouter.route("/:id").delete(checkID, deleteCart);
+cartRouter.route("/:id").delete(checkID, deleteCart).patch(checkID, updateCart);
