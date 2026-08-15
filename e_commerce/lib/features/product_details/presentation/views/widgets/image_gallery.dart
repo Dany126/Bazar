@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:e_commerce/core/helper_function/fix_image_utl.dart';
 
 import 'package:flutter/material.dart';
 
@@ -48,8 +49,8 @@ class _ProductImageGalleryState extends State<ProductImageGallery> {
                       }
 
                       return CachedNetworkImage(
-                        imageUrl: widget.images[index],
-                        fit: BoxFit.cover,
+                        imageUrl: fixImageUrl(widget.images[index]),
+                        fit: BoxFit.fitHeight,
                         width: double.infinity,
                         placeholder: (context, url) {
                           return const Center(

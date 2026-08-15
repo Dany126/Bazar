@@ -129,6 +129,8 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
       queryParameters: {'page': page, 'limit': limit},
     );
 
+    log(response.toString());
+
     return response.fold((failure) => Left(failure), (data) {
       final List<dynamic> productsJson = data['products'] as List<dynamic>;
 

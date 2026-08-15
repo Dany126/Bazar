@@ -17,7 +17,7 @@ abstract class Failure extends Equatable {
 /// Server responded with an error (5xx, malformed body, generic 4xx not
 /// covered by a more specific Failure below).
 class ServerFailure extends Failure {
-  const ServerFailure( {required super.message, super.statusCode});
+  const ServerFailure({required super.message, super.statusCode});
 }
 
 /// No internet connection, or Dio couldn't establish a connection at all.

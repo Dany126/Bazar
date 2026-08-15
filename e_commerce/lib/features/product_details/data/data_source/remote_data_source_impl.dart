@@ -1,4 +1,6 @@
 // lib/features/product_details/data/data_source/product_details_remote_data_source_impl.dart
+import 'dart:developer';
+
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/error/failure.dart';
@@ -17,14 +19,28 @@ class ProductDetailsRemoteDataSourceImpl
   Future<Either<Failure, ProductDetailsModel>> getProductDetails({
     required String productId,
   }) async {
-    final result = await apiService.get('$kBaseUrl/product/$productId');
+    final result = await apiService.get('$kBaseUrl/product/$productId/variant');
+
+    log(result.toString());
 
     return result.fold((failure) => Left(failure), (response) {
       try {
-        final data = response is Map && response.containsKey('product')
-            ? response['product'] as Map<String, dynamic>
-            : response as Map<String, dynamic>;
-        return Right(ProductDetailsModel.fromJson(data));
+        final variants = response['variants'] as List<dynamic>? ?? [];
+
+        if (variants.isEmpty) {
+          return Left(ServerFailure(message: 'No product variants found'));
+        }
+
+        final firstVariant = variants.first as Map<String, dynamic>;
+
+        final product = firstVariant['product'] as Map<String, dynamic>;
+
+        return Right(
+          ProductDetailsModel.fromVariantsJson(
+            product: product,
+            variants: variants,
+          ),
+        );
       } catch (e) {
         return Left(ServerFailure(message: e.toString()));
       }
