@@ -1,6 +1,7 @@
 import 'package:e_commerce/features/auth/presentation/view/reset_password_view.dart';
 import 'package:e_commerce/features/auth/presentation/view/sign_in_view.dart';
 import 'package:e_commerce/features/auth/presentation/view/signup_view.dart';
+import 'package:e_commerce/features/cart/presentation/view/cart_view.dart';
 import 'package:e_commerce/features/home/presentation/views/category_details_view.dart';
 import 'package:e_commerce/features/home/presentation/views/home_view.dart';
 
@@ -9,6 +10,7 @@ import 'package:e_commerce/features/home/presentation/views/widgets/new_arrivals
 import 'package:e_commerce/features/home/presentation/views/widgets/top_selling.dart';
 import 'package:e_commerce/features/notification/presentation/view/notification_view.dart';
 import 'package:e_commerce/features/order/presenation/view/order_view.dart';
+import 'package:e_commerce/features/product_details/presentation/views/product_details_view.dart';
 import 'package:e_commerce/features/search/presentation/views/search_view.dart';
 import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
 import 'package:e_commerce/main_view.dart';
@@ -60,6 +62,14 @@ Route onGenerateRoute(RouteSettings settings) {
 
     case SearchView.routeName:
       return MaterialPageRoute(builder: (context) => const SearchView());
+
+    case ProductDetailsView.routeName:
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (context) => const ProductDetailsView(),
+      );
+    case CartView.routeName:
+      return MaterialPageRoute(builder: (context) => const CartView());
 
     default:
       return MaterialPageRoute(

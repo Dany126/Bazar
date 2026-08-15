@@ -1,5 +1,6 @@
 import 'package:e_commerce/features/home/domain/entity/product_entity.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/product_card.dart';
+import 'package:e_commerce/features/product_details/presentation/views/product_details_view.dart';
 import 'package:flutter/material.dart';
 
 class ProductListView extends StatelessWidget {
@@ -28,7 +29,16 @@ class ProductListView extends StatelessWidget {
             padding: const EdgeInsets.only(right: 12),
             child: SizedBox(
               width: cardWidth,
-              child: ProductCard(product: products[index]),
+              child: ProductCard(
+                product: products[index],
+                onTap: () {
+                  Navigator.pushNamed(
+                    context,
+                    ProductDetailsView.routeName,
+                    arguments: products[index].id,
+                  );
+                },
+              ),
             ),
           );
         },

@@ -1,4 +1,8 @@
 // lib/features/product_details/presenation/view/widgets/product_details_view_body.dart
+import 'package:e_commerce/core/utils/app_colors.dart';
+import 'package:e_commerce/core/utils/app_styles.dart';
+import 'package:e_commerce/core/utils/assets.dart';
+import 'package:e_commerce/features/cart/presentation/cubit/cart_cubit.dart';
 import 'package:e_commerce/features/product_details/domain/entity/product_details_entity.dart';
 import 'package:e_commerce/features/product_details/presentation/model_view/cubit/product_details_cubit.dart';
 import 'package:e_commerce/features/product_details/presentation/model_view/cubit/product_details_state.dart';
@@ -51,6 +55,55 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
             children: [
               CustomScrollView(
                 slivers: [
+                  SliverPadding(
+                    padding: EdgeInsets.symmetric(horizontal: 16.0),
+                    sliver: SliverAppBar(
+                      expandedHeight:
+                          MediaQuery.of(context).size.height * 0.001,
+
+                      floating: true,
+                      snap: true,
+                      elevation: 0,
+                      automaticallyImplyLeading: false,
+                      backgroundColor: Colors.transparent,
+                      flexibleSpace: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          CircleAvatar(
+                            backgroundColor: const Color(0xFFF4F4F4),
+                            child: GestureDetector(
+                              onTap: () => Navigator.pop(context),
+                              child: Transform.rotate(
+                                angle: 3.14,
+                                child: Image.asset(
+                                  Assets.assetsImagesArrowright,
+                                ),
+                              ),
+                            ),
+                          ),
+                          CircleAvatar(
+                            backgroundColor: const Color(0xFFF4F4F4),
+                            child: IconButton(
+                              icon: Icon(
+                                product.isFavorite
+                                    ? Icons.favorite
+                                    : Icons.favorite_border,
+                                color: product.isFavorite
+                                    ? Colors.red
+                                    : Colors.black,
+                              ),
+                              onPressed: () {
+                                setState(() {
+                                  product.isFavorite = !product.isFavorite;
+                                });
+                              },
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
                   SliverToBoxAdapter(
                     child: ProductImageGallery(images: product.images),
                   ),
@@ -76,8 +129,11 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
                             ),
                           ),
                         const SizedBox(height: 20),
-                        _buildExpandableRow('Shipping & Returns'),
-                        const Divider(height: 24),
+                        Text(
+                          "Shopping & Returns",
+                          style: AppStyles.textStylesBold16Mono(context),
+                        ),
+
                         _buildReviewsHeader(product),
                         const SizedBox(height: 12),
                         ...product.reviews.map(
@@ -110,18 +166,13 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          product.name,
-          style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
-        const SizedBox(height: 4),
+        Text(product.name, style: AppStyles.textStylesBold16Mono(context)),
+        const SizedBox(height: 5),
         Text(
           '\$${product.price.toStringAsFixed(0)}',
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.w600,
-            color: kProductAccentColor,
-          ),
+          style: AppStyles.textStylesBold16Mono(
+            context,
+          ).copyWith(color: kProductAccentColor),
         ),
       ],
     );
@@ -130,23 +181,36 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
   Widget _buildSizeRow(BuildContext context, ProductDetailsEntity product) {
     return InkWell(
       onTap: () => _openSizeSheet(context, product),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text('Size', style: TextStyle(fontSize: 15)),
-          Row(
-            children: [
-              Text(
-                selectedSize ?? '-',
-                style: const TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w500,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.kCardBackgroundColor,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Size',
+              style: AppStyles.textStylesRegular16(
+                context,
+              ).copyWith(color: Colors.black),
+            ),
+            Row(
+              children: [
+                Text(
+                  selectedSize ?? '-',
+                  style: AppStyles.textStylesRegular16(context),
                 ),
-              ),
-              const Icon(Icons.keyboard_arrow_down, size: 20),
-            ],
-          ),
-        ],
+                const SizedBox(width: 8),
+                Transform.rotate(
+                  angle: 3.14 / 2, // Rotation angle in radians
+                  child: Image.asset(Assets.assetsImagesArrowright, height: 25),
+                ),
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -154,54 +218,73 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
   Widget _buildColorRow(BuildContext context, ProductDetailsEntity product) {
     return InkWell(
       onTap: () => _openColorSheet(context, product),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Text('Color', style: TextStyle(fontSize: 15)),
-          Row(
-            children: [
-              if (selectedColor != null)
-                Container(
-                  width: 16,
-                  height: 16,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: _colorFromHex(selectedColor!),
+      borderRadius: BorderRadius.circular(20),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: AppColors.kCardBackgroundColor,
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Color',
+              style: AppStyles.textStylesRegular16(
+                context,
+              ).copyWith(color: Colors.black),
+            ),
+            Row(
+              children: [
+                if (selectedColor != null)
+                  Container(
+                    width: 18,
+                    height: 18,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _colorFromHex(selectedColor!),
+                    ),
                   ),
+                const SizedBox(width: 8),
+                Transform.rotate(
+                  angle: 3.14 / 2,
+                  child: Image.asset(Assets.assetsImagesArrowright, height: 25),
                 ),
-              const SizedBox(width: 8),
-              const Icon(Icons.keyboard_arrow_down, size: 20),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }
 
   Widget _buildQuantityRow(ProductDetailsEntity product) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        const Text('Quantity', style: TextStyle(fontSize: 15)),
-        QuantityStepper(
-          quantity: quantity,
-          onChanged: (value) => setState(() => quantity = value),
-          maxQuantity: product.stock,
-        ),
-      ],
-    );
-  }
-
-  Widget _buildExpandableRow(String title) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
-        ),
-        const Icon(Icons.keyboard_arrow_down, size: 20),
-      ],
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: AppColors.kCardBackgroundColor,
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            'Quantity',
+            style: AppStyles.textStylesRegular16(
+              context,
+            ).copyWith(color: Colors.black),
+          ),
+          QuantityStepper(
+            quantity: quantity,
+            onChanged: (value) {
+              setState(() {
+                quantity = value;
+              });
+            },
+            maxQuantity: product.stock,
+          ),
+        ],
+      ),
     );
   }
 
@@ -209,66 +292,74 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Reviews',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.start,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text('Reviews', style: AppStyles.textStylesBold16Mono(context)),
+          ],
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 12),
+
         Row(
           children: [
             Text(
               '${product.avgRating} Ratings',
-              style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w500),
+              style: AppStyles.textStylesSemiBold24(context),
             ),
-            const SizedBox(width: 8),
-            Text(
-              '${product.ratingsQuantity} Reviews',
-              style: const TextStyle(fontSize: 13, color: Colors.black45),
-            ),
+            const SizedBox(width: 12),
           ],
+        ),
+        const SizedBox(height: 12),
+        Text(
+          '${product.ratingsQuantity} Reviews',
+          style: AppStyles.textStylesRegular12(context),
         ),
       ],
     );
   }
 
   Widget _buildBottomBar(BuildContext context, ProductDetailsEntity product) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black12,
-            blurRadius: 8,
-            offset: Offset(0, -2),
-          ),
-        ],
-      ),
-      child: SafeArea(
-        top: false,
-        child: Row(
-          children: [
-            Text(
-              '\$${product.price.toStringAsFixed(0)}',
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+    return GestureDetector(
+      onTap: () {
+        context.read<CartCubit>().addToCart(
+          productId: product.id,
+          quantity: quantity,
+          color: selectedColor,
+          size: selectedSize,
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: const BoxDecoration(color: Colors.transparent),
+        child: SafeArea(
+          top: false,
+          child: Container(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+
+            decoration: BoxDecoration(
+              color: AppColors.kPrimaryAccentColor,
+              borderRadius: BorderRadius.circular(30),
             ),
-            const Spacer(),
-            SizedBox(
-              width: 180,
-              height: 48,
-              child: ElevatedButton(
-                onPressed: product.stock > 0 ? () {} : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: kProductAccentColor,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(24),
-                  ),
+            child: Row(
+              children: [
+                Text(
+                  '\$${product.price.toStringAsFixed(0)}',
+                  style: AppStyles.textStylesBold16Mono(
+                    context,
+                  ).copyWith(color: Colors.white),
                 ),
-                child: const Text('Add to Bag'),
-              ),
+
+                const Spacer(),
+                Text(
+                  'Add to Cart',
+                  style: AppStyles.textStylesBold16Mono(
+                    context,
+                  ).copyWith(color: Colors.white),
+                ),
+              ],
             ),
-          ],
+          ),
         ),
       ),
     );

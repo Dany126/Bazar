@@ -45,13 +45,12 @@ class QuantityStepper extends StatelessWidget {
       onTap: onTap,
       borderRadius: BorderRadius.circular(14),
       child: Container(
-        width: 28,
-        height: 28,
+        padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
           color: onTap == null ? Colors.grey[300] : kProductAccentColor,
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, size: 16, color: Colors.white),
+        child: Icon(icon, size: 20, color: Colors.white),
       ),
     );
   }

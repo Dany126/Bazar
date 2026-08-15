@@ -3,6 +3,7 @@ import 'package:e_commerce/core/services/get_it_services.dart';
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
 import 'package:e_commerce/core/utils/assets.dart';
+import 'package:e_commerce/features/cart/presentation/view/cart_view.dart';
 
 import 'package:e_commerce/features/home/presentation/viewModel/categories_cubit/get_categories_cubit.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/categories_cubit/get_categories_state.dart';
@@ -61,25 +62,30 @@ class _HomeViewBodyState extends State<HomeViewBody> {
           title: Text("Bazar", style: AppStyles.textStylesSemiBold20(context)),
 
           actions: [
-            Padding(
-              padding: const EdgeInsets.only(right: 16),
+            GestureDetector(
+              onTap: () {
+                Navigator.pushNamed(context, CartView.routeName);
+              },
+              child: Padding(
+                padding: const EdgeInsets.only(right: 16),
 
-              child: Container(
-                decoration: const ShapeDecoration(
-                  color: AppColors.kPrimaryColor,
+                child: Container(
+                  decoration: const ShapeDecoration(
+                    color: AppColors.kPrimaryColor,
 
-                  shape: CircleBorder(),
-                ),
+                    shape: CircleBorder(),
+                  ),
 
-                child: const Padding(
-                  padding: EdgeInsets.all(12),
+                  child: const Padding(
+                    padding: EdgeInsets.all(12),
 
-                  child: Image(
-                    image: AssetImage(Assets.assetsImagesBagIcon),
+                    child: Image(
+                      image: AssetImage(Assets.assetsImagesBagIcon),
 
-                    height: 16,
+                      height: 16,
 
-                    width: 16,
+                      width: 16,
+                    ),
                   ),
                 ),
               ),

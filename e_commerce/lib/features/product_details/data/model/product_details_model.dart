@@ -3,7 +3,7 @@ import 'package:e_commerce/features/product_details/data/model/review_model.dart
 import 'package:e_commerce/features/product_details/domain/entity/product_details_entity.dart';
 
 class ProductDetailsModel extends ProductDetailsEntity {
-  const ProductDetailsModel({
+  ProductDetailsModel({
     required super.id,
     required super.name,
     required super.price,
@@ -14,6 +14,7 @@ class ProductDetailsModel extends ProductDetailsEntity {
     required super.soldCount,
     required super.categoryId,
     super.description,
+    super.isFavorite = false,
     super.colors,
     super.sizes,
     super.reviews,

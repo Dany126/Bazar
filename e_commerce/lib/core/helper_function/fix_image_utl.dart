@@ -1,0 +1,3 @@
+String fixImageUrl(String url) {
+  return url.replaceFirst('http://localhost:5000', 'http://10.0.2.2:5000');
+}

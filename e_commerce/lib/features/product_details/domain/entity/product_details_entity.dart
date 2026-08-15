@@ -16,8 +16,9 @@ class ProductDetailsEntity {
   final List<String> colors; // hex strings, e.g. "#FFA500"
   final List<String> sizes; // e.g. "S", "M", "L", "XL"
   final List<ReviewEntity> reviews;
+  bool isFavorite;
 
-  const ProductDetailsEntity({
+  ProductDetailsEntity({
     required this.id,
     required this.name,
     required this.price,
@@ -31,5 +32,6 @@ class ProductDetailsEntity {
     this.colors = const [],
     this.sizes = const [],
     this.reviews = const [],
+    this.isFavorite = false,
   });
 }

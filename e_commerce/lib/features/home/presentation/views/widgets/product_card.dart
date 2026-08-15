@@ -1,5 +1,6 @@
 import 'dart:ui';
 
+import 'package:e_commerce/core/helper_function/fix_image_utl.dart';
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
 
@@ -47,7 +48,7 @@ class _ProductCardState extends State<ProductCard> {
                   child: Padding(
                     padding: EdgeInsets.all(16.0),
                     child: CachedNetworkImage(
-                      imageUrl: widget.product.thumbnailUrl,
+                      imageUrl: fixImageUrl(widget.product.thumbnailUrl),
                       fit: BoxFit.cover,
                       placeholder: (context, url) =>
                           const Center(child: CircularProgressIndicator()),

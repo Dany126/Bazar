@@ -1,4 +1,5 @@
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:e_commerce/core/helper_function/fix_image_utl.dart';
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
 import 'package:e_commerce/features/home/domain/entity/category_entity.dart';
@@ -23,7 +24,7 @@ class CategoryDetailsListView extends StatelessWidget {
                 Navigator.pushNamed(
                   context,
                   AllItemsInCategoryView.routeName,
-                  arguments: categories[index],
+                  arguments: categories[index].imageUrl,
                 );
               },
               contentPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -37,7 +38,7 @@ class CategoryDetailsListView extends StatelessWidget {
               ),
               leading: ClipOval(
                 child: CachedNetworkImage(
-                  imageUrl: categories[index].imageUrl,
+                  imageUrl: fixImageUrl(categories[index].imageUrl),
                   fit: BoxFit.cover,
                   height: 40,
                   width: 40,

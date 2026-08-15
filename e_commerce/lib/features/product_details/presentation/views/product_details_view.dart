@@ -6,18 +6,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProductDetailsView extends StatelessWidget {
-  const ProductDetailsView({super.key, required this.productId});
+  const ProductDetailsView({super.key});
 
   static const String routeName = '/product-details';
 
-  final String productId;
-
   @override
   Widget build(BuildContext context) {
+    final product = ModalRoute.of(context)!.settings.arguments as String;
     return BlocProvider<ProductDetailsCubit>(
       create: (context) =>
-          getIt<ProductDetailsCubit>()..getProductDetails(productId: productId),
-      child: const Scaffold(body: ProductDetailsViewBody()),
+          getIt<ProductDetailsCubit>()..getProductDetails(productId: product),
+
+      child: const Scaffold(body: SafeArea(child: ProductDetailsViewBody())),
     );
   }
 }

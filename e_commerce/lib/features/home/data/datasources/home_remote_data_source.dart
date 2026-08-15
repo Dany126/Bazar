@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/error/failure.dart';
@@ -42,6 +44,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
   @override
   Future<Either<Failure, List<CategoryModel>>> getAllCategories() async {
     final response = await apiService.get(kGetAllGategories);
+    log(response.toString());
 
     return response.fold((failure) => Left(failure), (data) {
       final List<dynamic> categoriesJson = data['categories'] as List<dynamic>;
