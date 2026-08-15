@@ -54,10 +54,7 @@ class OrderSuccessView extends StatelessWidget {
                     child: ElevatedButton(
                       onPressed: () {
                         Navigator.of(context).pushAndRemoveUntil(
-                          MaterialPageRoute(
-                            builder: (_) =>
-                                OrderView(userId: userId ?? 'YOUR_USER_ID'),
-                          ),
+                          MaterialPageRoute(builder: (_) => OrderView()),
                           (route) => route.isFirst,
                         );
                       },

@@ -32,10 +32,7 @@ class _OrderViewBodyState extends State<OrderViewBody> {
       selectedFilter = filter;
     });
 
-    context.read<OrderCubit>().getMyOrders(
-      userId: '6a79c81d8a67e79b3d94c9f4',
-      filter: filter,
-    );
+    context.read<OrderCubit>().getMyOrders(filter: filter);
   }
 
   String get emptyMessage {
@@ -149,7 +146,6 @@ class _OrderViewBodyState extends State<OrderViewBody> {
                     });
 
                     context.read<OrderCubit>().getMyOrders(
-                      userId: '6a79c81d8a67e79b3d94c9f4',
                       filter: OrderStatus.all,
                     );
                   },
@@ -186,7 +182,6 @@ class _OrderViewBodyState extends State<OrderViewBody> {
               child: CustomButton(
                 onTap: () {
                   context.read<OrderCubit>().getMyOrders(
-                    userId: '6a79c81d8a67e79b3d94c9f4',
                     filter: selectedFilter,
                   );
                 },

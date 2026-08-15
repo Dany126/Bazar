@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
+  static const routeName = 'profile';
 
   @override
   Widget build(BuildContext context) {

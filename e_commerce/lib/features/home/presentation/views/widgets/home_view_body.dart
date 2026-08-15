@@ -20,6 +20,7 @@ import 'package:e_commerce/features/home/presentation/views/widgets/product_grid
 import 'package:e_commerce/features/home/presentation/views/widgets/product_list_view.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/search_bar.dart';
 import 'package:e_commerce/features/home/presentation/views/widgets/top_selling.dart';
+import 'package:e_commerce/main_view.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -51,12 +52,18 @@ class _HomeViewBodyState extends State<HomeViewBody> {
 
           elevation: 0,
 
-          leading: Image.asset(
-            Assets.assetsImagesProfile,
+          leading: GestureDetector(
+            onTap: () {
+              MainView.currentIndex = 3;
+              setState(() {});
+            },
+            child: Image.asset(
+              Assets.assetsImagesProfile,
 
-            height: 40,
+              height: 40,
 
-            width: 40,
+              width: 40,
+            ),
           ),
 
           title: Text("Bazar", style: AppStyles.textStylesSemiBold20(context)),

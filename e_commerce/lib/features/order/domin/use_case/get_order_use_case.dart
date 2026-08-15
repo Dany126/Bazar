@@ -10,7 +10,6 @@ class GetOrdersUseCase {
 
   GetOrdersUseCase(this.repository);
   Future<Either<Failure, List<OrderEntity>>> call({
-    required String userId,
     required OrderStatus filter,
   }) {
     return repository.getMyOrders(orderStatus: filter);

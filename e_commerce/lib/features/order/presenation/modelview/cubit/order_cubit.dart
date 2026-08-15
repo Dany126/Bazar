@@ -37,13 +37,10 @@ class OrderCubit extends Cubit<OrderState> {
     );
   }
 
-  Future<void> getMyOrders({
-    required String userId,
-    required OrderStatus filter,
-  }) async {
+  Future<void> getMyOrders({required OrderStatus filter}) async {
     emit(OrderLoading());
 
-    final result = await getOrdersUseCase(userId: userId, filter: filter);
+    final result = await getOrdersUseCase(filter: filter);
 
     result.fold(
       (failure) {

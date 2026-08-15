@@ -10,17 +10,23 @@ class MainView extends StatefulWidget {
   const MainView({super.key});
   static const routeName = 'main';
 
+  static int get currentIndex => _MainViewState.currentIndex;
+
+  static set currentIndex(int currentIndex) {
+    _MainViewState.currentIndex = currentIndex;
+  }
+
   @override
   State<MainView> createState() => _MainViewState();
 }
 
 class _MainViewState extends State<MainView> {
-  int currentIndex = 0;
+  static int currentIndex = 0;
 
   final List<Widget> screens = const [
     HomeView(),
     NotificationView(),
-    OrderView(userId: '6a79c81d8a67e79b3d94c9f4'),
+    OrderView(),
     ProfileView(),
   ];
 

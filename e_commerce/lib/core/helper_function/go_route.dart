@@ -11,6 +11,7 @@ import 'package:e_commerce/features/home/presentation/views/widgets/top_selling.
 import 'package:e_commerce/features/notification/presentation/view/notification_view.dart';
 import 'package:e_commerce/features/order/presenation/view/order_view.dart';
 import 'package:e_commerce/features/product_details/presentation/views/product_details_view.dart';
+import 'package:e_commerce/features/profile/presentation/view/profile_view.dart';
 import 'package:e_commerce/features/search/presentation/views/search_view.dart';
 import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
 import 'package:e_commerce/main_view.dart';
@@ -50,10 +51,7 @@ Route onGenerateRoute(RouteSettings settings) {
     case MainView.routeName:
       return MaterialPageRoute(builder: (context) => const MainView());
     case OrderView.routeName:
-      return MaterialPageRoute(
-        builder: (context) =>
-            const OrderView(userId: '6a79c81d8a67e79b3d94c9f4'),
-      );
+      return MaterialPageRoute(builder: (context) => const OrderView());
     case TopSelling.routeName:
       return MaterialPageRoute(builder: (context) => const TopSelling());
 
@@ -70,6 +68,9 @@ Route onGenerateRoute(RouteSettings settings) {
       );
     case CartView.routeName:
       return MaterialPageRoute(builder: (context) => const CartView());
+
+    case ProfileView.routeName:
+      return MaterialPageRoute(builder: (context) => const ProfileView());
 
     default:
       return MaterialPageRoute(

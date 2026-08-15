@@ -6,18 +6,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class OrderView extends StatelessWidget {
-  const OrderView({super.key, required this.userId});
+  const OrderView({super.key});
 
   static const String routeName = '/order';
-
-  final String userId;
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<OrderCubit>(
       create: (context) =>
-          getIt<OrderCubit>()
-            ..getMyOrders(userId: userId, filter: OrderStatus.all),
+          getIt<OrderCubit>()..getMyOrders(filter: OrderStatus.all),
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: Colors.white,
