@@ -4,6 +4,7 @@ import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'package:e_commerce/core/helper_function/go_route.dart';
@@ -29,7 +30,8 @@ Future<void> main() async {
   // ==========================================================
   // SHARED PREFERENCES
   // ==========================================================
-
+  await Hive.initFlutter();
+  await Hive.openBox('authBox');
   await SharedPrefsHelper.init();
 
   // ==========================================================

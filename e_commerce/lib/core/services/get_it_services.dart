@@ -15,6 +15,7 @@ import 'package:e_commerce/features/address/domain/use_case/add_address_use_case
 import 'package:e_commerce/features/address/domain/use_case/delete_address_use_case.dart';
 import 'package:e_commerce/features/address/domain/use_case/get_addresses_use_case.dart';
 import 'package:e_commerce/features/address/presentation/model_view/cubit/address_cubit.dart';
+import 'package:e_commerce/features/auth/data/auth_data_source/auth_local_data_source.dart';
 import 'package:e_commerce/features/auth/data/auth_data_source/auth_remote_data_source_impl.dart';
 import 'package:e_commerce/features/auth/data/repo/auth_repo_auth.dart';
 import 'package:e_commerce/features/auth/domain/auth_data_source/auth_remote_data_source.dart';
@@ -163,7 +164,11 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
     () => AuthRepositoryImpl(
       apiService: getIt<ApiService>(),
       remoteDataSource: getIt<AuthRemoteDataSource>(),
+      localDataSource: getIt<AuthLocalDataSource>(),
     ),
+  );
+  getIt.registerLazySingleton<AuthLocalDataSource>(
+    () => AuthLocalDataSourceImpl(),
   );
 
   // ==========================================================
