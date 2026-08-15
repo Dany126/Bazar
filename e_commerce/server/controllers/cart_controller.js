@@ -29,9 +29,10 @@ export const createCart = async (req, res) => {
 
     // 3. check if variant exists for this product
     const variantOfProduct = await Variant.findOne({
-      id: products[0].variant,
+      _id: products[0].variant,
       product: products[0].product,
     });
+    console.log(variantOfProduct);
     if (!variantOfProduct) {
       return res.status(400).json({
         status: "Failed",
