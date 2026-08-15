@@ -32,7 +32,7 @@ export const createCart = async (req, res) => {
       _id: products[0].variant,
       product: products[0].product,
     });
-    console.log(variantOfProduct);
+    
     if (!variantOfProduct) {
       return res.status(400).json({
         status: "Failed",

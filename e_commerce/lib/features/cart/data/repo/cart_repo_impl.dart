@@ -16,14 +16,12 @@ class CartRepositoryImpl implements CartRepository {
   @override
   Future<Either<Failure, CartEntity>> addToCart({
     required String productId,
-    String? size,
-    String? color,
+    required String variantId,
     required int quantity,
   }) {
     return remoteDataSource.addToCart(
       productId: productId,
-      size: size,
-      color: color,
+      variantId: variantId,
       quantity: quantity,
     );
   }
