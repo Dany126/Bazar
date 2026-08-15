@@ -110,7 +110,9 @@ export const getAllCarts = async (req, res) => {
       .limit(limits)
       .skip(skip)
       .sort(sortBy)
-      .select("-__v");
+      .select("-__v")
+      .populate("products.variant")
+      .populate("products.product");
     if (!carts || carts.length <= 0) {
       return res.status(400).json({
         status: "Failed",
