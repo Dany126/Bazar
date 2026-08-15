@@ -9,7 +9,7 @@ import { requireAuth } from "../middleware/requireAuth.js";
 import { checkStock } from "../middleware/checkStock.js";
 import { checkID } from "../middleware/checkID.js";
 
-export const cartRouter = express.Router();
+export const cartRouter = express.Router({ mergeParams: true });
 
 // cartRouter.use(requireAuth);
 
