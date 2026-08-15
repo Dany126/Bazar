@@ -38,7 +38,7 @@ class ProductDetailsRemoteDataSourceImpl
         return Right(
           ProductDetailsModel.fromVariantsJson(
             product: product,
-            variants: variants,
+            variantsJson: variants,
           ),
         );
       } catch (e) {

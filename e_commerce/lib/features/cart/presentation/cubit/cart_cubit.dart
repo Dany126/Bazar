@@ -1,5 +1,7 @@
 // lib/features/cart/presenation/modelview/cubit/cart_cubit.dart
 
+import 'dart:developer';
+
 import 'package:e_commerce/features/cart/domain/use_case/add_to_cart_use_case.dart';
 import 'package:e_commerce/features/cart/domain/use_case/apply_coupon_use_case.dart';
 import 'package:e_commerce/features/cart/domain/use_case/get_cart_use_case.dart';
@@ -38,16 +40,18 @@ class CartCubit extends Cubit<CartState> {
 
   Future<void> addToCart({
     required String productId,
-    String? size,
-    String? color,
+    required String variantId,
     required int quantity,
   }) async {
+    log(productId);
+    log(variantId);
+    log(quantity.toString());
     final result = await addToCartUseCase(
       productId: productId,
-      size: size,
-      color: color,
+      variantId: variantId,
       quantity: quantity,
     );
+
     result.fold(
       (failure) => emit(CartError(failure.message)),
       (cart) => emit(CartLoaded(cart)),

@@ -10,14 +10,13 @@ class AddToCartUseCase {
 
   Future<Either<Failure, CartEntity>> call({
     required String productId,
-    String? size,
-    String? color,
+    required String variantId,
     required int quantity,
   }) {
     return repository.addToCart(
       productId: productId,
-      size: size,
-      color: color,
+      variantId: variantId,
+
       quantity: quantity,
     );
   }

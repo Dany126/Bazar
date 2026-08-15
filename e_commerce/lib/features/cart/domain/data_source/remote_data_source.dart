@@ -8,8 +8,7 @@ abstract class CartRemoteDataSource {
 
   Future<Either<Failure, CartModel>> addToCart({
     required String productId,
-    String? size,
-    String? color,
+    required String variantId,
     required int quantity,
   });
 

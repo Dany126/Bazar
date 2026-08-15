@@ -1,9 +1,11 @@
 import 'package:cookie_jar/cookie_jar.dart';
+import 'package:e_commerce/features/cart/presentation/cubit/cart_cubit.dart';
 // import 'package:e_commerce/features/search/presentation/views/search_view.dart';
 import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
 
@@ -98,7 +100,12 @@ Future<void> main() async {
   // START APP
   // ==========================================================
 
-  runApp(const Bazar());
+  runApp(
+    BlocProvider<CartCubit>(
+      create: (context) => getIt<CartCubit>(),
+      child: const Bazar(),
+    ),
+  );
 }
 
 class Bazar extends StatelessWidget {

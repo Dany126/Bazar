@@ -8,8 +8,7 @@ abstract class CartRepository {
 
   Future<Either<Failure, CartEntity>> addToCart({
     required String productId,
-    String? size,
-    String? color,
+    required String variantId,
     required int quantity,
   });
 

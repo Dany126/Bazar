@@ -320,14 +320,19 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
   }
 
   Widget _buildBottomBar(BuildContext context, ProductDetailsEntity product) {
-    return GestureDetector(
+    return InkWell(
+      borderRadius: BorderRadius.circular(30),
+      splashColor: AppColors.kPrimaryAccentColor,
+      highlightColor: Colors.transparent,
       onTap: () {
         context.read<CartCubit>().addToCart(
           productId: product.id,
           quantity: quantity,
-          color: selectedColor,
-          size: selectedSize,
+          variantId: product
+              .findVariant(size: selectedSize!, color: selectedColor!)!
+              .id,
         );
+        Navigator.pop(context);
       },
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -344,7 +349,7 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
             child: Row(
               children: [
                 Text(
-                  '\$${product.price.toStringAsFixed(0)}',
+                  '\$${(product.price * quantity).toStringAsFixed(0)}',
                   style: AppStyles.textStylesBold16Mono(
                     context,
                   ).copyWith(color: Colors.white),
