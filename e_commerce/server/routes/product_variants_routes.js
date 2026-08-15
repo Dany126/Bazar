@@ -8,7 +8,7 @@ import {
 } from "../controllers/product_variants_controller.js";
 import { checkID } from "../middleware/checkID.js";
 
-export const variantRouter = express.Router();
+export const variantRouter = express.Router({ mergeParams: true });
 
 variantRouter.route("/").post(createVariant).get(getAllVariants);
 

@@ -25,11 +25,14 @@ export const createVariant = async (req, res) => {
 
 export const getAllVariants = async (req, res) => {
   try {
-    const { filter, limits, skip, sortBy } = apiFeatures(req.query);
+    const query = { ...req.params, ...req.query };
+    console.log(query);
+    const { filter, limits, skip, sortBy } = apiFeatures(query);
     const variants = await Variant.find(filter)
       .limit(limits)
       .skip(skip)
-      .sort(sortBy);
+      .sort(sortBy)
+      .populate("product");
     if (!variants) {
       return res.status(400).json({
         status: "Failed",

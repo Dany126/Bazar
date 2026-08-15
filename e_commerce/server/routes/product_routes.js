@@ -9,10 +9,13 @@ import {
 import { checkID } from "../middleware/checkID.js";
 import { upload } from "../utils/imageStore.js";
 import { requireAuth } from "../middleware/requireAuth.js";
+import { variantRouter } from "./product_variants_routes.js";
 
 export const productRouter = express.Router({ mergeParams: true });
 
 // productRouter.use(requireAuth);
+
+productRouter.use("/:product/variant", variantRouter);
 
 productRouter
   .route("/")
