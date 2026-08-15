@@ -12,6 +12,7 @@ export const createProduct = async (req, res) => {
     const imageUrls = req.files.map(
       (file) => `${req.protocol}://${req.get("host")}/public/${file.filename}`,
     );
+
     const body = {
       image: imageUrls,
       avg_rating: Number(req.body.avg_rating),
