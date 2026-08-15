@@ -13,6 +13,8 @@ import morgan from "morgan";
 import { orderRouter } from "./routes/order_routes.js";
 import { notificationRouter } from "./routes/notification_routes.js";
 import { reviewRouter } from "./routes/review_routes.js";
+import { variantRouter } from "./routes/product_variants_routes.js";
+import { cartRouter } from "./routes/cart_routes.js";
 
 const app = express();
 
@@ -42,6 +44,8 @@ app.use("/api/product", productRouter);
 app.use("/api/order", orderRouter);
 app.use("/api/notification", notificationRouter);
 app.use("/api/review", reviewRouter);
+app.use("/api/variant", variantRouter);
+app.use("/api/cart", cartRouter);
 
 app.all("*not", (req, res) => {
   return res.status(404).json({

@@ -7,6 +7,7 @@ export const apiFeatures = (query) => {
     "isRead",
     "isFavourite",
     "rating",
+    "orderStatus",
   ];
 
   const filter = {};

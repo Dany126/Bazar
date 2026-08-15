@@ -14,10 +14,7 @@ export const createProduct = async (req, res) => {
     );
     const body = {
       image: imageUrls,
-      price: Number(req.body.price),
       avg_rating: Number(req.body.avg_rating),
-      stock: Number(req.body.stock),
-      soldCount: Number(req.body.soldCount),
       ratingsQuantity: Number(req.body.ratingsQuantity),
       name: req.body.name,
       category: req.body.category,

@@ -1,5 +1,6 @@
 import { Order } from "../models/order_model.js";
 import { Product } from "../models/product_model.js";
+import { Variant } from "../models/product_variants_model.js";
 import { User } from "../models/user_model.js";
 import { apiFeatures } from "../utils/apiFeatures.js";
 import {
@@ -19,14 +20,14 @@ export const createOrder = async (req, res) => {
     }
     let totalPrice = 0;
     for (const el of products) {
-      const product = await Product.findById(el.product);
-      if (!product) {
+      const variant = await Variant.findById(el.variant);
+      if (!variant) {
         return res.status(404).json({
-          message: "Product not found",
+          message: "variant not found",
         });
       }
       totalPrice += el.price * el.quantity;
-      await Product.findByIdAndUpdate(el.product, {
+      await Variant.findByIdAndUpdate(el.variant, {
         $inc: {
           stock: -el.quantity,
           soldCount: el.quantity,

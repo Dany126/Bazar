@@ -43,3 +43,41 @@
     "category": "6a75fa6ba93e14aa4f455f09"
   }
 ]
+
+[
+  {
+    "name": "Classic T-Shirt",
+    "description": "Comfortable cotton t-shirt for everyday use.",
+    "categoryId": "6a75fa6ba93e14aa4f455f09",
+    "images": [
+      "tshirt-red.jpg",
+      "tshirt-blue.jpg"
+    ],
+    "avgRating": 4.5,
+    "ratingsQuantity": 120
+  },
+  {
+    "_id": "65f100000000000000000002",
+    "name": "Running Shoes",
+    "description": "Lightweight running shoes designed for daily training.",
+    "categoryId": "6a75fa6ba93e14aa4f455f09",
+    "images": [
+      "shoes-black.jpg",
+      "shoes-white.jpg"
+    ],
+    "avgRating": 4.7,
+    "ratingsQuantity": 85
+  },
+  {
+    "_id": "65f100000000000000000003",
+    "name": "Laptop Backpack",
+    "description": "Water-resistant backpack suitable for laptops and travel.",
+    "categoryId": "6a75fa6ba93e14aa4f455f09",
+    "images": [
+      "backpack-black.jpg",
+      "backpack-blue.jpg"
+    ],
+    "avgRating": 4.3,
+    "ratingsQuantity": 54
+  }
+]

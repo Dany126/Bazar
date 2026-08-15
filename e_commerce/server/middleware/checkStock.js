@@ -1,4 +1,4 @@
-import { Product } from "../models/product_model.js";
+import { Variant } from "../models/product_variants_model.js";
 
 export const checkStock = async (req, res, next) => {
   const { products } = req.body;
@@ -9,8 +9,13 @@ export const checkStock = async (req, res, next) => {
     });
   }
   for (const el of products) {
-    let result = await Product.findById(el.product);
-    console.log(result);
+    let result = await Variant.findById(el.variant);
+    if (!result) {
+      return res.status(400).json({
+        status: "Failed",
+        message: "No variant found with this ID!",
+      });
+    }
     if (result.stock <= 0 || el.quantity > result.stock) {
       return res.status(400).json({
         status: "Failed",

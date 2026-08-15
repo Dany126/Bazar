@@ -1,0 +1,120 @@
+[
+  {
+    "product": "6a7ef65b71ecb412cf7d0bff",
+    "color": "Red",
+    "size": "S",
+    "price": 20,
+    "stock": 15,
+    "soldCount": 32
+  },
+  {
+    "product": "6a7ef65b71ecb412cf7d0bff",
+    "color": "Red",
+    "size": "M",
+    "price": 20,
+    "stock": 25,
+    "soldCount": 48
+  },
+  {
+    "_id": "65f200000000000000000003",
+    "productId": "65f100000000000000000001",
+    "color": "Red",
+    "size": "L",
+    "price": 22,
+    "stock": 10,
+    "soldCount": 21,
+    "sku": "TS-RED-L"
+  },
+  {
+    "_id": "65f200000000000000000004",
+    "productId": "65f100000000000000000001",
+    "color": "Blue",
+    "size": "M",
+    "price": 20,
+    "stock": 18,
+    "soldCount": 35,
+    "sku": "TS-BLUE-M"
+  },
+  {
+    "_id": "65f200000000000000000005",
+    "productId": "65f100000000000000000001",
+    "color": "Blue",
+    "size": "L",
+    "price": 20,
+    "stock": 7,
+    "soldCount": 14,
+    "sku": "TS-BLUE-L"
+  },
+
+  {
+    "_id": "65f200000000000000000006",
+    "productId": "65f100000000000000000002",
+    "color": "Black",
+    "size": "40",
+    "price": 75,
+    "stock": 12,
+    "soldCount": 40,
+    "sku": "RS-BLK-40"
+  },
+  {
+    "_id": "65f200000000000000000007",
+    "productId": "65f100000000000000000002",
+    "color": "Black",
+    "size": "41",
+    "price": 75,
+    "stock": 8,
+    "soldCount": 35,
+    "sku": "RS-BLK-41"
+  },
+  {
+    "_id": "65f200000000000000000008",
+    "productId": "65f100000000000000000002",
+    "color": "Black",
+    "size": "42",
+    "price": 80,
+    "stock": 15,
+    "soldCount": 52,
+    "sku": "RS-BLK-42"
+  },
+  {
+    "_id": "65f200000000000000000009",
+    "productId": "65f100000000000000000002",
+    "color": "White",
+    "size": "41",
+    "price": 78,
+    "stock": 5,
+    "soldCount": 18,
+    "sku": "RS-WHT-41"
+  },
+  {
+    "_id": "65f200000000000000000010",
+    "productId": "65f100000000000000000002",
+    "color": "White",
+    "size": "42",
+    "price": 78,
+    "stock": 9,
+    "soldCount": 25,
+    "sku": "RS-WHT-42"
+  },
+
+  {
+    "_id": "65f200000000000000000011",
+    "productId": "65f100000000000000000003",
+    "color": "Black",
+    "size": "Standard",
+    "price": 45,
+    "stock": 20,
+    "soldCount": 60,
+    "sku": "BP-BLK-STD"
+  },
+  {
+    "_id": "65f200000000000000000012",
+    "productId": "65f100000000000000000003",
+    "color": "Blue",
+    "size": "Standard",
+    "price": 45,
+    "stock": 13,
+    "soldCount": 31,
+    "sku": "BP-BLU-STD"
+  }
+]
