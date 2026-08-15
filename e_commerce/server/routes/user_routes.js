@@ -14,6 +14,7 @@ import {
 } from "../controllers/user_controller.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { orderRouter } from "./order_routes.js";
+import { cartRouter } from "./cart_routes.js";
 
 export const userRouter = express.Router();
 
@@ -27,6 +28,7 @@ userRouter.post("/reset-password", resetPassword);
 // userRouter.use(requireAuth);
 
 userRouter.use("/:user/order", orderRouter);
+userRouter.use("/:user/cart", cartRouter);
 
 userRouter.route("/").get(getAllUsers);
 

@@ -104,7 +104,8 @@ export const createCart = async (req, res) => {
 
 export const getAllCarts = async (req, res) => {
   try {
-    const { filter, skip, limits, sortBy } = apiFeatures(req.query);
+    const query = { ...req.params, ...req.query };
+    const { filter, skip, limits, sortBy } = apiFeatures(query);
     const carts = await Cart.find(filter)
       .limit(limits)
       .skip(skip)
