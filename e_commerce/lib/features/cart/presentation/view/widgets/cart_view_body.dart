@@ -34,129 +34,203 @@ class CartViewBody extends StatelessWidget {
 
           final cart = state.cart;
 
-          return Column(
-            children: [
-              _buildAppBar(context, cart.items.isNotEmpty),
-              const SizedBox(height: 12),
-              Padding(
-                padding: EdgeInsets.symmetric(horizontal: 24.0),
-                child: Visibility(
-                  visible: cart.items.isNotEmpty,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+          return SafeArea(
+            child: LayoutBuilder(
+              builder: (context, constraints) {
+                final width = constraints.maxWidth;
+
+                final horizontalPadding = width < 360
+                    ? 12.0
+                    : width < 600
+                    ? 16.0
+                    : 24.0;
+
+                return Padding(
+                  padding: EdgeInsets.symmetric(horizontal: horizontalPadding),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      GestureDetector(
-                        onTap: () => context
-                            .read<CartCubit>()
-                            .removeAllFromCartUseCase(),
-                        child: Text(
-                          "Remove All",
-                          style: AppStyles.textStylesSemiBold15(
-                            context,
-                          ).copyWith(color: Colors.black),
+                      _buildAppBar(context),
+
+                      const SizedBox(height: 8),
+
+                      _buildRemoveAll(context, horizontalPadding),
+
+                      const SizedBox(height: 8),
+
+                      Expanded(
+                        child: ListView.separated(
+                          physics: const BouncingScrollPhysics(),
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                          itemCount: cart.items.length,
+                          separatorBuilder: (_, __) =>
+                              const SizedBox(height: 12),
+                          itemBuilder: (context, index) {
+                            final item = cart.items[index];
+
+                            return CartItemCard(
+                              item: item,
+
+                              onIncrement: () {
+                                context
+                                    .read<CartCubit>()
+                                    .updateCartItemQuantity(
+                                      itemId: item.id,
+                                      quantity: item.quantity + 1,
+                                    );
+                              },
+
+                              onDecrement: item.quantity > 1
+                                  ? () {
+                                      context
+                                          .read<CartCubit>()
+                                          .updateCartItemQuantity(
+                                            itemId: item.id,
+                                            quantity: item.quantity - 1,
+                                          );
+                                    }
+                                  : null,
+
+                              onRemove: () {
+                                context.read<CartCubit>().removeFromCart(
+                                  itemId: item.id,
+                                );
+                              },
+                            );
+                          },
                         ),
                       ),
+
+                      const SizedBox(height: 8),
+
+                      CartSummary(cart: cart),
+
+                      const SizedBox(height: 8),
+
+                      _buildCheckoutButton(context, horizontalPadding),
+
+                      const SizedBox(height: 8),
                     ],
                   ),
-                ),
-              ),
-              Expanded(
-                child: ListView.separated(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
-                  ),
-                  itemCount: cart.items.length,
-                  separatorBuilder: (_, __) => const SizedBox(height: 12),
-                  itemBuilder: (context, index) {
-                    final item = cart.items[index];
-                    return CartItemCard(
-                      item: item,
-                      onIncrement: () =>
-                          context.read<CartCubit>().updateCartItemQuantity(
-                            itemId: item.id,
-                            quantity: item.quantity + 1,
-                          ),
-                      onDecrement: item.quantity > 1
-                          ? () => context
-                                .read<CartCubit>()
-                                .updateCartItemQuantity(
-                                  itemId: item.id,
-                                  quantity: item.quantity - 1,
-                                )
-                          : null,
-                      onRemove: () => context.read<CartCubit>().removeFromCart(
-                        itemId: item.id,
-                      ),
-                    );
-                  },
-                ),
-              ),
-              CartSummary(cart: cart),
-              Padding(
-                padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
-                child: SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(builder: (_) => const CheckoutView()),
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.kPrimaryAccentColor,
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(26),
-                      ),
-                    ),
-                    child: const Text(
-                      'Checkout',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
+                );
+              },
+            ),
           );
         }
 
-        return const SizedBox();
+        return const SizedBox.shrink();
       },
     );
   }
 
-  Widget _buildAppBar(BuildContext context, bool hasItems) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+  // ------------------------------------------------------------
+  // APP BAR
+  // ------------------------------------------------------------
+
+  Widget _buildAppBar(BuildContext context) {
+    return SizedBox(
+      height: 48,
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Transform.rotate(
-            angle: 3.14, // Rotation angle in radians
-            child: CircleAvatar(
-              backgroundColor: Colors.grey[100],
-              child: Image.asset(Assets.assetsImagesArrowright),
-            ),
-          ),
-          Spacer(flex: 3),
+          _buildBackButton(context),
 
-          Text(
-            textAlign: TextAlign.center,
+          const Spacer(),
 
-            'Cart',
-            style: AppStyles.textStylesSemiBold20(context),
-          ),
-          Spacer(flex: 4),
+          Text('Cart', style: AppStyles.textStylesSemiBold20(context)),
+
+          const Spacer(),
+
+          const SizedBox(width: 42),
         ],
       ),
     );
   }
+
+  // ------------------------------------------------------------
+  // BACK BUTTON
+  // ------------------------------------------------------------
+
+  Widget _buildBackButton(BuildContext context) {
+    return GestureDetector(
+      onTap: () => Navigator.of(context).pop(),
+      child: Container(
+        width: 42,
+        height: 42,
+        decoration: BoxDecoration(
+          color: Colors.grey.shade100,
+          shape: BoxShape.circle,
+        ),
+        padding: const EdgeInsets.all(10),
+        child: Transform.rotate(
+          angle: 3.1415926535,
+          child: Image.asset(
+            Assets.assetsImagesArrowright,
+            fit: BoxFit.contain,
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // REMOVE ALL
+  // ------------------------------------------------------------
+
+  Widget _buildRemoveAll(BuildContext context, double horizontalPadding) {
+    return Padding(
+      padding: EdgeInsets.symmetric(horizontal: horizontalPadding > 16 ? 4 : 0),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: GestureDetector(
+          onTap: () {
+            context.read<CartCubit>().removeAllFromCartUseCase();
+          },
+          child: Text(
+            'Remove All',
+            style: AppStyles.textStylesSemiBold15(
+              context,
+            ).copyWith(color: Colors.black87),
+          ),
+        ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // CHECKOUT BUTTON
+  // ------------------------------------------------------------
+
+  Widget _buildCheckoutButton(BuildContext context, double horizontalPadding) {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        onPressed: () {
+          Navigator.of(
+            context,
+          ).push(MaterialPageRoute(builder: (_) => const CheckoutView()));
+        },
+        style: ElevatedButton.styleFrom(
+          backgroundColor: AppColors.kPrimaryAccentColor,
+          foregroundColor: Colors.white,
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(26),
+          ),
+        ),
+        child: Text(
+          'Checkout',
+          style: AppStyles.textStylesSemiBold15(
+            context,
+          ).copyWith(color: Colors.white),
+        ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // ERROR
+  // ------------------------------------------------------------
 
   Widget _buildErrorState(BuildContext context, String message) {
     return Center(
@@ -165,12 +239,22 @@ class CartViewBody extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 60, color: Colors.red),
+            Icon(Icons.error_outline, size: 60, color: Colors.red.shade400),
+
             const SizedBox(height: 16),
-            Text(message, textAlign: TextAlign.center),
+
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: AppStyles.textStylesRegular16(context),
+            ),
+
             const SizedBox(height: 20),
+
             ElevatedButton(
-              onPressed: () => context.read<CartCubit>().getCart(),
+              onPressed: () {
+                context.read<CartCubit>().getCart();
+              },
               child: const Text('Try Again'),
             ),
           ],
