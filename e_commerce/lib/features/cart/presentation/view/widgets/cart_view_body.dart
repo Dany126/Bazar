@@ -1,6 +1,8 @@
 // lib/features/cart/presenation/view/widgets/cart_view_body.dart
 
 import 'package:e_commerce/core/utils/app_colors.dart';
+import 'package:e_commerce/core/utils/app_styles.dart';
+import 'package:e_commerce/core/utils/assets.dart';
 import 'package:e_commerce/features/cart/presentation/cubit/cart_cubit.dart';
 import 'package:e_commerce/features/cart/presentation/cubit/cart_state.dart';
 import 'package:e_commerce/features/cart/presentation/view/widgets/cart_empty_state.dart';
@@ -35,6 +37,29 @@ class CartViewBody extends StatelessWidget {
           return Column(
             children: [
               _buildAppBar(context, cart.items.isNotEmpty),
+              const SizedBox(height: 12),
+              Padding(
+                padding: EdgeInsets.symmetric(horizontal: 24.0),
+                child: Visibility(
+                  visible: cart.items.isNotEmpty,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      GestureDetector(
+                        onTap: () => context
+                            .read<CartCubit>()
+                            .removeAllFromCartUseCase(),
+                        child: Text(
+                          "Remove All",
+                          style: AppStyles.textStylesSemiBold15(
+                            context,
+                          ).copyWith(color: Colors.black),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
               Expanded(
                 child: ListView.separated(
                   padding: const EdgeInsets.symmetric(
@@ -109,30 +134,25 @@ class CartViewBody extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
       child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          CircleAvatar(
-            backgroundColor: Colors.grey[100],
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black),
-              onPressed: () => Navigator.of(context).pop(),
+          Transform.rotate(
+            angle: 3.14, // Rotation angle in radians
+            child: CircleAvatar(
+              backgroundColor: Colors.grey[100],
+              child: Image.asset(Assets.assetsImagesArrowright),
             ),
           ),
-          const Spacer(),
-          const Text(
+          Spacer(flex: 3),
+
+          Text(
+            textAlign: TextAlign.center,
+
             'Cart',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+            style: AppStyles.textStylesSemiBold20(context),
           ),
-          const Spacer(),
-          if (hasItems)
-            TextButton(
-              onPressed: () => context.read<CartCubit>().removeAllFromCart(),
-              child: const Text(
-                'Remove All',
-                style: TextStyle(color: Colors.black54, fontSize: 13),
-              ),
-            )
-          else
-            const SizedBox(width: 48),
+          Spacer(flex: 4),
         ],
       ),
     );
