@@ -1,7 +1,7 @@
 // lib/features/cart/presenation/view/widgets/cart_item_card.dart
 
+import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/features/cart/domain/entity/cart_item_entity.dart';
-import 'package:e_commerce/features/cart/presentation/view/widgets/cart_view_body.dart';
 import 'package:flutter/material.dart';
 
 class CartItemCard extends StatelessWidget {
@@ -44,14 +44,19 @@ class CartItemCard extends StatelessWidget {
           children: [
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
-              child: Image.network(
-                item.image,
-                width: 64,
-                height: 64,
-                fit: BoxFit.cover,
-                errorBuilder: (_, __, ___) =>
-                    Container(width: 64, height: 64, color: Colors.grey[200]),
-              ),
+              child: item.image != null
+                  ? Image.network(
+                      item.image!,
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        width: 64,
+                        height: 64,
+                        color: Colors.grey[200],
+                      ),
+                    )
+                  : Container(width: 64, height: 64, color: Colors.grey[200]),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -62,7 +67,7 @@ class CartItemCard extends StatelessWidget {
                     children: [
                       Expanded(
                         child: Text(
-                          item.name,
+                          item.name ?? '',
                           style: const TextStyle(
                             fontSize: 14,
                             fontWeight: FontWeight.w600,
@@ -72,7 +77,7 @@ class CartItemCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        '\$${(item.price * item.quantity).toStringAsFixed(0)}',
+                        '\$${((item.price ?? 0) * item.quantity).toStringAsFixed(0)}',
                         style: const TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.w600,
@@ -111,10 +116,10 @@ class CartItemCard extends StatelessWidget {
                       if (item.color != null)
                         Text(
                           ' ${item.color}',
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
-                            color: kCartAccentColor,
+                            color: AppColors.kPrimaryAccentColor,
                           ),
                         ),
                     ],
@@ -144,7 +149,9 @@ class CartItemCard extends StatelessWidget {
         width: 24,
         height: 24,
         decoration: BoxDecoration(
-          color: onTap == null ? Colors.grey[300] : kCartAccentColor,
+          color: onTap == null
+              ? Colors.grey[300]
+              : AppColors.kPrimaryAccentColor,
           shape: BoxShape.circle,
         ),
         child: Icon(icon, size: 14, color: Colors.white),

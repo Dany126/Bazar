@@ -1,4 +1,6 @@
 // lib/features/cart/presenation/view/widgets/cart_view_body.dart
+
+import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/features/cart/presentation/cubit/cart_cubit.dart';
 import 'package:e_commerce/features/cart/presentation/cubit/cart_state.dart';
 import 'package:e_commerce/features/cart/presentation/view/widgets/cart_empty_state.dart';
@@ -7,8 +9,6 @@ import 'package:e_commerce/features/cart/presentation/view/widgets/cart_summary.
 import 'package:e_commerce/features/checkout/presentation/views/checkout_view.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-const kCartAccentColor = Color(0xFF7B61FF);
 
 class CartViewBody extends StatelessWidget {
   const CartViewBody({super.key});
@@ -80,7 +80,7 @@ class CartViewBody extends StatelessWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: kCartAccentColor,
+                      backgroundColor: AppColors.kPrimaryAccentColor,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(26),

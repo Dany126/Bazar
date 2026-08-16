@@ -152,7 +152,9 @@ class _CheckoutViewBodyState extends State<CheckoutViewBody> {
   Widget _buildPlaceOrderBar(BuildContext context) {
     return BlocBuilder<CartCubit, CartState>(
       builder: (context, cartState) {
-        final total = cartState is CartLoaded ? cartState.cart.total : 0.0;
+        final total = cartState is CartLoaded
+            ? (cartState.cart.subtotal ?? 0.0)
+            : 0.0;
         final canPlaceOrder =
             selectedAddress != null && selectedPaymentMethod != null;
 
@@ -236,7 +238,7 @@ class _CheckoutViewBodyState extends State<CheckoutViewBody> {
 
     context.read<OrderCubit>().createOrder(
       products: products,
-      totalPrice: cartState.cart.total,
+      totalPrice: cartState.cart.subtotal ?? 0.0,
       shippingAddress: {
         'street': selectedAddress!.street,
         'city': selectedAddress!.city,

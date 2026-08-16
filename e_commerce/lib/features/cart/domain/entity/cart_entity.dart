@@ -1,22 +1,29 @@
-// lib/features/cart/domin/entity/cart_entity.dart
 import 'cart_item_entity.dart';
 
 class CartEntity {
   final String id;
+  final String userId;
   final List<CartItemEntity> items;
-  final double subtotal;
-  final double shippingCost;
-  final double tax;
-  final double total;
-  final String? couponCode;
+  final DateTime? createdAt;
+  final DateTime? updatedAt;
 
   const CartEntity({
     required this.id,
+    required this.userId,
     required this.items,
-    required this.subtotal,
-    required this.shippingCost,
-    required this.tax,
-    required this.total,
-    this.couponCode,
+    this.createdAt,
+    this.updatedAt,
   });
+
+  int get itemCount => items.fold(0, (sum, item) => sum + item.quantity);
+
+  double? get subtotal {
+    double sum = 0;
+    for (final item in items) {
+      final lineTotal = item.lineTotal;
+      if (lineTotal == null) return null;
+      sum += lineTotal;
+    }
+    return sum;
+  }
 }

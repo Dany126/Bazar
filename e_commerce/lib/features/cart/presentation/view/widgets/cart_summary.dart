@@ -1,8 +1,9 @@
 // lib/features/cart/presenation/view/widgets/cart_summary.dart
 
+import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/features/cart/domain/entity/cart_entity.dart';
 import 'package:e_commerce/features/cart/presentation/cubit/cart_cubit.dart';
-import 'package:e_commerce/features/cart/presentation/view/widgets/cart_view_body.dart';
+import 'package:e_commerce/features/cart/presentation/view/widgets/cart_item_card.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -27,17 +28,16 @@ class _CartSummaryState extends State<CartSummary> {
   @override
   Widget build(BuildContext context) {
     final cart = widget.cart;
+    final subtotal = cart.subtotal;
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _summaryRow('Subtotal', cart.subtotal),
-          _summaryRow('Shipping Cost', cart.shippingCost),
-          _summaryRow('Tax', cart.tax),
+          _summaryRow('Subtotal', subtotal),
           const Divider(height: 20),
-          _summaryRow('Total', cart.total, isBold: true),
+          _summaryRow('Total', subtotal, isBold: true),
           const SizedBox(height: 14),
           Row(
             children: [
@@ -62,7 +62,7 @@ class _CartSummaryState extends State<CartSummary> {
                     suffixIcon: IconButton(
                       icon: const CircleAvatar(
                         radius: 14,
-                        backgroundColor: kCartAccentColor,
+                        backgroundColor: AppColors.kPrimaryAccentColor,
                         child: Icon(
                           Icons.arrow_forward,
                           size: 14,
@@ -86,7 +86,7 @@ class _CartSummaryState extends State<CartSummary> {
     );
   }
 
-  Widget _summaryRow(String label, double value, {bool isBold = false}) {
+  Widget _summaryRow(String label, double? value, {bool isBold = false}) {
     final style = TextStyle(
       fontSize: 14,
       fontWeight: isBold ? FontWeight.w700 : FontWeight.w400,
@@ -98,7 +98,10 @@ class _CartSummaryState extends State<CartSummary> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(label, style: style),
-          Text('\$${value.toStringAsFixed(2)}', style: style),
+          Text(
+            value == null ? '—' : '\$${value.toStringAsFixed(2)}',
+            style: style,
+          ),
         ],
       ),
     );

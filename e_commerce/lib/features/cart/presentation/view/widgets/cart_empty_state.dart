@@ -1,6 +1,6 @@
 // lib/features/cart/presenation/view/widgets/cart_empty_state.dart
 
-import 'package:e_commerce/features/cart/presentation/view/widgets/cart_view_body.dart';
+import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
 
 class CartEmptyState extends StatelessWidget {
@@ -51,7 +51,7 @@ class CartEmptyState extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () => Navigator.of(context).pop(),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: kCartAccentColor,
+                      backgroundColor: AppColors.kPrimaryAccentColor,
                       foregroundColor: Colors.white,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),

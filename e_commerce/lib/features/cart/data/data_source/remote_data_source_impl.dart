@@ -17,10 +17,7 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
 
   Either<Failure, CartModel> _parse(dynamic response) {
     try {
-      final data = response is Map && response.containsKey('cart')
-          ? response['cart'] as Map<String, dynamic>
-          : response as Map<String, dynamic>;
-      return Right(CartModel.fromJson(data));
+      return Right(CartModel.fromResponse(response as Map<String, dynamic>));
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
     }

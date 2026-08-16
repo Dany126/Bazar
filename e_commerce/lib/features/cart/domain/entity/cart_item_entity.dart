@@ -1,24 +1,28 @@
-// lib/features/cart/domin/entity/cart_item_entity.dart
 class CartItemEntity {
-  final String id;
+  final String id; // this line-item's own _id within products[]
   final String productId;
-  final String name;
-  final String image;
-  final double price;
+  final String variantId;
+  final int quantity;
+
+  final String? name;
+  final String? image;
+  final double? price;
   final String? size;
   final String? color;
-  final int quantity;
-  final int stock;
+  final int? stock;
 
   const CartItemEntity({
     required this.id,
     required this.productId,
-    required this.name,
-    required this.image,
-    required this.price,
+    required this.variantId,
+    required this.quantity,
+    this.name,
+    this.image,
+    this.price,
     this.size,
     this.color,
-    required this.quantity,
-    required this.stock,
+    this.stock,
   });
+
+  double? get lineTotal => price == null ? null : price! * quantity;
 }
