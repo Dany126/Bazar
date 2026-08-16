@@ -37,6 +37,7 @@ import 'package:e_commerce/features/cart/domain/use_case/remove_all_from_cart_us
 import 'package:e_commerce/features/cart/domain/use_case/remove_from_cart_use_case.dart';
 import 'package:e_commerce/features/cart/domain/use_case/update_cart_item_quantity_use_case.dart';
 import 'package:e_commerce/features/cart/presentation/cubit/cart_cubit.dart';
+import 'package:e_commerce/features/checkout/presentation/cubit/checkout_cubit.dart';
 
 import 'package:e_commerce/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:e_commerce/features/home/data/repo/home_repo_impl.dart';
@@ -461,24 +462,37 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
     ),
   );
 
+  getIt.registerFactory<CheckoutCubit>(
+    () => CheckoutCubit(
+      getAddressesUseCase: getIt<GetAddressesUseCase>(),
+      getPaymentMethodsUseCase: getIt<GetPaymentMethodsUseCase>(),
+    ),
+  );
+
   // ==========================================================
   // ADDRESS
   // ==========================================================
+
   getIt.registerLazySingleton<AddressRemoteDataSource>(
     () => AddressRemoteDataSourceImpl(getIt<ApiService>()),
   );
+
   getIt.registerLazySingleton<AddressRepository>(
     () => AddressRepositoryImpl(getIt<AddressRemoteDataSource>()),
   );
+
   getIt.registerLazySingleton<GetAddressesUseCase>(
     () => GetAddressesUseCase(getIt<AddressRepository>()),
   );
+
   getIt.registerLazySingleton<AddAddressUseCase>(
     () => AddAddressUseCase(getIt<AddressRepository>()),
   );
+
   getIt.registerLazySingleton<DeleteAddressUseCase>(
     () => DeleteAddressUseCase(getIt<AddressRepository>()),
   );
+
   getIt.registerFactory<AddressCubit>(
     () => AddressCubit(
       getAddressesUseCase: getIt<GetAddressesUseCase>(),
@@ -490,26 +504,43 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
   // ==========================================================
   // PAYMENT METHOD
   // ==========================================================
+
   getIt.registerLazySingleton<PaymentMethodRemoteDataSource>(
     () => PaymentMethodRemoteDataSourceImpl(getIt<ApiService>()),
   );
+
   getIt.registerLazySingleton<PaymentMethodRepository>(
     () => PaymentMethodRepositoryImpl(getIt<PaymentMethodRemoteDataSource>()),
   );
+
   getIt.registerLazySingleton<GetPaymentMethodsUseCase>(
     () => GetPaymentMethodsUseCase(getIt<PaymentMethodRepository>()),
   );
+
   getIt.registerLazySingleton<AddPaymentMethodUseCase>(
     () => AddPaymentMethodUseCase(getIt<PaymentMethodRepository>()),
   );
+
   getIt.registerLazySingleton<DeletePaymentMethodUseCase>(
     () => DeletePaymentMethodUseCase(getIt<PaymentMethodRepository>()),
   );
+
   getIt.registerFactory<PaymentMethodCubit>(
     () => PaymentMethodCubit(
       getPaymentMethodsUseCase: getIt<GetPaymentMethodsUseCase>(),
       addPaymentMethodUseCase: getIt<AddPaymentMethodUseCase>(),
       deletePaymentMethodUseCase: getIt<DeletePaymentMethodUseCase>(),
+    ),
+  );
+
+  // ==========================================================
+  // CHECKOUT
+  // ==========================================================
+
+  getIt.registerFactory<CheckoutCubit>(
+    () => CheckoutCubit(
+      getAddressesUseCase: getIt<GetAddressesUseCase>(),
+      getPaymentMethodsUseCase: getIt<GetPaymentMethodsUseCase>(),
     ),
   );
 }

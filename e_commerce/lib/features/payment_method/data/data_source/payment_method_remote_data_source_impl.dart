@@ -1,4 +1,3 @@
-// lib/features/payment_method/data/data_source/payment_method_remote_data_source_impl.dart
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/error/failure.dart';
@@ -12,21 +11,23 @@ class PaymentMethodRemoteDataSourceImpl
 
   PaymentMethodRemoteDataSourceImpl(this.apiService);
 
+  List<PaymentMethodModel> _parseList(dynamic response) {
+    final data = response is Map && response.containsKey('paymentMethods')
+        ? response['paymentMethods']
+        : response;
+    if (data is! List) return [];
+    return data
+        .whereType<Map<String, dynamic>>()
+        .map((e) => PaymentMethodModel.fromJson(e))
+        .toList();
+  }
+
   @override
   Future<Either<Failure, List<PaymentMethodModel>>> getPaymentMethods() async {
     final result = await apiService.get('$kBaseUrl/payment-method');
     return result.fold((failure) => Left(failure), (response) {
       try {
-        final List methodsJson = response is Map
-            ? (response['paymentMethods'] ?? []) as List
-            : response as List;
-        return Right(
-          methodsJson
-              .map(
-                (e) => PaymentMethodModel.fromJson(e as Map<String, dynamic>),
-              )
-              .toList(),
-        );
+        return Right(_parseList(response));
       } catch (e) {
         return Left(ServerFailure(message: e.toString()));
       }
@@ -35,19 +36,13 @@ class PaymentMethodRemoteDataSourceImpl
 
   @override
   Future<Either<Failure, PaymentMethodModel>> addPaymentMethod({
-    required String cardholderName,
-    required String cardNumber,
-    required String expiryDate,
-    required String cvv,
+    required String brand,
+    required String last4,
+    bool isDefault = false,
   }) async {
     final result = await apiService.post(
       '$kBaseUrl/payment-method',
-      data: {
-        'cardholderName': cardholderName,
-        'cardNumber': cardNumber,
-        'expiryDate': expiryDate,
-        'cvv': cvv,
-      },
+      data: {'brand': brand, 'last4': last4, 'isDefault': isDefault},
     );
     return result.fold((failure) => Left(failure), (response) {
       try {

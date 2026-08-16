@@ -1,4 +1,3 @@
-// lib/features/address/data/data_source/address_remote_data_source_impl.dart
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/error/failure.dart';
@@ -11,19 +10,23 @@ class AddressRemoteDataSourceImpl implements AddressRemoteDataSource {
 
   AddressRemoteDataSourceImpl(this.apiService);
 
+  List<AddressModel> _parseList(dynamic response) {
+    final data = response is Map && response.containsKey('addresses')
+        ? response['addresses']
+        : response;
+    if (data is! List) return [];
+    return data
+        .whereType<Map<String, dynamic>>()
+        .map((e) => AddressModel.fromJson(e))
+        .toList();
+  }
+
   @override
   Future<Either<Failure, List<AddressModel>>> getAddresses() async {
     final result = await apiService.get('$kBaseUrl/address');
     return result.fold((failure) => Left(failure), (response) {
       try {
-        final List addressesJson = response is Map
-            ? (response['addresses'] ?? []) as List
-            : response as List;
-        return Right(
-          addressesJson
-              .map((e) => AddressModel.fromJson(e as Map<String, dynamic>))
-              .toList(),
-        );
+        return Right(_parseList(response));
       } catch (e) {
         return Left(ServerFailure(message: e.toString()));
       }
@@ -36,6 +39,7 @@ class AddressRemoteDataSourceImpl implements AddressRemoteDataSource {
     required String city,
     required String country,
     required String postalCode,
+    bool isDefault = false,
   }) async {
     final result = await apiService.post(
       '$kBaseUrl/address',
@@ -44,6 +48,7 @@ class AddressRemoteDataSourceImpl implements AddressRemoteDataSource {
         'city': city,
         'country': country,
         'postalCode': postalCode,
+        'isDefault': isDefault,
       },
     );
     return result.fold((failure) => Left(failure), (response) {

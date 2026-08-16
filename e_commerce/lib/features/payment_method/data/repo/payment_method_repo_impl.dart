@@ -1,4 +1,3 @@
-// lib/features/payment_method/data/repo/payment_method_repo_impl.dart
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/features/payment_method/domain/data_source/payment_method_remote_data_source.dart';
@@ -16,16 +15,14 @@ class PaymentMethodRepositoryImpl implements PaymentMethodRepository {
 
   @override
   Future<Either<Failure, PaymentMethodEntity>> addPaymentMethod({
-    required String cardholderName,
-    required String cardNumber,
-    required String expiryDate,
-    required String cvv,
+    required String brand,
+    required String last4,
+    bool isDefault = false,
   }) {
     return remoteDataSource.addPaymentMethod(
-      cardholderName: cardholderName,
-      cardNumber: cardNumber,
-      expiryDate: expiryDate,
-      cvv: cvv,
+      brand: brand,
+      last4: last4,
+      isDefault: isDefault,
     );
   }
 

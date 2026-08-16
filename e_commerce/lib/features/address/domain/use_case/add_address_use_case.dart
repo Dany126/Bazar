@@ -1,4 +1,4 @@
-// lib/features/address/domin/use_case/add_address_use_case.dart
+// add_address_use_case.dart
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/features/address/domain/entity/address_entity.dart';
@@ -13,12 +13,14 @@ class AddAddressUseCase {
     required String city,
     required String country,
     required String postalCode,
+    bool isDefault = false,
   }) {
     return repository.addAddress(
       street: street,
       city: city,
       country: country,
       postalCode: postalCode,
+      isDefault: isDefault,
     );
   }
 }

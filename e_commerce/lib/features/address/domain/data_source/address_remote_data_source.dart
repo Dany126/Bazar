@@ -1,4 +1,3 @@
-// lib/features/address/domin/data_source/remote_data_source/address_remote_data_source.dart
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/features/address/data/model/address_model.dart';
@@ -11,6 +10,7 @@ abstract class AddressRemoteDataSource {
     required String city,
     required String country,
     required String postalCode,
+    bool isDefault = false,
   });
 
   Future<Either<Failure, void>> deleteAddress({required String addressId});

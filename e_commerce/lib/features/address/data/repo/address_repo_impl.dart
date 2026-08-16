@@ -1,4 +1,3 @@
-// lib/features/address/data/repo/address_repo_impl.dart
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/features/address/domain/data_source/address_remote_data_source.dart';
@@ -20,12 +19,14 @@ class AddressRepositoryImpl implements AddressRepository {
     required String city,
     required String country,
     required String postalCode,
+    bool isDefault = false,
   }) {
     return remoteDataSource.addAddress(
       street: street,
       city: city,
       country: country,
       postalCode: postalCode,
+      isDefault: isDefault,
     );
   }
 

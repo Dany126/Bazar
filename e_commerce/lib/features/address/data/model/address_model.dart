@@ -1,4 +1,3 @@
-// lib/features/address/data/model/address_model.dart
 import 'package:e_commerce/features/address/domain/entity/address_entity.dart';
 
 class AddressModel extends AddressEntity {
@@ -8,17 +7,27 @@ class AddressModel extends AddressEntity {
     required super.city,
     required super.country,
     required super.postalCode,
-    super.isDefault,
+    required super.isDefault,
   });
 
   factory AddressModel.fromJson(Map<String, dynamic> json) {
     return AddressModel(
-      id: json['_id'] ?? json['id'] ?? '',
-      street: json['street'] ?? '',
-      city: json['city'] ?? '',
-      country: json['country'] ?? '',
+      id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
+      street: json['street']?.toString() ?? '',
+      city: json['city']?.toString() ?? '',
+      country: json['country']?.toString() ?? '',
       postalCode: json['postalCode']?.toString() ?? '',
-      isDefault: json['isDefault'] ?? false,
+      isDefault: json['isDefault'] == true,
     );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'street': street,
+      'city': city,
+      'country': country,
+      'postalCode': postalCode,
+      'isDefault': isDefault,
+    };
   }
 }

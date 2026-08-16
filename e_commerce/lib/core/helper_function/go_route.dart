@@ -2,6 +2,7 @@ import 'package:e_commerce/features/auth/presentation/view/reset_password_view.d
 import 'package:e_commerce/features/auth/presentation/view/sign_in_view.dart';
 import 'package:e_commerce/features/auth/presentation/view/signup_view.dart';
 import 'package:e_commerce/features/cart/presentation/view/cart_view.dart';
+import 'package:e_commerce/features/checkout/presentation/views/checkout_view.dart';
 import 'package:e_commerce/features/home/presentation/views/category_details_view.dart';
 import 'package:e_commerce/features/home/presentation/views/home_view.dart';
 
@@ -71,7 +72,11 @@ Route onGenerateRoute(RouteSettings settings) {
 
     case ProfileView.routeName:
       return MaterialPageRoute(builder: (context) => const ProfileView());
-
+    case CheckoutView.routeName:
+      return MaterialPageRoute(
+        settings: settings,
+        builder: (context) => const CheckoutView(),
+      );
     default:
       return MaterialPageRoute(
         builder: (context) =>

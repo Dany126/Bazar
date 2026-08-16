@@ -1,35 +1,18 @@
-// lib/features/checkout/presenation/view/widgets/checkout_view_body.dart
-
-import 'package:e_commerce/features/address/domain/entity/address_entity.dart';
-import 'package:e_commerce/features/address/presentation/model_view/cubit/address_cubit.dart';
-import 'package:e_commerce/features/address/presentation/model_view/cubit/address_state.dart';
-import 'package:e_commerce/features/cart/presentation/cubit/cart_cubit.dart';
-import 'package:e_commerce/features/cart/presentation/cubit/cart_state.dart';
-import 'package:e_commerce/features/checkout/presentation/views/widgets/checkout_selection_row.dart';
-import 'package:e_commerce/features/checkout/presentation/views/widgets/checkout_summary.dart';
-
+import 'package:e_commerce/features/cart/domain/entity/cart_entity.dart';
+import 'package:e_commerce/features/cart/presentation/view/widgets/cart_app_bar.dart';
+import 'package:e_commerce/features/cart/presentation/view/widgets/cart_summary.dart';
+import 'package:e_commerce/features/checkout/presentation/cubit/checkout_cubit.dart';
+import 'package:e_commerce/features/checkout/presentation/cubit/checkout_state.dart';
 import 'package:e_commerce/features/order/presenation/modelview/cubit/order_cubit.dart';
 import 'package:e_commerce/features/order/presenation/modelview/cubit/order_state.dart';
 import 'package:e_commerce/features/order/presenation/view/widgets/order_success_view.dart';
-import 'package:e_commerce/features/payment_method/domain/entity/payment_method_entity.dart';
-import 'package:e_commerce/features/payment_method/presentation/model_view/cubit/payment_method_cubit.dart';
-import 'package:e_commerce/features/payment_method/presentation/model_view/cubit/payment_method_state.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-const kCheckoutAccentColor = Color(0xFF7B61FF);
+class CheckoutViewBody extends StatelessWidget {
+  const CheckoutViewBody({super.key, required this.cart});
 
-class CheckoutViewBody extends StatefulWidget {
-  const CheckoutViewBody({super.key});
-
-  @override
-  State<CheckoutViewBody> createState() => _CheckoutViewBodyState();
-}
-
-class _CheckoutViewBodyState extends State<CheckoutViewBody> {
-  AddressEntity? selectedAddress;
-  PaymentMethodEntity? selectedPaymentMethod;
+  final CartEntity cart;
 
   @override
   Widget build(BuildContext context) {
@@ -46,206 +29,313 @@ class _CheckoutViewBodyState extends State<CheckoutViewBody> {
           ).showSnackBar(SnackBar(content: Text(state.message)));
         }
       },
-      child: Column(
-        children: [
-          _buildAppBar(context),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  BlocBuilder<AddressCubit, AddressState>(
-                    builder: (context, state) {
-                      final addresses = state is AddressLoaded
-                          ? state.addresses
-                          : <AddressEntity>[];
-                      selectedAddress ??= addresses.isNotEmpty
-                          ? addresses.firstWhere(
-                              (a) => a.isDefault,
-                              orElse: () => addresses.first,
-                            )
-                          : null;
-
-                      return CheckoutSelectionRow(
-                        label: 'Shipping Address',
-                        value: selectedAddress == null
-                            ? null
-                            : '${selectedAddress!.street}, ${selectedAddress!.city}',
-                        placeholder: 'Add Shipping Address',
-                        onTap: () {
-                          // TODO: open address list / add-address screen,
-                          // then setState(() => selectedAddress = picked);
-                        },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 12),
-                  BlocBuilder<PaymentMethodCubit, PaymentMethodState>(
-                    builder: (context, state) {
-                      final methods = state is PaymentMethodLoaded
-                          ? state.paymentMethods
-                          : <PaymentMethodEntity>[];
-                      selectedPaymentMethod ??= methods.isNotEmpty
-                          ? methods.firstWhere(
-                              (m) => m.isDefault,
-                              orElse: () => methods.first,
-                            )
-                          : null;
-
-                      return CheckoutSelectionRow(
-                        label: 'Payment Method',
-                        value: selectedPaymentMethod == null
-                            ? null
-                            : '**** ${selectedPaymentMethod!.last4}',
-                        placeholder: 'Add Payment Method',
-                        trailingDot: selectedPaymentMethod != null,
-                        onTap: () {
-                          // TODO: open payment method list / add screen,
-                          // then setState(() => selectedPaymentMethod = picked);
-                        },
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 24),
-                  BlocBuilder<CartCubit, CartState>(
-                    builder: (context, state) {
-                      if (state is CartLoaded) {
-                        return CheckoutSummary(cart: state.cart);
-                      }
-                      return const SizedBox();
-                    },
-                  ),
-                ],
-              ),
-            ),
-          ),
-          _buildPlaceOrderBar(context),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildAppBar(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
-      child: Row(
-        children: [
-          CircleAvatar(
-            backgroundColor: Colors.grey[100],
-            child: IconButton(
-              icon: const Icon(Icons.arrow_back, color: Colors.black),
-              onPressed: () => Navigator.of(context).pop(),
-            ),
-          ),
-          const Spacer(),
-          const Text(
-            'Checkout',
-            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-          ),
-          const Spacer(),
-          const SizedBox(width: 48),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildPlaceOrderBar(BuildContext context) {
-    return BlocBuilder<CartCubit, CartState>(
-      builder: (context, cartState) {
-        final total = cartState is CartLoaded
-            ? (cartState.cart.subtotal ?? 0.0)
-            : 0.0;
-        final canPlaceOrder =
-            selectedAddress != null && selectedPaymentMethod != null;
-
-        return Container(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black12,
-                blurRadius: 8,
-                offset: Offset(0, -2),
-              ),
-            ],
-          ),
-          child: SafeArea(
-            top: false,
-            child: BlocBuilder<OrderCubit, OrderState>(
-              builder: (context, orderState) {
-                final isPlacing = orderState is OrderLoading;
-
-                return SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: canPlaceOrder && !isPlacing
-                        ? () => _placeOrder(context, cartState)
-                        : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: kCheckoutAccentColor,
-                      foregroundColor: Colors.white,
-                      disabledBackgroundColor: Colors.grey[300],
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(26),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        child: CustomScrollView(
+          slivers: [
+            const SliverToBoxAdapter(child: CartAppBar(title: 'Checkout')),
+            SliverToBoxAdapter(
+              child: BlocBuilder<CheckoutCubit, CheckoutState>(
+                builder: (context, state) {
+                  if (state is CheckoutLoading || state is CheckoutInitial) {
+                    return const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 40),
+                      child: Center(child: CircularProgressIndicator()),
+                    );
+                  }
+                  if (state is CheckoutError) {
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 24),
+                      child: Text(
+                        state.message,
+                        style: const TextStyle(color: Colors.red),
                       ),
-                    ),
-                    child: isPlacing
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              color: Colors.white,
-                              strokeWidth: 2,
-                            ),
-                          )
-                        : Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text('\$${total.toStringAsFixed(0)}'),
-                              const Text(
-                                'Place Order',
-                                style: TextStyle(fontWeight: FontWeight.w600),
-                              ),
-                              const SizedBox(width: 40),
-                            ],
-                          ),
-                  ),
-                );
-              },
+                    );
+                  }
+                  final loaded = state as CheckoutLoaded;
+
+                  return Column(
+                    children: [
+                      const SizedBox(height: 16),
+                      _buildOptionCard(
+                        context,
+                        title: 'Shipping Address',
+                        value: loaded.selectedAddress == null
+                            ? 'Add Shipping Address'
+                            : '${loaded.selectedAddress!.street}, ${loaded.selectedAddress!.city}',
+                        onTap: () => _showAddressPicker(context, loaded),
+                      ),
+                      const SizedBox(height: 16),
+                      _buildOptionCard(
+                        context,
+                        title: 'Payment Method',
+                        value: loaded.selectedPaymentMethod == null
+                            ? 'Add Payment Method'
+                            : '**** ${loaded.selectedPaymentMethod!.last4}',
+                        onTap: () => _showPaymentPicker(context, loaded),
+                      ),
+                    ],
+                  );
+                },
+              ),
             ),
-          ),
+            SliverFillRemaining(
+              hasScrollBody: false,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    CartSummary(cart: cart, showCoupon: false),
+                    const SizedBox(height: 28),
+                    _buildPlaceOrderButton(context),
+                    const SizedBox(height: 16),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ------------------------------------------------------------
+  // PLACE ORDER
+  // ------------------------------------------------------------
+
+  Widget _buildPlaceOrderButton(BuildContext context) {
+    return BlocBuilder<CheckoutCubit, CheckoutState>(
+      builder: (context, checkoutState) {
+        final loaded = checkoutState is CheckoutLoaded ? checkoutState : null;
+        final canPlaceOrder =
+            loaded?.selectedAddress != null &&
+            loaded?.selectedPaymentMethod != null;
+        final total = cart.subtotal ?? 0.0;
+
+        return BlocBuilder<OrderCubit, OrderState>(
+          builder: (context, orderState) {
+            final isPlacing = orderState is OrderLoading;
+
+            return SizedBox(
+              width: double.infinity,
+              height: 50,
+              child: FilledButton(
+                onPressed: canPlaceOrder && !isPlacing
+                    ? () => _placeOrder(context, loaded!)
+                    : null,
+                style: FilledButton.styleFrom(
+                  elevation: 0,
+                  padding: EdgeInsets.zero,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(28),
+                  ),
+                ),
+                child: isPlacing
+                    ? const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          color: Colors.white,
+                          strokeWidth: 2,
+                        ),
+                      )
+                    : Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 22),
+                        child: Row(
+                          children: [
+                            Text(
+                              '\$${total.toStringAsFixed(0)}',
+                              style: const TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                            const Spacer(),
+                            const Text(
+                              'Place Order',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+              ),
+            );
+          },
         );
       },
     );
   }
 
-  void _placeOrder(BuildContext context, CartState cartState) {
-    if (cartState is! CartLoaded || selectedAddress == null) return;
+  void _placeOrder(BuildContext context, CheckoutLoaded state) {
+    final address = state.selectedAddress;
+    final paymentMethod = state.selectedPaymentMethod;
+    if (address == null || paymentMethod == null) return;
 
-    final products = cartState.cart.items
+    final products = cart.items
         .map(
           (item) => {
             'product': item.productId,
+            'variant': item.variantId,
             'quantity': item.quantity,
-            'price': item.price,
-            if (item.size != null) 'size': item.size,
-            if (item.color != null) 'color': item.color,
+            if (item.price != null) 'price': item.price,
           },
         )
         .toList();
 
     context.read<OrderCubit>().createOrder(
       products: products,
-      totalPrice: cartState.cart.subtotal ?? 0.0,
+      totalPrice: cart.subtotal ?? 0.0,
       shippingAddress: {
-        'street': selectedAddress!.street,
-        'city': selectedAddress!.city,
-        'country': selectedAddress!.country,
-        'postalCode': selectedAddress!.postalCode,
+        'street': address.street,
+        'city': address.city,
+        'country': address.country,
+        'postalCode': address.postalCode,
       },
-      paymentMethod: selectedPaymentMethod?.brand ?? 'cash',
+      paymentMethod: paymentMethod.brand,
+    );
+  }
+
+  // ------------------------------------------------------------
+  // PICKERS
+  // ------------------------------------------------------------
+
+  void _showAddressPicker(BuildContext context, CheckoutLoaded state) {
+    final cubit = context.read<CheckoutCubit>();
+    showModalBottomSheet(
+      context: context,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (state.addresses.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text('No saved addresses yet.'),
+                ),
+              for (final address in state.addresses)
+                ListTile(
+                  title: Text('${address.street}, ${address.city}'),
+                  trailing: address.id == state.selectedAddress?.id
+                      ? const Icon(Icons.check_circle, color: Colors.green)
+                      : null,
+                  onTap: () {
+                    cubit.selectAddress(address);
+                    Navigator.of(sheetContext).pop();
+                  },
+                ),
+              ListTile(
+                leading: const Icon(Icons.add),
+                title: const Text('Add New Address'),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  // TODO: push add-address flow, then cubit.init() on return.
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  void _showPaymentPicker(BuildContext context, CheckoutLoaded state) {
+    final cubit = context.read<CheckoutCubit>();
+    showModalBottomSheet(
+      context: context,
+      builder: (sheetContext) {
+        return SafeArea(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (state.paymentMethods.isEmpty)
+                const Padding(
+                  padding: EdgeInsets.all(24),
+                  child: Text('No saved payment methods yet.'),
+                ),
+              for (final method in state.paymentMethods)
+                ListTile(
+                  title: Text('**** ${method.last4}'),
+                  trailing: method.id == state.selectedPaymentMethod?.id
+                      ? const Icon(Icons.check_circle, color: Colors.green)
+                      : null,
+                  onTap: () {
+                    cubit.selectPaymentMethod(method);
+                    Navigator.of(sheetContext).pop();
+                  },
+                ),
+              ListTile(
+                leading: const Icon(Icons.add),
+                title: const Text('Add New Payment Method'),
+                onTap: () {
+                  Navigator.of(sheetContext).pop();
+                  // TODO: push add-payment flow, then cubit.init() on return.
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildOptionCard(
+    BuildContext context, {
+    required String title,
+    required String value,
+    required VoidCallback onTap,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(8),
+        child: Ink(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 11),
+          decoration: BoxDecoration(
+            color: Colors.grey.shade100,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.black45,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      value,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        fontWeight: FontWeight.w400,
+                        color: Colors.black87,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right_rounded,
+                size: 25,
+                color: Colors.black87,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }

@@ -1,9 +1,7 @@
-// lib/features/payment_method/presenation/modelview/cubit/payment_method_cubit.dart
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:e_commerce/features/payment_method/domain/use_case/add_payment_method_use_case.dart';
 import 'package:e_commerce/features/payment_method/domain/use_case/delete_payment_method_use_case.dart';
 import 'package:e_commerce/features/payment_method/domain/use_case/get_payment_methods_use_case.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'payment_method_state.dart';
 
 class PaymentMethodCubit extends Cubit<PaymentMethodState> {
@@ -27,17 +25,14 @@ class PaymentMethodCubit extends Cubit<PaymentMethodState> {
   }
 
   Future<void> addPaymentMethod({
-    required String cardholderName,
-    required String cardNumber,
-    required String expiryDate,
-    required String cvv,
+    required String brand,
+    required String last4,
+    bool isDefault = false,
   }) async {
-    emit(PaymentMethodLoading());
     final result = await addPaymentMethodUseCase(
-      cardholderName: cardholderName,
-      cardNumber: cardNumber,
-      expiryDate: expiryDate,
-      cvv: cvv,
+      brand: brand,
+      last4: last4,
+      isDefault: isDefault,
     );
     result.fold(
       (failure) => emit(PaymentMethodError(failure.message)),
@@ -45,7 +40,7 @@ class PaymentMethodCubit extends Cubit<PaymentMethodState> {
     );
   }
 
-  Future<void> deletePaymentMethod({required String paymentMethodId}) async {
+  Future<void> deletePaymentMethod(String paymentMethodId) async {
     final result = await deletePaymentMethodUseCase(
       paymentMethodId: paymentMethodId,
     );
