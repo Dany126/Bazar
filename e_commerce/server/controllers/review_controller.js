@@ -30,15 +30,19 @@ export const createReview = async (req, res) => {
       ).toFixed(1),
     );
 
-    await Product.findByIdAndUpdate(product.id, {
-      $inc: {
-        ratingsQuantity: 1,
+    const updatedProduct = await Product.findByIdAndUpdate(
+      product.id,
+      {
+        $inc: {
+          ratingsQuantity: 1,
+        },
+        $set: {
+          avg_rating: newAvg,
+        },
       },
-      $set: {
-        avg_rating: newAvg,
-      },
-    });
-
+      { returnDocument: "after" },
+    );
+    console.log(updatedProduct);
     return res.status(201).json({
       status: "Success",
       review,

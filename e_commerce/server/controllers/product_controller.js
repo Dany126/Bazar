@@ -17,6 +17,7 @@ export const createProduct = async (req, res) => {
     const body = {
       image: imageUrls,
       avg_rating: Number(req.body.avg_rating),
+      price: Number(req.body.price),
       ratingsQuantity: Number(req.body.ratingsQuantity),
       name: req.body.name,
       category: req.body.category,
