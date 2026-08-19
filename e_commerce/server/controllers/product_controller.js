@@ -1,5 +1,6 @@
 import { Product } from "../models/product_model.js";
 import { apiFeatures } from "../utils/apiFeatures.js";
+import { Wishlist } from "../models/wishlist_model.js";
 
 export const createProduct = async (req, res) => {
   try {
@@ -43,23 +44,41 @@ export const createProduct = async (req, res) => {
 export const getAllProducts = async (req, res) => {
   try {
     const query = { ...req.params, ...req.query };
+
     const { filter, limits, skip, sortBy } = apiFeatures(query);
+
     const products = await Product.find(filter)
       .sort(sortBy)
       .skip(skip)
       .limit(limits);
-    if (!products) {
-      return res.status(400).json({
+
+    if (!products.length) {
+      return res.status(404).json({
         status: "Failed",
         message: "No product found",
       });
     }
+
+    const wishlist = await Wishlist.findOne({
+      user: req.user.id,
+    }).select("product");
+
+    const wishlistIds = new Set(
+      wishlist?.product.map((id) => id.toString()) || [],
+    );
+
+    const result = products.map((product) => ({
+      ...product.toObject(),
+      isFavourite: wishlistIds.has(product._id.toString()),
+    }));
+
     return res.status(200).json({
       status: "Success",
-      products,
+      products: result,
     });
   } catch (err) {
     console.log(err);
+
     return res.status(500).json({
       status: "Failed",
       message: "Internal Server Error",

@@ -13,7 +13,7 @@ import { variantRouter } from "./product_variants_routes.js";
 
 export const productRouter = express.Router({ mergeParams: true });
 
-// productRouter.use(requireAuth);
+productRouter.use(requireAuth);
 
 productRouter.use("/:product/variant", variantRouter);
 
