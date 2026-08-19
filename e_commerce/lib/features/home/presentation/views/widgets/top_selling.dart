@@ -18,7 +18,7 @@ class TopSelling extends StatelessWidget {
           getIt<GetProductsCubit>()
             ..fetchBestSellingProducts(page: 1, limit: 50),
       child: Scaffold(
-        appBar: customAppBar(context),
+        appBar: CustomAppBar(),
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: CustomScrollView(

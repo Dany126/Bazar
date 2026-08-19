@@ -1,5 +1,5 @@
 import 'package:e_commerce/features/cart/domain/entity/cart_entity.dart';
-import 'package:e_commerce/features/cart/presentation/view/widgets/cart_app_bar.dart';
+import 'package:e_commerce/core/widgets/custom_app_bar.dart';
 import 'package:e_commerce/features/cart/presentation/view/widgets/cart_summary.dart';
 import 'package:e_commerce/features/checkout/presentation/cubit/checkout_cubit.dart';
 import 'package:e_commerce/features/checkout/presentation/cubit/checkout_state.dart';
@@ -33,7 +33,7 @@ class CheckoutViewBody extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: CustomScrollView(
           slivers: [
-            const SliverToBoxAdapter(child: CartAppBar(title: 'Checkout')),
+            const SliverToBoxAdapter(child: CustomAppBar(title: 'Checkout')),
             SliverToBoxAdapter(
               child: BlocBuilder<CheckoutCubit, CheckoutState>(
                 builder: (context, state) {

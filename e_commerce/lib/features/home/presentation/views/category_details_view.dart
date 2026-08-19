@@ -9,7 +9,7 @@ class CategoryDetailsView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: customAppBar(context),
+      appBar: CustomAppBar(title: 'Category Details'),
       body: Padding(
         padding: EdgeInsets.symmetric(horizontal: 24),
         child: CategoryDetailsViewBody(),

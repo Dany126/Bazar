@@ -1,3 +1,5 @@
+import 'package:e_commerce/features/address/presentation/views/address_view.dart';
+import 'package:e_commerce/features/address/presentation/views/map_view.dart';
 import 'package:e_commerce/features/auth/presentation/view/reset_password_view.dart';
 import 'package:e_commerce/features/auth/presentation/view/sign_in_view.dart';
 import 'package:e_commerce/features/auth/presentation/view/signup_view.dart';
@@ -77,6 +79,12 @@ Route onGenerateRoute(RouteSettings settings) {
         settings: settings,
         builder: (context) => const CheckoutView(),
       );
+    case AddressView.routeName:
+      return MaterialPageRoute(builder: (context) => const AddressView());
+
+    case MapView.routeName:
+      return MaterialPageRoute(builder: (context) => const MapView());
+
     default:
       return MaterialPageRoute(
         builder: (context) =>

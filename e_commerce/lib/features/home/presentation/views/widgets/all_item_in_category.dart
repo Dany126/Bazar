@@ -26,11 +26,11 @@ class AllItemsInCategoryView extends StatelessWidget {
           limit: 10,
           categoryId: category.id,
         );
-        
+
         return cubit;
       },
       child: Scaffold(
-        appBar: customAppBar(context),
+        appBar: CustomAppBar(title: category.name),
         body: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24),
           child: BlocBuilder<GetProductsCubit, GetProductsState>(

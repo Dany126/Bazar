@@ -1,41 +1,26 @@
-import 'package:e_commerce/core/utils/app_colors.dart';
+import 'package:e_commerce/core/utils/app_styles.dart';
+import 'package:e_commerce/core/widgets/custom_back_button.dart';
 import 'package:flutter/material.dart';
 
-// ignore: strict_top_level_inference
-AppBar customAppBar(context) {
-  return AppBar(
-    backgroundColor: Colors.transparent,
-    elevation: 0,
-    scrolledUnderElevation: 0,
-    leadingWidth: 100,
+class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
+  const CustomAppBar({super.key, this.title});
+  final String? title;
 
-    // leadingWidth: MediaQuery.of(context).size.width * .5,
-    leading: Row(
-      children: [
-        const SizedBox(width: 20),
-        Container(
-          width: 50,
-          height: 50,
-          decoration: ShapeDecoration(
-            color: AppColors.kSecondaryAccentColor /* Bg-Light-2 */,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(1000),
-            ),
-          ),
-          child: Center(
-            child: IconButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              icon: const Icon(
-                size: 20,
-                Icons.arrow_back_ios_new,
-                color: Color(0xff272727),
-              ),
-            ),
-          ),
-        ),
-      ],
-    ),
-  );
+  @override
+  Size get preferredSize => const Size.fromHeight(48);
+
+  @override
+  Widget build(BuildContext context) {
+    return AppBar(
+      automaticallyImplyLeading: false,
+      backgroundColor: Colors.transparent,
+      elevation: 0,
+      toolbarHeight: 48,
+      leadingWidth: 42,
+      leading: const CustomBackButton(),
+      centerTitle: true,
+      title: Text(title ?? '', style: AppStyles.textStylesSemiBold20(context)),
+      actions: const [SizedBox(width: 42)],
+    );
+  }
 }

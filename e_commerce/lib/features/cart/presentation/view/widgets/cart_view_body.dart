@@ -4,7 +4,7 @@ import 'dart:developer';
 
 import 'package:e_commerce/features/cart/presentation/cubit/cart_cubit.dart';
 import 'package:e_commerce/features/cart/presentation/cubit/cart_state.dart';
-import 'package:e_commerce/features/cart/presentation/view/widgets/cart_app_bar.dart';
+import 'package:e_commerce/core/widgets/custom_app_bar.dart';
 import 'package:e_commerce/features/cart/presentation/view/widgets/cart_checkout_button.dart';
 import 'package:e_commerce/features/cart/presentation/view/widgets/cart_empty_state.dart';
 import 'package:e_commerce/features/cart/presentation/view/widgets/cart_error_state.dart';
@@ -54,7 +54,7 @@ class CartViewBody extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const CartAppBar(title: 'Cart'),
+                      const CustomAppBar(title: 'Cart'),
 
                       const SizedBox(height: 8),
 

@@ -1,6 +1,8 @@
 import 'package:e_commerce/core/utils/app_colors.dart';
+import 'package:e_commerce/core/utils/app_styles.dart';
 import 'package:e_commerce/features/address/presentation/model_view/cubit/address_cubit.dart';
 import 'package:e_commerce/features/address/presentation/model_view/cubit/address_state.dart';
+import 'package:e_commerce/features/address/presentation/views/map_view.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -90,6 +92,40 @@ class _AddAddressViewState extends State<AddAddressView> {
                     ),
                   ],
                 ),
+                const SizedBox(height: 12),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Expanded(
+                      child: Divider(thickness: 1, color: Colors.grey.shade300),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.symmetric(horizontal: 16.0),
+                      child: Text(
+                        "OR",
+                        style: AppStyles.textStylesSemiBold14(
+                          context,
+                        ).copyWith(color: AppColors.kPrimaryColor),
+                      ),
+                    ),
+                    Expanded(
+                      child: Divider(thickness: 1, color: Colors.grey.shade300),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                GestureDetector(
+                  onTap: () {
+                    Navigator.pushNamed(context, MapView.routeName);
+                  },
+                  child: Text(
+                    'Pick a location on the map',
+                    style: AppStyles.textStylesSemiBold14(context),
+                  ),
+                ),
+                const SizedBox(height: 12),
+
                 const Spacer(),
                 BlocBuilder<AddressCubit, AddressState>(
                   builder: (context, state) {

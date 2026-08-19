@@ -41,7 +41,7 @@ class OrderItemsCard extends StatelessWidget {
                               ? Image.network(
                                   product.thumbnailUrl,
                                   fit: BoxFit.cover,
-                                  errorBuilder: (_, __, ___) {
+                                  errorBuilder: (_, _, _) {
                                     return const Icon(
                                       Icons.image_not_supported_outlined,
                                     );
