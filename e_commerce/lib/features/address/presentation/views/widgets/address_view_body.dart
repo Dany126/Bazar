@@ -1,7 +1,8 @@
 import 'package:e_commerce/features/address/domain/entity/address_entity.dart';
 import 'package:e_commerce/features/address/presentation/model_view/cubit/address_cubit.dart';
 import 'package:e_commerce/features/address/presentation/model_view/cubit/address_state.dart';
-import 'package:e_commerce/features/address/presentation/views/widgets/add_address_view.dart';
+import 'package:e_commerce/features/address/presentation/views/map_view.dart';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -99,7 +100,7 @@ class AddressViewBody extends StatelessWidget {
                   MaterialPageRoute(
                     builder: (_) => BlocProvider.value(
                       value: context.read<AddressCubit>(),
-                      child: const AddAddressView(),
+                      child: const MapView(),
                     ),
                   ),
                 );

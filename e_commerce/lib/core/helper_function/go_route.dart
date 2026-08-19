@@ -1,3 +1,4 @@
+import 'package:e_commerce/features/address/presentation/views/add_address_view.dart';
 import 'package:e_commerce/features/address/presentation/views/address_view.dart';
 import 'package:e_commerce/features/address/presentation/views/map_view.dart';
 import 'package:e_commerce/features/auth/presentation/view/reset_password_view.dart';
@@ -84,6 +85,9 @@ Route onGenerateRoute(RouteSettings settings) {
 
     case MapView.routeName:
       return MaterialPageRoute(builder: (context) => const MapView());
+
+    case AddAddressView.routeName:
+      return MaterialPageRoute(builder: (context) => const AddAddressView());
 
     default:
       return MaterialPageRoute(

@@ -493,6 +493,7 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
     () => DeleteAddressUseCase(getIt<AddressRepository>()),
   );
 
+
   getIt.registerFactory<AddressCubit>(
     () => AddressCubit(
       getAddressesUseCase: getIt<GetAddressesUseCase>(),
@@ -500,6 +501,7 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
       deleteAddressUseCase: getIt<DeleteAddressUseCase>(),
     ),
   );
+  
 
   // ==========================================================
   // PAYMENT METHOD
