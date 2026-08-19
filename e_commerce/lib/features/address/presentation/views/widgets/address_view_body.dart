@@ -1,6 +1,5 @@
 import 'package:e_commerce/features/address/presentation/model_view/cubit/address_cubit.dart';
 import 'package:e_commerce/features/address/presentation/model_view/cubit/address_state.dart';
-import 'package:e_commerce/features/address/presentation/views/map_view.dart';
 import 'package:e_commerce/features/address/presentation/views/widgets/address_card.dart';
 
 import 'package:flutter/material.dart';
@@ -19,7 +18,7 @@ class AddressViewBody extends StatelessWidget {
       child: Column(
         children: [
           const SizedBox(height: 12),
-          _buildHeader(context),
+
           const SizedBox(height: 24),
           Expanded(
             child: BlocBuilder<AddressCubit, AddressState>(
@@ -31,7 +30,7 @@ class AddressViewBody extends StatelessWidget {
                   return Skeletonizer(
                     enabled: true,
                     child: ListView.separated(
-                      itemCount: 4,
+                      itemCount: 6,
                       separatorBuilder: (_, _) => const SizedBox(height: 12),
                       itemBuilder: (context, index) =>
                           const AddressCardSkeleton(),
@@ -41,7 +40,10 @@ class AddressViewBody extends StatelessWidget {
                 if (state is AddressError) {
                   return Center(
                     child: Text(
-                      state.message,
+                      state.message.statusCode == 404
+                          ? 'No saved addresses yet'
+                          : state.message.message,
+
                       style: const TextStyle(color: Colors.red),
                     ),
                   );
@@ -71,68 +73,6 @@ class AddressViewBody extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 16),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildHeader(BuildContext context) {
-    return SizedBox(
-      height: 42,
-      child: Row(
-        children: [
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => Navigator.of(context).pop(),
-              borderRadius: BorderRadius.circular(21),
-              child: Ink(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(
-                  Icons.chevron_left_rounded,
-                  color: Colors.black87,
-                ),
-              ),
-            ),
-          ),
-          const Expanded(
-            child: Center(
-              child: Text(
-                'Address',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
-              ),
-            ),
-          ),
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () {
-                Navigator.of(context).push(
-                  MaterialPageRoute(
-                    builder: (_) => BlocProvider.value(
-                      value: context.read<AddressCubit>(),
-                      child: const MapView(),
-                    ),
-                  ),
-                );
-              },
-              borderRadius: BorderRadius.circular(21),
-              child: Ink(
-                width: 42,
-                height: 42,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade100,
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.add, color: Colors.black87),
-              ),
-            ),
-          ),
         ],
       ),
     );

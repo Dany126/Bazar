@@ -50,7 +50,7 @@ class AddressCubit extends Cubit<AddressState> {
     final result = await getCurrentLocationUseCase();
     return result.fold(
       (failure) {
-        emit(AddressError(failure.message));
+        emit(AddressError(failure));
         return null;
       },
       (position) {
@@ -58,6 +58,7 @@ class AddressCubit extends Cubit<AddressState> {
         pickedLocation = PickedLocationEntity(
           latitude: position.latitude,
           longitude: position.longitude,
+          street: '',
           city: '',
           country: '',
           postalCode: '',
@@ -73,7 +74,7 @@ class AddressCubit extends Cubit<AddressState> {
     emit(AddressLoading());
     final result = await editAddressUseCase(address);
     result.fold(
-      (failure) => emit(AddressError(failure.message)),
+      (failure) => emit(AddressError(failure)),
       (updatedAddress) => emit(AddressLoaded(updatedAddress)),
     );
   }
@@ -85,6 +86,7 @@ class AddressCubit extends Cubit<AddressState> {
     pickedLocation = PickedLocationEntity(
       latitude: address.latitude,
       longitude: address.longitude,
+      street: address.street,
       city: address.city,
       country: address.country,
       postalCode: address.postalCode,
@@ -111,7 +113,7 @@ class AddressCubit extends Cubit<AddressState> {
   Future<void> _resolve(double lat, double lng, {bool recenter = false}) async {
     emit(AddressResolving());
     final result = await reverseGeocodeUseCase(latitude: lat, longitude: lng);
-    result.fold((failure) => emit(AddressError(failure.message)), (location) {
+    result.fold((failure) => emit(AddressError(failure)), (location) {
       pickedLocation = location;
       emit(AddressLocationPicked(location, recenter: recenter));
     });
@@ -121,7 +123,7 @@ class AddressCubit extends Cubit<AddressState> {
     emit(AddressLoading());
     final result = await addAddressUseCase(address);
     result.fold(
-      (failure) => emit(AddressError(failure.message)),
+      (failure) => emit(AddressError(failure)),
       (savedAddress) => emit(AddressLoaded(savedAddress)),
     );
   }
@@ -130,14 +132,14 @@ class AddressCubit extends Cubit<AddressState> {
     emit(AddressLoading());
     final result = await getAddressesUseCase();
     result.fold(
-      (failure) => emit(AddressError(failure.message)),
+      (failure) => emit(AddressError(failure)),
       (addresses) => emit(AddressListLoaded(addresses)),
     );
   }
 
   Future<void> deleteAddress(String id) async {
     final result = await deleteAddressUseCase(id);
-    result.fold((failure) => emit(AddressError(failure.message)), (_) {
+    result.fold((failure) => emit(AddressError(failure)), (_) {
       emit(AddressDeleted());
       loadAddresses();
     });
@@ -146,7 +148,7 @@ class AddressCubit extends Cubit<AddressState> {
   Future<void> setDefault(String id) async {
     final result = await setDefaultAddressUseCase(id);
     result.fold(
-      (failure) => emit(AddressError(failure.message)),
+      (failure) => emit(AddressError(failure)),
       (_) => loadAddresses(),
     );
   }

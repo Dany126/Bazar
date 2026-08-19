@@ -19,8 +19,8 @@ class MapView extends StatelessWidget {
           actions: Padding(
             padding: const EdgeInsets.only(right: 16.0),
             child: GestureDetector(
-              onTap: () {
-                Navigator.of(context).push(
+              onTap: () async {
+                final saved = await Navigator.of(context).push<bool>(
                   MaterialPageRoute(
                     builder: (_) => BlocProvider.value(
                       value: context.read<AddressCubit>(),
@@ -28,6 +28,9 @@ class MapView extends StatelessWidget {
                     ),
                   ),
                 );
+                if (saved == true && context.mounted) {
+                  Navigator.of(context).pop(true);
+                }
               },
               child: const Icon(Icons.search, color: Colors.black),
             ),

@@ -1,3 +1,4 @@
+import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/features/address/domain/entity/address_entity.dart';
 import 'package:e_commerce/features/address/domain/entity/picked_location_entity.dart';
 import 'package:e_commerce/features/address/domain/entity/search_result_entity.dart';
@@ -25,7 +26,7 @@ final class AddressListLoaded extends AddressState {
 }
 
 final class AddressError extends AddressState {
-  final String message;
+  final Failure message;
   AddressError(this.message);
 }
 

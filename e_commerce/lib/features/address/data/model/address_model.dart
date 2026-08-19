@@ -77,7 +77,7 @@ class AddressModel extends AddressEntity {
   // Adjust keys to match your friend's actual JSON shape.
   factory AddressModel.fromJson(Map<String, dynamic> json) {
     return AddressModel(
-      id: json['id']?.toString(),
+      id: (json['_id'] ?? json['id'])?.toString(),
       addressType: json['addressType'] as String? ?? 'Apartment',
       buildingName: json['buildingName'] as String?,
       apartmentNumber: json['apartmentNumber'] as String?,

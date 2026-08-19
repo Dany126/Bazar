@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:e_commerce/core/error/failure.dart';
@@ -91,15 +93,29 @@ class AddressRepoImpl implements AddressRepo {
         );
       }
 
-      return Right(
-        PickedLocationModel.fromPhotonJson(
-          features.first as Map<String, dynamic>,
-          latitude: latitude,
-          longitude: longitude,
+      final photonLocation = PickedLocationModel.fromPhotonJson(
+        features.first as Map<String, dynamic>,
+        latitude: latitude,
+        longitude: longitude,
+      );
+      if (photonLocation.city.isNotEmpty &&
+          photonLocation.postalCode.isNotEmpty) {
+        return Right(photonLocation);
+      }
+
+      return Left(
+        ServerFailure(
+          message:
+              'This map provider returned no postal code for the selected location.',
         ),
       );
     } on DioException catch (e) {
-      return Left(ServerFailure(message: e.message.toString()));
+      return Left(
+        ServerFailure(
+          message: _dioFailureMessage(e, 'Could not resolve this location'),
+          statusCode: e.response?.statusCode,
+        ),
+      );
     } catch (e) {
       return Left(
         ServerFailure(
@@ -107,6 +123,14 @@ class AddressRepoImpl implements AddressRepo {
         ),
       );
     }
+  }
+
+  String _dioFailureMessage(DioException error, String fallback) {
+    final status = error.response?.statusCode;
+    final uri = error.requestOptions.uri;
+    final response = error.response?.data;
+    return '$fallback (HTTP ${status ?? 'network error'} at $uri)'
+        '${response == null ? '' : ': $response'}';
   }
 
   @override
@@ -129,7 +153,12 @@ class AddressRepoImpl implements AddressRepo {
           .toList();
       return Right(results);
     } on DioException catch (e) {
-      return Left(ServerFailure(message: e.message.toString()));
+      return Left(
+        ServerFailure(
+          message: _dioFailureMessage(e, 'Could not search for that location'),
+          statusCode: e.response?.statusCode,
+        ),
+      );
     } catch (e) {
       return Left(ServerFailure(message: 'Could not search for that location'));
     }
@@ -145,7 +174,12 @@ class AddressRepoImpl implements AddressRepo {
       );
       return Right(updated);
     } on DioException catch (e) {
-      return Left(ServerFailure(message: e.message.toString()));
+      return Left(
+        ServerFailure(
+          message: _dioFailureMessage(e, 'Could not update the address'),
+          statusCode: e.response?.statusCode,
+        ),
+      );
     } catch (e) {
       return Left(ServerFailure(message: 'Could not update the address'));
     }
@@ -159,10 +193,18 @@ class AddressRepoImpl implements AddressRepo {
       final saved = await remoteDataSource.addAddress(
         AddressModel.fromEntity(address),
       );
+
       return Right(saved);
     } on DioException catch (e) {
-      return Left(ServerFailure(message: e.message.toString()));
+      log(e.message.toString());
+      return Left(
+        ServerFailure(
+          message: _dioFailureMessage(e, 'Could not save the address'),
+          statusCode: e.response?.statusCode,
+        ),
+      );
     } catch (e) {
+      log(e.toString());
       return Left(ServerFailure(message: 'Could not save the address'));
     }
   }
@@ -173,8 +215,14 @@ class AddressRepoImpl implements AddressRepo {
       final addresses = await remoteDataSource.getAddresses();
       return Right(addresses);
     } on DioException catch (e) {
-      return Left(ServerFailure(message: e.message.toString()));
+      return Left(
+        ServerFailure(
+          message: _dioFailureMessage(e, 'Could not load your addresses'),
+          statusCode: e.response?.statusCode,
+        ),
+      );
     } catch (e) {
+      log(e.toString());
       return Left(ServerFailure(message: 'Could not load your addresses'));
     }
   }
@@ -185,7 +233,12 @@ class AddressRepoImpl implements AddressRepo {
       await remoteDataSource.deleteAddress(addressId);
       return const Right(unit);
     } on DioException catch (e) {
-      return Left(ServerFailure(message: e.message.toString()));
+      return Left(
+        ServerFailure(
+          message: _dioFailureMessage(e, 'Could not delete the address'),
+          statusCode: e.response?.statusCode,
+        ),
+      );
     } catch (e) {
       return Left(ServerFailure(message: 'Could not delete the address'));
     }
@@ -197,7 +250,12 @@ class AddressRepoImpl implements AddressRepo {
       await remoteDataSource.setDefaultAddress(addressId);
       return const Right(unit);
     } on DioException catch (e) {
-      return Left(ServerFailure(message: e.message.toString()));
+      return Left(
+        ServerFailure(
+          message: _dioFailureMessage(e, 'Could not set the default address'),
+          statusCode: e.response?.statusCode,
+        ),
+      );
     } catch (e) {
       return Left(ServerFailure(message: 'Could not set the default address'));
     }

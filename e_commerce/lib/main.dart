@@ -8,7 +8,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
 import 'package:path_provider/path_provider.dart';
-
 import 'package:e_commerce/core/helper_function/go_route.dart';
 import 'package:e_commerce/core/helper_function/shared_prefs_helper.dart';
 import 'package:e_commerce/core/notifications/fcm_service.dart';
@@ -16,6 +15,7 @@ import 'package:e_commerce/core/services/api_services.dart';
 import 'package:e_commerce/core/services/get_it_services.dart';
 import 'package:e_commerce/core/utils/app_theme.dart';
 import 'package:e_commerce/firebase_options.dart';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();

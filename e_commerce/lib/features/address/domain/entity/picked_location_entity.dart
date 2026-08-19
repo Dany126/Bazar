@@ -3,6 +3,7 @@ import 'package:equatable/equatable.dart';
 class PickedLocationEntity extends Equatable {
   final double latitude;
   final double longitude;
+  final String street;
   final String city;
   final String country;
   final String postalCode;
@@ -11,6 +12,7 @@ class PickedLocationEntity extends Equatable {
   const PickedLocationEntity({
     required this.latitude,
     required this.longitude,
+    required this.street,
     required this.city,
     required this.country,
     required this.postalCode,
@@ -21,6 +23,7 @@ class PickedLocationEntity extends Equatable {
   List<Object?> get props => [
     latitude,
     longitude,
+    street,
     city,
     country,
     postalCode,

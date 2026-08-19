@@ -48,10 +48,6 @@ class _AddAddressViewBodyState extends State<AddAddressViewBody> {
       'officeName': FormControl<String>(value: a?.officeName),
       'officeNumber': FormControl<String>(value: a?.officeNumber),
       'floor': FormControl<String>(value: a?.floor),
-      'street': FormControl<String>(
-        value: a?.street,
-        validators: [Validators.required],
-      ),
       'phone': FormControl<String>(
         value: a?.phone ?? '+20 1226875031',
         validators: [Validators.required],
@@ -86,9 +82,20 @@ class _AddAddressViewBodyState extends State<AddAddressViewBody> {
       );
       return;
     }
+    if (location.city.trim().isEmpty ||
+        location.postalCode.trim().isEmpty ||
+        location.street.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Could not read the street, city, or postal code from the map.',
+          ),
+        ),
+      );
+      return;
+    }
 
     final value = _form.value;
-
     final address = AddressEntity(
       id: widget.addressToEdit?.id,
       addressType: value['addressType'] as String,
@@ -99,7 +106,7 @@ class _AddAddressViewBodyState extends State<AddAddressViewBody> {
       officeName: value['officeName'] as String?,
       officeNumber: value['officeNumber'] as String?,
       floor: value['floor'] as String?,
-      street: value['street'] as String,
+      street: location.street,
       phone: value['phone'] as String,
       additionalDirections: value['additionalDirections'] as String?,
       addressLabel: value['addressLabel'] as String?,
@@ -118,13 +125,10 @@ class _AddAddressViewBodyState extends State<AddAddressViewBody> {
   Widget build(BuildContext context) {
     return BlocListener<AddressCubit, AddressState>(
       listener: (context, state) {
-        if (state is AddressLoaded) {
-          Navigator.of(context).pop(state.address);
-        }
         if (state is AddressError) {
           ScaffoldMessenger.of(
             context,
-          ).showSnackBar(SnackBar(content: Text(state.message)));
+          ).showSnackBar(SnackBar(content: Text(state.message.message)));
         }
       },
       child: ReactiveForm(
@@ -146,11 +150,6 @@ class _AddAddressViewBodyState extends State<AddAddressViewBody> {
                     AddressTypeSelector(form: _form),
                     const SizedBox(height: 24),
                     const AddressTypeDependentFields(),
-                    const SizedBox(height: 12),
-                    const AddressTextField(
-                      formControlName: 'street',
-                      hintText: 'Street',
-                    ),
                     const SizedBox(height: 12),
                     PhoneField(form: _form),
                     const SizedBox(height: 12),

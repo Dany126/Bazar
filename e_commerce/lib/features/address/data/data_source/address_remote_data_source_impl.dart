@@ -8,11 +8,10 @@ class AddressRemoteDataSource {
 
   AddressRemoteDataSource({required this.dio});
   Future<AddressModel> addAddress(AddressModel address) async {
-    final response = await dio.post(
-      '/address',
-      data: {'user_id': cachedUserId, 'address': address.toJson()},
-    );
-    return AddressModel.fromJson(response.data as Map<String, dynamic>);
+    final response = await dio.post('/address', data: address.toJson());
+    final data = response.data as Map<String, dynamic>;
+
+    return AddressModel.fromJson(data['address'] as Map<String, dynamic>);
   }
 
   Future<List<AddressModel>> getAddresses() async {
@@ -20,7 +19,8 @@ class AddressRemoteDataSource {
       '/address',
       queryParameters: {'user_id': cachedUserId},
     );
-    final data = response.data as List<dynamic>;
+    final responseData = response.data as Map<String, dynamic>;
+    final data = responseData['addresses'] as List<dynamic>? ?? [];
     return data
         .map((e) => AddressModel.fromJson(e as Map<String, dynamic>))
         .toList();
@@ -35,17 +35,14 @@ class AddressRemoteDataSource {
 
   Future<AddressModel> updateAddress(AddressModel address) async {
     final response = await dio.put(
-      '/address/${address.id} ',
-      data: {'user_id': cachedUserId, 'address': address.toJson()},
+      '/address/${address.id}',
+      data: address.toJson(),
     );
-    return AddressModel.fromJson(response.data as Map<String, dynamic>);
+    final data = response.data as Map<String, dynamic>;
+    return AddressModel.fromJson(data['address'] as Map<String, dynamic>);
   }
 
   Future<void> setDefaultAddress(String id) async {
-    await dio.patch(
-      '/addresses/$id',
-      queryParameters: {'user_id': cachedUserId},
-      data: {'is_default': true},
-    );
+    await dio.patch('/address/$id', data: {'is_default': true});
   }
 }
