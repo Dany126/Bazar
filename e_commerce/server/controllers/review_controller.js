@@ -4,7 +4,10 @@ import { apiFeatures } from "../utils/apiFeatures.js";
 
 export const createReview = async (req, res) => {
   try {
-    const review = await Review.create(req.body);
+    const review = await Review.create({
+      user: req.user.id,
+      ...req.body,
+    });
     if (!review) {
       return res.status(400).json({
         status: "Failed",
