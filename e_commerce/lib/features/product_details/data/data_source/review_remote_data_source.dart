@@ -9,7 +9,7 @@ class ReviewRemoteDataSource {
 
   Future<List<ReviewModel>> getProductReviews(String productId) async {
     final response = await dio.get(
-      '/reviews',
+      '/review',
       queryParameters: {'product': productId},
     );
 
@@ -26,7 +26,7 @@ class ReviewRemoteDataSource {
     required String description,
   }) async {
     final response = await dio.post(
-      '/reviews',
+      '/review',
       data: {
         'product': productId,
         'rating': rating,
