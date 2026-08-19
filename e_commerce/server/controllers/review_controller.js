@@ -54,7 +54,7 @@ export const getReview = async (req, res) => {
     const { id } = req.params;
     const review = await Review.findById(id);
     if (!review) {
-      return res.status(404).json({
+      return res.status(200).json({
         status: "Failed",
         message: "Review Not Found",
       });
@@ -80,7 +80,7 @@ export const getAllReviews = async (req, res) => {
       .skip(skip)
       .sort(sortBy);
     if (!reviews || reviews.length <= 0) {
-      return res.status(404).json({
+      return res.status(200).json({
         status: "Failed",
         message: "No review found",
       });

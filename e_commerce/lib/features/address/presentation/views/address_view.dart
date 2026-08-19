@@ -15,39 +15,41 @@ class AddressView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider<AddressCubit>(
       create: (_) => getIt<AddressCubit>()..loadAddresses(),
-      child: Scaffold(
-        appBar: CustomAppBar(
-          title: 'Addresses',
-          actions: Padding(
-            padding: EdgeInsets.only(right: 16.0),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => BlocProvider.value(
-                        value: context.read<AddressCubit>(),
-                        child: const MapView(),
+      child: Builder(
+        builder: (context) => Scaffold(
+          appBar: CustomAppBar(
+            title: 'Addresses',
+            actions: Padding(
+              padding: EdgeInsets.only(right: 16.0),
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => BlocProvider.value(
+                          value: context.read<AddressCubit>(),
+                          child: const MapView(),
+                        ),
                       ),
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(21),
+                  child: Ink(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade100,
+                      shape: BoxShape.circle,
                     ),
-                  );
-                },
-                borderRadius: BorderRadius.circular(21),
-                child: Ink(
-                  width: 42,
-                  height: 42,
-                  decoration: BoxDecoration(
-                    color: Colors.grey.shade100,
-                    shape: BoxShape.circle,
+                    child: Icon(Icons.add, color: Colors.black87),
                   ),
-                  child: Icon(Icons.add, color: Colors.black87),
                 ),
               ),
             ),
           ),
+          body: const SafeArea(child: AddressViewBody()),
         ),
-        body: const SafeArea(child: AddressViewBody()),
       ),
     );
   }
