@@ -18,6 +18,7 @@ class HiveService {
     if (Hive.isBoxOpen(name)) return Hive.box(name);
     return Hive.openBox(name);
   }
+  
 
   static Future<void> closeAll() => Hive.close();
 

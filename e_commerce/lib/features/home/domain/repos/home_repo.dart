@@ -24,6 +24,7 @@ abstract class HomeRepo {
     required int page,
     required int limit,
   });
+  // ignore: non_constant_identifier_names
   Future<Either<Failure, Unit>> ChangeToIsFavourite({
     required String productId,
     required bool isFavourite,
