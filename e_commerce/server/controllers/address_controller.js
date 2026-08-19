@@ -31,7 +31,7 @@ export const getAllAddresses = async (req, res) => {
       .skip(skip)
       .sort(sortBy);
     if (!addresses || addresses.length <= 0) {
-      return res.status(400).json({
+      return res.status(200).json({
         status: "Failed",
         message: "No addresses found",
       });
