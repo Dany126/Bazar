@@ -85,12 +85,16 @@ import 'package:e_commerce/features/payment_method/domain/use_case/delete_paymen
 import 'package:e_commerce/features/payment_method/domain/use_case/get_payment_methods_use_case.dart';
 import 'package:e_commerce/features/payment_method/presentation/model_view/cubit/payment_method_cubit.dart';
 import 'package:e_commerce/features/product_details/data/data_source/remote_data_source_impl.dart';
+import 'package:e_commerce/features/product_details/data/data_source/review_remote_data_source.dart';
 import 'package:e_commerce/features/product_details/data/repo/product_details_repo_impl.dart';
+import 'package:e_commerce/features/product_details/data/repo/review_repository_impl.dart';
 import 'package:e_commerce/features/product_details/domain/data_source/remote_data_source.dart';
 import 'package:e_commerce/features/product_details/domain/repo/product_details_repo.dart';
+import 'package:e_commerce/features/product_details/domain/repo/review_repository.dart';
 import 'package:e_commerce/features/product_details/domain/use_case/add_product_review_use_case.dart';
 import 'package:e_commerce/features/product_details/domain/use_case/get_product_details_use_case.dart';
-import 'package:e_commerce/features/product_details/presentation/model_view/cubit/product_details_cubit.dart';
+import 'package:e_commerce/features/product_details/presentation/model_view/product_details_cubit/product_details_cubit.dart';
+import 'package:e_commerce/features/product_details/presentation/model_view/review_cubit/review_cubit.dart';
 import 'package:e_commerce/features/search/data/data_source/search_remote_data_impl.dart';
 import 'package:e_commerce/features/search/data/repo/search_repo_impl.dart';
 import 'package:e_commerce/features/search/domain/data_source/search_remote_data.dart';
@@ -588,5 +592,18 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
       getAddressesUseCase: getIt<GetAddressesUseCase>(),
       getPaymentMethodsUseCase: getIt<GetPaymentMethodsUseCase>(),
     ),
+  );
+
+  getIt.registerLazySingleton<ReviewRemoteDataSource>(
+    () => ReviewRemoteDataSource(dio: getIt<Dio>()),
+  );
+
+  getIt.registerLazySingleton<ReviewRepository>(
+    () =>
+        ReviewRepositoryImpl(remoteDataSource: getIt<ReviewRemoteDataSource>()),
+  );
+
+  getIt.registerFactory<ReviewCubit>(
+    () => ReviewCubit(repository: getIt<ReviewRepository>()),
   );
 }

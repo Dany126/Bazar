@@ -24,23 +24,4 @@ class ProductDetailsCubit extends Cubit<ProductDetailsState> {
       (product) => emit(ProductDetailsLoaded(product)),
     );
   }
-
-  Future<void> addReview({
-    required String productId,
-    required double rating,
-    required String comment,
-  }) async {
-    emit(ReviewSubmitting());
-
-    final result = await addProductReviewUseCase(
-      productId: productId,
-      rating: rating,
-      comment: comment,
-    );
-
-    result.fold(
-      (failure) => emit(ReviewError(failure.message)),
-      (review) => emit(ReviewSubmitted(review)),
-    );
-  }
 }

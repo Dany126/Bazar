@@ -1,18 +1,17 @@
-// lib/features/product_details/domin/entity/review_entity.dart
 class ReviewEntity {
   final String id;
-  final String userName;
-  final String? userAvatar;
+  final String description;
   final double rating;
-  final String comment;
+  final String userId;
+  final String productId;
   final DateTime? createdAt;
 
   const ReviewEntity({
     required this.id,
-    required this.userName,
-    this.userAvatar,
+    required this.description,
     required this.rating,
-    required this.comment,
+    required this.userId,
+    required this.productId,
     this.createdAt,
   });
 }
