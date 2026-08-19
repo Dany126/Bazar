@@ -6,24 +6,31 @@ class CustomBackButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () => Navigator.of(context).pop(),
-      child: Container(
-        width: 42,
-        height: 42,
-        decoration: BoxDecoration(
-          color: Colors.grey.shade100,
-          shape: BoxShape.circle,
-        ),
-        padding: const EdgeInsets.all(10),
-        child: Transform.rotate(
-          angle: 3.1415926535,
-          child: Image.asset(
-            Assets.assetsImagesArrowright,
-            fit: BoxFit.contain,
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        const SizedBox(width: 12),
+        GestureDetector(
+          onTap: () => Navigator.of(context).pop(),
+          child: Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: Colors.grey.shade100,
+              shape: BoxShape.circle,
+            ),
+            padding: const EdgeInsets.all(10),
+            child: Transform.rotate(
+              angle: 3.1415926535,
+              child: Image.asset(
+                Assets.assetsImagesArrowright,
+                fit: BoxFit.contain,
+              ),
+            ),
           ),
         ),
-      ),
+      ],
     );
   }
 }

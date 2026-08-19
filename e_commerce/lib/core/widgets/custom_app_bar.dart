@@ -16,7 +16,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       backgroundColor: Colors.transparent,
       elevation: 0,
       toolbarHeight: 48,
-      leadingWidth: 42,
+      leadingWidth: 60,
       leading: const CustomBackButton(),
       centerTitle: true,
       title: Text(title ?? '', style: AppStyles.textStylesSemiBold20(context)),
