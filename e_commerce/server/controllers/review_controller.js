@@ -30,7 +30,7 @@ export const createReview = async (req, res) => {
       ).toFixed(1),
     );
 
-    await Product.findByIdAndUpdate(product, {
+    await Product.findByIdAndUpdate(product.id, {
       $inc: {
         ratingsQuantity: 1,
       },
