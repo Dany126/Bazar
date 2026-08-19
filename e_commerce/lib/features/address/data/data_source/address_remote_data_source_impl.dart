@@ -1,73 +1,41 @@
-import 'package:dartz/dartz.dart';
-import 'package:e_commerce/constant.dart';
-import 'package:e_commerce/core/error/failure.dart';
-import 'package:e_commerce/core/services/api_services.dart';
+import 'package:dio/dio.dart';
+
+import 'package:e_commerce/core/services/hive_server.dart';
 import 'package:e_commerce/features/address/data/model/address_model.dart';
-import 'package:e_commerce/features/address/domain/data_source/address_remote_data_source.dart';
 
-class AddressRemoteDataSourceImpl implements AddressRemoteDataSource {
-  final ApiService apiService;
+class AddressRemoteDataSource {
+  final Dio dio; // base URL = your Node.js API
 
-  AddressRemoteDataSourceImpl(this.apiService);
+  Future<dynamic> get userID =>
+      HiveService.openBox('authBox').then((value) => value.get('id'));
 
-  List<AddressModel> _parseList(dynamic response) {
-    final data = response is Map && response.containsKey('addresses')
-        ? response['addresses']
-        : response;
-    if (data is! List) return [];
+  AddressRemoteDataSource({required this.dio});
+  Future<AddressModel> addAddress(AddressModel address) async {
+    final response = await dio.post('/addresses', data: address.toJson());
+    return AddressModel.fromJson(response.data as Map<String, dynamic>);
+  }
+
+  Future<List<AddressModel>> getAddresses() async {
+    final response = await dio.get('/address/${await userID}');
+    final data = response.data as List<dynamic>;
     return data
-        .whereType<Map<String, dynamic>>()
-        .map((e) => AddressModel.fromJson(e))
+        .map((e) => AddressModel.fromJson(e as Map<String, dynamic>))
         .toList();
   }
 
-  @override
-  Future<Either<Failure, List<AddressModel>>> getAddresses() async {
-    final result = await apiService.get('$kBaseUrl/address');
-    return result.fold((failure) => Left(failure), (response) {
-      try {
-        return Right(_parseList(response));
-      } catch (e) {
-        return Left(ServerFailure(message: e.toString()));
-      }
-    });
+  Future<void> deleteAddress(String id) async {
+    await dio.delete('/addresse/$id');
   }
 
-  @override
-  Future<Either<Failure, AddressModel>> addAddress({
-    required String street,
-    required String city,
-    required String country,
-    required String postalCode,
-    bool isDefault = false,
-  }) async {
-    final result = await apiService.post(
-      '$kBaseUrl/address',
-      data: {
-        'street': street,
-        'city': city,
-        'country': country,
-        'postalCode': postalCode,
-        'isDefault': isDefault,
-      },
+  Future<AddressModel> updateAddress(AddressModel address) async {
+    final response = await dio.put(
+      '/addresses/${address.id}',
+      data: address.toJson(),
     );
-    return result.fold((failure) => Left(failure), (response) {
-      try {
-        final data = response is Map && response.containsKey('address')
-            ? response['address'] as Map<String, dynamic>
-            : response as Map<String, dynamic>;
-        return Right(AddressModel.fromJson(data));
-      } catch (e) {
-        return Left(ServerFailure(message: e.toString()));
-      }
-    });
+    return AddressModel.fromJson(response.data as Map<String, dynamic>);
   }
 
-  @override
-  Future<Either<Failure, void>> deleteAddress({
-    required String addressId,
-  }) async {
-    final result = await apiService.delete('$kBaseUrl/address/$addressId');
-    return result.fold((failure) => Left(failure), (_) => const Right(null));
+  Future<void> setDefaultAddress(String id) async {
+    await dio.patch('/addresses/$id/default');
   }
 }

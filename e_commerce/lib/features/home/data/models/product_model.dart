@@ -25,6 +25,7 @@ class ProductModel extends ProductEntity {
       rating: (json['avg_rating'] as num?)?.toDouble() ?? 0,
       stock: json['stock'] as int? ?? 0,
       soldCount: json['soldCount'] as int? ?? 0,
+      isFavorite: json['isFavorite'] as bool? ?? false,
       ratingsQuantity: json['ratingsQuantity'] as int? ?? 0,
       category: json['category'] is Map<String, dynamic>
           ? CategoryModel.fromJson(json['category'] as Map<String, dynamic>)

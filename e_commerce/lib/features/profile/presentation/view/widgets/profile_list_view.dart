@@ -1,5 +1,6 @@
 import 'package:e_commerce/features/address/presentation/views/address_view.dart';
 import 'package:e_commerce/features/profile/domain/entity/profile_item_entity.dart';
+import 'package:e_commerce/features/profile/presentation/view/my_favourite_view.dart';
 import 'package:e_commerce/features/profile/presentation/view/widgets/profile_item.dart';
 import 'package:flutter/material.dart';
 
@@ -15,7 +16,12 @@ class ProfileListView extends StatelessWidget {
           Navigator.pushNamed(context, AddressView.routeName);
         },
       ),
-      ProfileItemEntity(title: "My Favorites", onTap: () {}),
+      ProfileItemEntity(
+        title: "My Favorites",
+        onTap: () {
+          Navigator.pushNamed(context, MyFavouriteView.routeName);
+        },
+      ),
       ProfileItemEntity(title: "Payment", onTap: () {}),
       ProfileItemEntity(title: "Help", onTap: () {}),
       ProfileItemEntity(title: "Support", onTap: () {}),

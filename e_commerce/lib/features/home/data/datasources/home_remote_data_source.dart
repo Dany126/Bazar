@@ -34,6 +34,16 @@ abstract class HomeRemoteDataSource {
     required int page,
     required int limit,
   });
+
+  Future<Either<Failure, List<ProductModel>>> getFavoriteProducts({
+    required int page,
+    required int limit,
+  });
+
+  Future<Either<Failure, Unit>> ChangeToIsFavourite({
+    required String productId,
+    required bool isFavourite,
+  });
 }
 
 class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
@@ -44,7 +54,6 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
   @override
   Future<Either<Failure, List<CategoryModel>>> getAllCategories() async {
     final response = await apiService.get(kGetAllGategories);
-    log(response.toString());
 
     return response.fold((failure) => Left(failure), (data) {
       final List<dynamic> categoriesJson = data['categories'] as List<dynamic>;
@@ -58,6 +67,28 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
   }
 
   @override
+  Future<Either<Failure, List<ProductModel>>> getFavoriteProducts({
+    required int page,
+    required int limit,
+  }) async {
+    final response = await apiService.get(
+      "$kBaseUrl/product",
+      queryParameters: {'page': page, 'limit': limit, 'isFavorite': 'true'},
+    );
+
+    log("-------------------------------------");
+    log(response.toString());
+    log("-------------------------------------");
+    return response.fold((failure) => Left(failure), (data) {
+      final List<dynamic> productsJson = data['products'] as List<dynamic>;
+      final products = productsJson
+          .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
+          .toList();
+      return Right(products);
+    });
+  }
+
+  @override
   Future<Either<Failure, List<ProductModel>>> getAllProducts({
     required int page,
     required int limit,
@@ -66,6 +97,8 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
       kGetAllProducts,
       queryParameters: {'page': page, 'limit': limit},
     );
+
+    log(response.toString());
 
     return response.fold((failure) => Left(failure), (data) {
       final List<dynamic> productsJson = data['products'] as List<dynamic>;
@@ -85,6 +118,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
       kGetBestSellerProductByCategory,
       queryParameters: {'page': page, 'limit': limit, 'sort': "-stock"},
     );
+    log(response.toString());
 
     return response.fold((failure) => Left(failure), (data) {
       final List<dynamic> productsJson = data['products'] as List<dynamic>;
@@ -162,5 +196,17 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
 
       return Right(products);
     });
+  }
+
+  @override
+  Future<Either<Failure, Unit>> ChangeToIsFavourite({
+    required String productId,
+    required bool isFavourite,
+  }) async {
+    final response = await apiService.patch(
+      "$kBaseUrl/product/$productId",
+      data: {'isFavorite': isFavourite},
+    );
+    return response.fold((failure) => Left(failure), (_) => Right(unit));
   }
 }

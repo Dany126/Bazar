@@ -1,3 +1,5 @@
+import 'package:e_commerce/core/services/get_it_services.dart';
+import 'package:e_commerce/features/address/presentation/model_view/cubit/address_cubit.dart';
 import 'package:e_commerce/features/address/presentation/views/add_address_view.dart';
 import 'package:e_commerce/features/address/presentation/views/address_view.dart';
 import 'package:e_commerce/features/address/presentation/views/map_view.dart';
@@ -7,6 +9,7 @@ import 'package:e_commerce/features/auth/presentation/view/signup_view.dart';
 import 'package:e_commerce/features/cart/presentation/view/cart_view.dart';
 import 'package:e_commerce/features/checkout/presentation/views/checkout_view.dart';
 import 'package:e_commerce/features/home/presentation/views/category_details_view.dart';
+import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_cubit.dart';
 import 'package:e_commerce/features/home/presentation/views/home_view.dart';
 
 import 'package:e_commerce/features/home/presentation/views/widgets/all_item_in_category.dart';
@@ -15,11 +18,13 @@ import 'package:e_commerce/features/home/presentation/views/widgets/top_selling.
 import 'package:e_commerce/features/notification/presentation/view/notification_view.dart';
 import 'package:e_commerce/features/order/presenation/view/order_view.dart';
 import 'package:e_commerce/features/product_details/presentation/views/product_details_view.dart';
+import 'package:e_commerce/features/profile/presentation/view/my_favourite_view.dart';
 import 'package:e_commerce/features/profile/presentation/view/profile_view.dart';
 import 'package:e_commerce/features/search/presentation/views/search_view.dart';
 import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
 import 'package:e_commerce/main_view.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 Route onGenerateRoute(RouteSettings settings) {
   switch (settings.name) {
@@ -84,10 +89,28 @@ Route onGenerateRoute(RouteSettings settings) {
       return MaterialPageRoute(builder: (context) => const AddressView());
 
     case MapView.routeName:
-      return MaterialPageRoute(builder: (context) => const MapView());
+      return MaterialPageRoute(
+        builder: (context) => BlocProvider<AddressCubit>(
+          create: (_) => getIt<AddressCubit>(),
+          child: const MapView(),
+        ),
+      );
 
     case AddAddressView.routeName:
-      return MaterialPageRoute(builder: (context) => const AddAddressView());
+      return MaterialPageRoute(
+        builder: (context) => BlocProvider<AddressCubit>(
+          create: (_) => getIt<AddressCubit>(),
+          child: const AddAddressView(),
+        ),
+      );
+
+    case MyFavouriteView.routeName:
+      return MaterialPageRoute(
+        builder: (context) => BlocProvider<GetProductsCubit>(
+          create: (_) => getIt<GetProductsCubit>(),
+          child: const MyFavouriteView(),
+        ),
+      );
 
     default:
       return MaterialPageRoute(

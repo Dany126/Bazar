@@ -15,3 +15,14 @@ class GetProductsFailure extends GetProductsState {
   final String message;
   GetProductsFailure({required this.message});
 }
+
+class ProductFavouriteChanged extends GetProductsSuccess {
+  final String productId;
+  final bool isFavourite;
+
+  ProductFavouriteChanged({
+    required super.products,
+    required this.productId,
+    required this.isFavourite,
+  });
+}

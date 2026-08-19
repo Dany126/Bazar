@@ -20,7 +20,7 @@ class CustomBackButton extends StatelessWidget {
               color: Colors.grey.shade100,
               shape: BoxShape.circle,
             ),
-            padding: const EdgeInsets.all(10),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
             child: Transform.rotate(
               angle: 3.1415926535,
               child: Image.asset(

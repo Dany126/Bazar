@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 
 class CustomButton extends StatelessWidget {
   const CustomButton({super.key, required this.onTap, required this.text});
-  final VoidCallback onTap;
+  final VoidCallback? onTap;
   final String text;
 
   @override
@@ -15,7 +15,9 @@ class CustomButton extends StatelessWidget {
         width: double.infinity,
 
         decoration: ShapeDecoration(
-          color: AppColors.kPrimaryColor /* Primary-100 */,
+          color: onTap == null
+              ? AppColors.kPrimaryColor.withValues(alpha: 0.5)
+              : AppColors.kPrimaryColor /* Primary-100 */,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(100),
           ),

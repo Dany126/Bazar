@@ -52,7 +52,7 @@ Future<void> main() async {
   // GET IT
   // ==========================================================
 
-  setupServiceLocator(cookieJar: cookieJar);
+  await setupServiceLocator(cookieJar: cookieJar);
 
   // ==========================================================
   // RESTORE SESSION

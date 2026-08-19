@@ -12,7 +12,7 @@ class AddressView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider<AddressCubit>(
-      create: (_) => getIt<AddressCubit>()..getAddresses(),
+      create: (_) => getIt<AddressCubit>()..loadAddresses(),
       child: const Scaffold(body: SafeArea(child: AddressViewBody())),
     );
   }

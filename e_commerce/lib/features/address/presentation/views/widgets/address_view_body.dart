@@ -1,10 +1,11 @@
-import 'package:e_commerce/features/address/domain/entity/address_entity.dart';
 import 'package:e_commerce/features/address/presentation/model_view/cubit/address_cubit.dart';
 import 'package:e_commerce/features/address/presentation/model_view/cubit/address_state.dart';
 import 'package:e_commerce/features/address/presentation/views/map_view.dart';
+import 'package:e_commerce/features/address/presentation/views/widgets/address_card.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:skeletonizer/skeletonizer.dart';
 
 const kAddressAccentColor = Color(0xFF7B61FF);
 
@@ -23,8 +24,19 @@ class AddressViewBody extends StatelessWidget {
           Expanded(
             child: BlocBuilder<AddressCubit, AddressState>(
               builder: (context, state) {
-                if (state is AddressLoading || state is AddressInitial) {
-                  return const Center(child: CircularProgressIndicator());
+                if (state is AddressLoading ||
+                    state is AddressInitial ||
+                    state is AddressLocating ||
+                    state is AddressResolving) {
+                  return Skeletonizer(
+                    enabled: true,
+                    child: ListView.separated(
+                      itemCount: 4,
+                      separatorBuilder: (_, _) => const SizedBox(height: 12),
+                      itemBuilder: (context, index) =>
+                          const AddressCardSkeleton(),
+                    ),
+                  );
                 }
                 if (state is AddressError) {
                   return Center(
@@ -34,7 +46,11 @@ class AddressViewBody extends StatelessWidget {
                     ),
                   );
                 }
-                final addresses = (state as AddressLoaded).addresses;
+                if (state is! AddressListLoaded) {
+                  return const SizedBox.shrink();
+                }
+
+                final addresses = state.addresses;
 
                 if (addresses.isEmpty) {
                   return const Center(
@@ -49,7 +65,7 @@ class AddressViewBody extends StatelessWidget {
                   itemCount: addresses.length,
                   separatorBuilder: (_, _) => const SizedBox(height: 12),
                   itemBuilder: (context, index) =>
-                      _AddressCard(address: addresses[index]),
+                      AddressCard(address: addresses[index]),
                 );
               },
             ),
@@ -116,47 +132,6 @@ class AddressViewBody extends StatelessWidget {
                 child: const Icon(Icons.add, color: Colors.black87),
               ),
             ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _AddressCard extends StatelessWidget {
-  const _AddressCard({required this.address});
-
-  final AddressEntity address;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
-      decoration: BoxDecoration(
-        color: Colors.grey.shade50,
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Text(
-              '${address.street}, ${address.city}',
-              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
-          ),
-          const SizedBox(width: 8),
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert, size: 20, color: Colors.black45),
-            onSelected: (value) {
-              if (value == 'delete') {
-                context.read<AddressCubit>().deleteAddress(address.id);
-              }
-            },
-            itemBuilder: (context) => const [
-              PopupMenuItem(value: 'delete', child: Text('Delete')),
-            ],
           ),
         ],
       ),

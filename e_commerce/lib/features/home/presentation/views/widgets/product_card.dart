@@ -1,3 +1,4 @@
+import 'dart:developer';
 import 'dart:ui';
 
 import 'package:e_commerce/core/helper_function/fix_image_utl.dart';
@@ -5,9 +6,11 @@ import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
 
 import 'package:e_commerce/features/home/domain/entity/product_entity.dart';
+import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_cubit.dart';
 import 'package:flutter/material.dart';
 
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProductCard extends StatefulWidget {
   const ProductCard({
@@ -28,6 +31,7 @@ class ProductCard extends StatefulWidget {
 class _ProductCardState extends State<ProductCard> {
   @override
   Widget build(BuildContext context) {
+    log(widget.product.isFavorite.toString());
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
@@ -62,6 +66,10 @@ class _ProductCardState extends State<ProductCard> {
                   right: 8,
                   child: GestureDetector(
                     onTap: () {
+                      context.read<GetProductsCubit>().changeToIsFavourite(
+                        productId: widget.product.id,
+                        isFavourite: !widget.product.isFavorite,
+                      );
                       widget.product.isFavorite = !widget.product.isFavorite;
                       setState(() {});
                     },
@@ -74,7 +82,7 @@ class _ProductCardState extends State<ProductCard> {
                           width: 24,
                           alignment: Alignment.center,
 
-                          child: widget.product.isFavorite
+                          child: !widget.product.isFavorite
                               ? const Icon(
                                   Icons.favorite_border_outlined,
 

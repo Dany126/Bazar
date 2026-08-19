@@ -1,6 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:e_commerce/features/address/domain/entity/address_entity.dart';
-import 'package:e_commerce/features/address/domain/use_case/get_addresses_use_case.dart';
+import 'package:e_commerce/features/address/domain/use_case/get_addresses_usecase.dart';
 import 'package:e_commerce/features/payment_method/domain/entity/payment_method_entity.dart';
 import 'package:e_commerce/features/payment_method/domain/use_case/get_payment_methods_use_case.dart';
 import 'checkout_state.dart';

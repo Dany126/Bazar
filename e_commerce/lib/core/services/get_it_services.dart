@@ -9,11 +9,18 @@ import 'package:e_commerce/core/notifications/socket_service.dart';
 import 'package:e_commerce/core/services/api_services.dart';
 import 'package:e_commerce/features/address/data/data_source/address_remote_data_source_impl.dart';
 import 'package:e_commerce/features/address/data/repo/address_repo_impl.dart';
-import 'package:e_commerce/features/address/domain/data_source/address_remote_data_source.dart';
 import 'package:e_commerce/features/address/domain/repo/address_repo.dart';
-import 'package:e_commerce/features/address/domain/use_case/add_address_use_case.dart';
-import 'package:e_commerce/features/address/domain/use_case/delete_address_use_case.dart';
-import 'package:e_commerce/features/address/domain/use_case/get_addresses_use_case.dart';
+
+import 'package:e_commerce/features/address/domain/use_case/add_address_usecase.dart';
+
+import 'package:e_commerce/features/address/domain/use_case/delete_address_usecase.dart';
+import 'package:e_commerce/features/address/domain/use_case/edit_address_usecase.dart';
+
+import 'package:e_commerce/features/address/domain/use_case/get_addresses_usecase.dart';
+import 'package:e_commerce/features/address/domain/use_case/get_current_location_usecase.dart';
+import 'package:e_commerce/features/address/domain/use_case/reverse_geocode_usecase.dart';
+import 'package:e_commerce/features/address/domain/use_case/search_places_usecase.dart';
+import 'package:e_commerce/features/address/domain/use_case/set_default_address_usecase.dart';
 import 'package:e_commerce/features/address/presentation/model_view/cubit/address_cubit.dart';
 import 'package:e_commerce/features/auth/data/auth_data_source/auth_local_data_source.dart';
 import 'package:e_commerce/features/auth/data/auth_data_source/auth_remote_data_source_impl.dart';
@@ -46,6 +53,8 @@ import 'package:e_commerce/features/home/domain/usecases/get_all_categories_usec
 import 'package:e_commerce/features/home/domain/usecases/get_all_products_by_categories_use_case.dart';
 import 'package:e_commerce/features/home/domain/usecases/get_all_products_usecase.dart';
 import 'package:e_commerce/features/home/domain/usecases/get_best_selling_product_use_case.dart';
+import 'package:e_commerce/features/home/domain/usecases/change_to_is_favourite.dart';
+import 'package:e_commerce/features/home/domain/usecases/get_favourite_products_usecase.dart';
 import 'package:e_commerce/features/home/domain/usecases/get_newest_product_use_case.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/categories_cubit/get_categories_cubit.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_cubit.dart';
@@ -247,6 +256,14 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
     () => GetNewtestProductUseCase(getIt<HomeRepo>()),
   );
 
+  getIt.registerLazySingleton<ChangeToIsFavourite>(
+    () => ChangeToIsFavourite(homeRepo: getIt<HomeRepo>()),
+  );
+
+  getIt.registerLazySingleton<GetFavouriteProductsUseCase>(
+    () => GetFavouriteProductsUseCase(getIt<HomeRepo>()),
+  );
+
   // ==========================================================
   // HOME CUBITS
   // ==========================================================
@@ -264,6 +281,8 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
           getIt<GetAllProductsByCategoriesUseCase>(),
       getBestSellingProductsUseCase: getIt<GetBestSellingProductUseCase>(),
       getNewestProductsUseCase: getIt<GetNewtestProductUseCase>(),
+      changeToIsFavouriteUseCase: getIt<ChangeToIsFavourite>(),
+      getFavoriteProductsUseCase: getIt<GetFavouriteProductsUseCase>(),
     ),
   );
 
@@ -462,47 +481,72 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
     ),
   );
 
-  getIt.registerFactory<CheckoutCubit>(
-    () => CheckoutCubit(
-      getAddressesUseCase: getIt<GetAddressesUseCase>(),
-      getPaymentMethodsUseCase: getIt<GetPaymentMethodsUseCase>(),
-    ),
-  );
-
   // ==========================================================
   // ADDRESS
   // ==========================================================
+  getIt.registerLazySingleton(
+    () => Dio(
+      BaseOptions(
+        baseUrl: 'https://photon.komoot.io',
+        headers: {
+          'User-Agent': 'E-commerce/1.0 (contact: danyashraf012@example.com)',
+          'Referer': 'https://github.com/Dany126/Bazar',
+          'Accept': 'application/json',
+          'Accept-Language': 'en',
+        },
+      ),
+    ),
+    instanceName: 'nominatimDio',
+  );
 
   getIt.registerLazySingleton<AddressRemoteDataSource>(
-    () => AddressRemoteDataSourceImpl(getIt<ApiService>()),
+    () => AddressRemoteDataSource(dio: getIt<Dio>()),
   );
 
-  getIt.registerLazySingleton<AddressRepository>(
-    () => AddressRepositoryImpl(getIt<AddressRemoteDataSource>()),
+  getIt.registerLazySingleton<AddressRepo>(
+    () => AddressRepoImpl(
+      remoteDataSource: getIt(),
+      nominatimDio: getIt(instanceName: 'nominatimDio'),
+    ),
   );
 
-  getIt.registerLazySingleton<GetAddressesUseCase>(
-    () => GetAddressesUseCase(getIt<AddressRepository>()),
+  getIt.registerLazySingleton<GetCurrentLocationUseCase>(
+    () => GetCurrentLocationUseCase(getIt<AddressRepo>()),
   );
-
+  getIt.registerLazySingleton<ReverseGeocodeUseCase>(
+    () => ReverseGeocodeUseCase(getIt<AddressRepo>()),
+  );
   getIt.registerLazySingleton<AddAddressUseCase>(
-    () => AddAddressUseCase(getIt<AddressRepository>()),
+    () => AddAddressUseCase(getIt<AddressRepo>()),
   );
-
+  getIt.registerLazySingleton<GetAddressesUseCase>(
+    () => GetAddressesUseCase(getIt<AddressRepo>()),
+  );
   getIt.registerLazySingleton<DeleteAddressUseCase>(
-    () => DeleteAddressUseCase(getIt<AddressRepository>()),
+    () => DeleteAddressUseCase(getIt<AddressRepo>()),
   );
-
+  getIt.registerLazySingleton<SetDefaultAddressUseCase>(
+    () => SetDefaultAddressUseCase(getIt<AddressRepo>()),
+  );
+  getIt.registerLazySingleton<EditAddressUseCase>(
+    () => EditAddressUseCase(getIt<AddressRepo>()),
+  );
+  getIt.registerLazySingleton<SearchPlacesUseCase>(
+    () => SearchPlacesUseCase(getIt<AddressRepo>()),
+  );
 
   getIt.registerFactory<AddressCubit>(
     () => AddressCubit(
-      getAddressesUseCase: getIt<GetAddressesUseCase>(),
+      getCurrentLocationUseCase: getIt<GetCurrentLocationUseCase>(),
+      reverseGeocodeUseCase: getIt<ReverseGeocodeUseCase>(),
       addAddressUseCase: getIt<AddAddressUseCase>(),
+      getAddressesUseCase: getIt<GetAddressesUseCase>(),
       deleteAddressUseCase: getIt<DeleteAddressUseCase>(),
+      setDefaultAddressUseCase: getIt<SetDefaultAddressUseCase>(),
+      editAddressUseCase: getIt<EditAddressUseCase>(),
+      searchPlacesUseCase: getIt<SearchPlacesUseCase>(),
     ),
   );
-  
-
   // ==========================================================
   // PAYMENT METHOD
   // ==========================================================

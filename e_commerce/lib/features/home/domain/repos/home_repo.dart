@@ -24,6 +24,15 @@ abstract class HomeRepo {
     required int page,
     required int limit,
   });
+  Future<Either<Failure, Unit>> ChangeToIsFavourite({
+    required String productId,
+    required bool isFavourite,
+  });
+
+  Future<Either<Failure, List<ProductEntity>>> getFavoriteProducts({
+    required int page,
+    required int limit,
+  });
 
   Future<Either<Failure, List<ProductEntity>>> search({
     required String query,

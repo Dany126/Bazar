@@ -3,8 +3,9 @@ import 'package:e_commerce/core/widgets/custom_back_button.dart';
 import 'package:flutter/material.dart';
 
 class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
-  const CustomAppBar({super.key, this.title});
+  const CustomAppBar({super.key, this.title, this.actions});
   final String? title;
+  final Widget? actions;
 
   @override
   Size get preferredSize => const Size.fromHeight(48);
@@ -20,7 +21,7 @@ class CustomAppBar extends StatelessWidget implements PreferredSizeWidget {
       leading: const CustomBackButton(),
       centerTitle: true,
       title: Text(title ?? '', style: AppStyles.textStylesSemiBold20(context)),
-      actions: const [SizedBox(width: 42)],
+      actions: [actions ?? const SizedBox.shrink()],
     );
   }
 }

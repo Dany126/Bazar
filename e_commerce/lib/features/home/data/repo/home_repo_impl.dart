@@ -40,6 +40,21 @@ class HomeRepositoryImpl implements HomeRepo {
   }
 
   @override
+  Future<Either<Failure, List<ProductEntity>>> getFavoriteProducts({
+    required int page,
+    required int limit,
+  }) async {
+    final result = await remoteDataSource.getFavoriteProducts(
+      page: page,
+      limit: limit,
+    );
+    return result.fold(
+      (failure) => Left(failure),
+      (products) => Right(products),
+    );
+  }
+
+  @override
   Future<Either<Failure, List<ProductEntity>>> getBestSellingProducts({
     required int page,
     required int limit,
@@ -101,5 +116,17 @@ class HomeRepositoryImpl implements HomeRepo {
       (failure) => Left(failure),
       (products) => Right(products),
     );
+  }
+
+  @override
+  Future<Either<Failure, Unit>> ChangeToIsFavourite({
+    required String productId,
+    required bool isFavourite,
+  }) async {
+    final result = await remoteDataSource.ChangeToIsFavourite(
+      productId: productId,
+      isFavourite: isFavourite,
+    );
+    return result.fold((failure) => Left(failure), (_) => Right(unit));
   }
 }
