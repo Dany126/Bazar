@@ -13,7 +13,7 @@ class ReviewRemoteDataSource {
       queryParameters: {'product': productId},
     );
 
-    final reviews = response.data['review'] as List? ?? [];
+    final reviews = response.data['reviews'] as List? ?? [];
 
     return reviews
         .map((review) => ReviewModel.fromJson(review as Map<String, dynamic>))

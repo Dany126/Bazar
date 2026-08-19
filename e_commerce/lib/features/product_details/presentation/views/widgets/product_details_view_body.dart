@@ -378,7 +378,12 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
           children: [
             const SizedBox(height: 24),
 
-            _buildReviewsHeader(context, product),
+            _buildReviewsHeader(
+              context,
+              product,
+              reviews.length,
+              product.avgRating,
+            ),
 
             const SizedBox(height: 16),
 
@@ -400,6 +405,8 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
   Widget _buildReviewsHeader(
     BuildContext context,
     ProductDetailsEntity product,
+    int reviewCount,
+    double rating,
   ) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -438,7 +445,7 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
         const SizedBox(height: 6),
 
         Text(
-          '${product.ratingsQuantity} Reviews',
+          '$reviewCount Reviews',
           style: AppStyles.textStylesRegular12(
             context,
           ).copyWith(color: Colors.grey.shade600),
