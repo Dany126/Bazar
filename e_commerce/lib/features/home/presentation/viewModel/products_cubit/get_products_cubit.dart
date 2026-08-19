@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/features/home/domain/entity/product_entity.dart';
@@ -8,9 +10,12 @@ import 'package:e_commerce/features/home/domain/usecases/get_best_selling_produc
 import 'package:e_commerce/features/home/domain/usecases/get_favourite_products_usecase.dart';
 import 'package:e_commerce/features/home/domain/usecases/get_newest_product_use_case.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_state.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class GetProductsCubit extends Cubit<GetProductsState> {
+  static final favoriteStates = ValueNotifier<Map<String, bool>>({});
+
   GetProductsCubit({
     required this.getFavoriteProductsUseCase,
     required this.getAllProductsUseCase,
@@ -81,8 +86,11 @@ class GetProductsCubit extends Cubit<GetProductsState> {
         (failure) => emit(GetProductsFailure(message: failure.toString())),
         (products) => emit(GetProductsSuccess(products: products)),
       );
+      log("result");
+      log(result.toString());
       return result;
     } catch (e) {
+      log(e.toString());
       emit(GetProductsFailure(message: e.toString()));
       return Left(ServerFailure(message: e.toString()));
     }
@@ -104,6 +112,11 @@ class GetProductsCubit extends Cubit<GetProductsState> {
       result.fold(
         (failure) => emit(GetProductsFailure(message: failure.toString())),
         (_) {
+          favoriteStates.value = {
+            ...favoriteStates.value,
+            productId: isFavourite,
+          };
+
           final currentProducts = state is GetProductsSuccess
               ? (state as GetProductsSuccess).products
               : const <ProductEntity>[];

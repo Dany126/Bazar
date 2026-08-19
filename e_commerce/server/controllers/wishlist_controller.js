@@ -55,7 +55,7 @@ export const getWishlistByUserId = async (req, res) => {
   try {
     const wishList = await Wishlist.find({
       user: req.user.id,
-    });
+    }).populate("product");
     if (!wishList || wishList.length <= 0) {
       return res.status(404).json({
         status: "Failed",

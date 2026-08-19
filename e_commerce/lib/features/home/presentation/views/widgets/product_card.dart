@@ -1,14 +1,11 @@
-import 'dart:developer';
 import 'dart:ui';
 
 import 'package:e_commerce/core/helper_function/fix_image_utl.dart';
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
-
 import 'package:e_commerce/features/home/domain/entity/product_entity.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_cubit.dart';
 import 'package:flutter/material.dart';
-
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -31,7 +28,6 @@ class ProductCard extends StatefulWidget {
 class _ProductCardState extends State<ProductCard> {
   @override
   Widget build(BuildContext context) {
-    log(widget.product.isFavorite.toString());
     return GestureDetector(
       onTap: widget.onTap,
       child: Container(
@@ -50,7 +46,7 @@ class _ProductCardState extends State<ProductCard> {
                   height: 220,
                   width: double.infinity,
                   child: Padding(
-                    padding: EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(16),
                     child: CachedNetworkImage(
                       imageUrl: fixImageUrl(widget.product.thumbnailUrl),
                       fit: BoxFit.cover,
@@ -64,38 +60,43 @@ class _ProductCardState extends State<ProductCard> {
                 Positioned(
                   top: 5,
                   right: 8,
-                  child: GestureDetector(
-                    onTap: () {
-                      context.read<GetProductsCubit>().changeToIsFavourite(
-                        productId: widget.product.id,
-                        isFavourite: !widget.product.isFavorite,
-                      );
-                      widget.product.isFavorite = !widget.product.isFavorite;
-                      setState(() {});
-                    },
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(100),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                        child: Container(
-                          height: 24,
-                          width: 24,
-                          alignment: Alignment.center,
+                  child: ValueListenableBuilder<Map<String, bool>>(
+                    valueListenable: GetProductsCubit.favoriteStates,
+                    builder: (context, states, child) {
+                      final isFavorite =
+                          states[widget.product.id] ??
+                          widget.product.isFavorite;
 
-                          child: !widget.product.isFavorite
-                              ? const Icon(
-                                  Icons.favorite_border_outlined,
-
-                                  size: 18,
-                                )
-                              : Icon(
-                                  Icons.favorite,
-                                  color: const Color.fromARGB(255, 255, 0, 0),
-                                  size: 18,
-                                ),
+                      return GestureDetector(
+                        onTap: () {
+                          context.read<GetProductsCubit>().changeToIsFavourite(
+                            productId: widget.product.id,
+                            isFavourite: !isFavorite,
+                          );
+                        },
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(100),
+                          child: BackdropFilter(
+                            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                            child: Container(
+                              height: 24,
+                              width: 24,
+                              alignment: Alignment.center,
+                              child: isFavorite
+                                  ? const Icon(
+                                      Icons.favorite,
+                                      color: Colors.red,
+                                      size: 18,
+                                    )
+                                  : const Icon(
+                                      Icons.favorite_border_outlined,
+                                      size: 18,
+                                    ),
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
+                      );
+                    },
                   ),
                 ),
               ],
@@ -116,7 +117,6 @@ class _ProductCardState extends State<ProductCard> {
                   const SizedBox(height: 4),
                   Text(
                     '\$${widget.product.price.toStringAsFixed(2)}',
-
                     style: AppStyles.textStylesRegular12(
                       context,
                     ).copyWith(fontWeight: FontWeight.bold),

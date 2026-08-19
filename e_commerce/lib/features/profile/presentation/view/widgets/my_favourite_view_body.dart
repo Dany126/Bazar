@@ -33,7 +33,14 @@ class _MyFavouriteViewBodyState extends State<MyFavouriteViewBody> {
       },
       child: Skeletonizer(
         enabled: _products.isEmpty,
-        child: ProductGridView(products: _products),
+        child: CustomScrollView(
+          slivers: [
+            SliverPadding(
+              padding: const EdgeInsets.all(16),
+              sliver: ProductGridView(products: _products),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -56,7 +56,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     final response = await apiService.get(kGetAllGategories);
 
     return response.fold((failure) => Left(failure), (data) {
-      final List<dynamic> categoriesJson = data['categories'] as List<dynamic>;
+      final categoriesJson = (data['categories'] as List<dynamic>?) ?? [];
 
       final categories = categoriesJson
           .map((e) => CategoryModel.fromJson(e as Map<String, dynamic>))
@@ -72,20 +72,32 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     required int limit,
   }) async {
     final response = await apiService.get(
-      "$kBaseUrl/product",
-      queryParameters: {'page': page, 'limit': limit, 'isFavorite': 'true'},
+      "$kBaseUrl/wishlist",
+      queryParameters: {'page': page, 'limit': limit},
     );
 
-    log("-------------------------------------");
-    log(response.toString());
-    log("-------------------------------------");
-    return response.fold((failure) => Left(failure), (data) {
-      final List<dynamic> productsJson = data['products'] as List<dynamic>;
-      final products = productsJson
-          .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
-          .toList();
-      return Right(products);
-    });
+    return response.fold(
+      (failure) {
+        log(failure.toString());
+        return Left(failure);
+      },
+      (data) {
+        final wishlists = (data['wishList'] as List<dynamic>?) ?? [];
+        final productsJson = wishlists
+            .whereType<Map<String, dynamic>>()
+            .expand((wishlist) {
+              final products = wishlist['product'];
+              if (products is List) return products;
+              return products is Map<String, dynamic> ? [products] : const [];
+            })
+            .whereType<Map<String, dynamic>>()
+            .toList();
+        final products = productsJson
+            .map((e) => ProductModel.fromJson(e)..isFavorite = true)
+            .toList();
+        return Right(products);
+      },
+    );
   }
 
   @override
@@ -101,7 +113,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     log(response.toString());
 
     return response.fold((failure) => Left(failure), (data) {
-      final List<dynamic> productsJson = data['products'] as List<dynamic>;
+      final productsJson = (data['products'] as List<dynamic>?) ?? [];
       final products = productsJson
           .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
           .toList();
@@ -121,7 +133,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     log(response.toString());
 
     return response.fold((failure) => Left(failure), (data) {
-      final List<dynamic> productsJson = data['products'] as List<dynamic>;
+      final productsJson = (data['products'] as List<dynamic>?) ?? [];
 
       final products = productsJson
           .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
@@ -142,7 +154,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     );
 
     return response.fold((failure) => Left(failure), (data) {
-      final List<dynamic> productsJson = data['products'] as List<dynamic>;
+      final productsJson = (data['products'] as List<dynamic>?) ?? [];
 
       final products = productsJson
           .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
@@ -166,7 +178,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     log(response.toString());
 
     return response.fold((failure) => Left(failure), (data) {
-      final List<dynamic> productsJson = data['products'] as List<dynamic>;
+      final productsJson = (data['products'] as List<dynamic>?) ?? [];
 
       final products = productsJson
           .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
@@ -188,7 +200,7 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     );
 
     return response.fold((failure) => Left(failure), (data) {
-      final List<dynamic> productsJson = data['products'] as List<dynamic>;
+      final productsJson = (data['products'] as List<dynamic>?) ?? [];
 
       final products = productsJson
           .map((e) => ProductModel.fromJson(e as Map<String, dynamic>))
@@ -203,10 +215,12 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
     required String productId,
     required bool isFavourite,
   }) async {
-    final response = await apiService.patch(
-      "$kBaseUrl/product/$productId",
-      data: {'isFavorite': isFavourite},
-    );
-    return response.fold((failure) => Left(failure), (_) => Right(unit));
+    if (isFavourite) {
+      final response = await apiService.post("$kBaseUrl/wishlist/$productId");
+      return response.fold((failure) => Left(failure), (_) => Right(unit));
+    } else {
+      final response = await apiService.delete("$kBaseUrl/wishlist/$productId");
+      return response.fold((failure) => Left(failure), (_) => Right(unit));
+    }
   }
 }
