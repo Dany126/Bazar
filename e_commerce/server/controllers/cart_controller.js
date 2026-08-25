@@ -134,8 +134,7 @@ export const getAllCarts = async (req, res) => {
 
 export const updateCartProduct = async (req, res) => {
   try {
-    const { product, variant, quantity } = req.body;
-
+    const { itemId, quantity } = req.body;
     const userId = req.user.id;
 
     // Find user's cart
@@ -148,10 +147,8 @@ export const updateCartProduct = async (req, res) => {
       });
     }
 
-    // Find the specific product + variant
-    const cartItem = cart.products.find(
-      (el) => el.product.equals(product) && el.variant.equals(variant),
-    );
+    // Find the specific cart item
+    const cartItem = cart.products.find((el) => el._id.equals(itemId));
 
     if (!cartItem) {
       return res.status(404).json({
@@ -182,14 +179,11 @@ export const updateCartProduct = async (req, res) => {
 
 export const deleteCartProduct = async (req, res) => {
   try {
-    const { product, variant } = req.body;
-
+    const { itemId } = req.body;
     const userId = req.user.id;
 
     // Find user's cart
     const cart = await Cart.findOne({ user: userId });
-
-    console.log(cart);
 
     if (!cart) {
       return res.status(404).json({
@@ -198,13 +192,8 @@ export const deleteCartProduct = async (req, res) => {
       });
     }
 
-    console.log(cart.products);
-    // Find the product/variant in the cart
-    const cartItem = cart.products.find(
-      (el) => el.product.equals(product) && el.variant.equals(variant),
-    );
-
-    console.log("existing", cartItem);
+    // Check if cart item exists
+    const cartItem = cart.products.find((el) => el._id.equals(itemId));
 
     if (!cartItem) {
       return res.status(404).json({
@@ -213,10 +202,8 @@ export const deleteCartProduct = async (req, res) => {
       });
     }
 
-    // Remove the product
-    cart.products = cart.products.filter(
-      (el) => !(el.product.equals(product) && el.variant.equals(variant)),
-    );
+    // Remove the cart item
+    cart.products = cart.products.filter((el) => !el._id.equals(itemId));
 
     await cart.save();
 
