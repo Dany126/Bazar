@@ -27,6 +27,7 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
         'totalPrice': totalPrice,
         'shippingAddress': shippingAddress,
         'paymentMethod': paymentMethod,
+        'paymentStatus': 'pending',
       },
     );
 

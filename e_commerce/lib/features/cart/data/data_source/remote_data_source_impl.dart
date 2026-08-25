@@ -25,9 +25,8 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
 
   @override
   Future<Either<Failure, CartModel>> getCart() async {
-    // final userId = _cachedUserId;
-    // var userId= Hive.box('authBox').get('user')['id'] as String?;
-    final result = await apiService.get('$kBaseUrl/cart');
+    final result = await apiService.get('$kBaseUrl/cart/');
+    log(result.toString());
 
     return result.fold((failure) => Left(failure), _parse);
   }
@@ -61,7 +60,7 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
     log(itemId);
     final result = await apiService.patch(
       '$kBaseUrl/cart/',
-      data: {'product': itemId, 'variant': variantId, 'quantity': quantity},
+      data: {'itemId': itemId, 'variant': variantId, 'quantity': quantity},
     );
     return result.fold((failure) => Left(failure), _parse);
   }
@@ -73,7 +72,7 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
   }) async {
     final result = await apiService.delete(
       '$kBaseUrl/cart/',
-      data: {'product': itemId, 'variant': variantId},
+      data: {'itemId': itemId, 'variant': variantId},
     );
     return result.fold((failure) => Left(failure), _parse);
   }
@@ -85,7 +84,6 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
   }
 
   @override
-
   Future<Either<Failure, CartModel>> applyCoupon({required String code}) async {
     final result = await apiService.post(
       '$kBaseUrl/cart/coupon',

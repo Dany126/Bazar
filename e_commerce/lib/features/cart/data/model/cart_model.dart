@@ -13,10 +13,19 @@ class CartModel extends CartEntity {
   /// Parses the root API response: { status, carts: [ {...} ] }
   factory CartModel.fromResponse(Map<String, dynamic> response) {
     final cartsRaw = response['carts'];
-    if (cartsRaw is! List || cartsRaw.isEmpty) {
-      throw const FormatException('No cart found in response');
+    if (cartsRaw is List && cartsRaw.isNotEmpty) {
+      final cart = cartsRaw.first;
+      if (cart is Map<String, dynamic>) {
+        return CartModel.fromJson(cart);
+      }
     }
-    return CartModel.fromJson(cartsRaw.first as Map<String, dynamic>);
+
+    final cartRaw = response['cart'];
+    if (cartRaw is Map<String, dynamic>) {
+      return CartModel.fromJson(cartRaw);
+    }
+
+    throw const FormatException('No cart found in response');
   }
 
   /// Parses a single cart object: { _id, user, products: [...], createdAt, updatedAt }
@@ -30,7 +39,7 @@ class CartModel extends CartEntity {
         : <CartItemModel>[];
 
     return CartModel(
-      id: json['_id']?.toString() ?? json['id']?.toString() ?? '',
+      id: json['_id'].toString(),
       userId: json['user']?.toString() ?? '',
       items: items,
       createdAt: DateTime.tryParse(json['createdAt']?.toString() ?? ''),

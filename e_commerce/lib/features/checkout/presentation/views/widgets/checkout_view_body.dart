@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:e_commerce/features/address/presentation/views/map_view.dart';
 import 'package:e_commerce/features/cart/domain/entity/cart_entity.dart';
 import 'package:e_commerce/core/widgets/custom_app_bar.dart';
@@ -46,6 +48,7 @@ class CheckoutViewBody extends StatelessWidget {
           );
         }
         if (state is OrderError) {
+          log(state.message.toString());
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(state.message)));
