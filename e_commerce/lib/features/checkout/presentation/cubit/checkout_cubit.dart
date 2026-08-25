@@ -44,7 +44,7 @@ class CheckoutCubit extends Cubit<CheckoutState> {
           paymentMethods,
           (method) => method.isDefault,
         ),
-        selectedPaymentType: CheckoutPaymentType.online,
+        selectedPaymentType: CheckoutPaymentType.card,
       ),
     );
   }
@@ -72,7 +72,7 @@ class CheckoutCubit extends Cubit<CheckoutState> {
       emit(
         current.copyWith(
           selectedPaymentMethod: method,
-          selectedPaymentType: CheckoutPaymentType.online,
+          selectedPaymentType: CheckoutPaymentType.card,
         ),
       );
     }
@@ -85,10 +85,10 @@ class CheckoutCubit extends Cubit<CheckoutState> {
     }
   }
 
-  void selectOnlinePayment() {
+  void selectcardPayment() {
     final current = state;
     if (current is CheckoutLoaded) {
-      emit(current.copyWith(selectedPaymentType: CheckoutPaymentType.online));
+      emit(current.copyWith(selectedPaymentType: CheckoutPaymentType.card));
     }
   }
 }

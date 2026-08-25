@@ -30,6 +30,7 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
         'paymentStatus': 'pending',
       },
     );
+    log(result.toString());
 
     return result.fold((failure) => Left(failure), (response) {
       try {

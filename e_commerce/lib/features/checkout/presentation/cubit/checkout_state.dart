@@ -1,7 +1,7 @@
 import 'package:e_commerce/features/address/domain/entity/address_entity.dart';
 import 'package:e_commerce/features/payment_method/domain/entity/saved_card_entity.dart';
 
-enum CheckoutPaymentType { cash, online }
+enum CheckoutPaymentType { cash, card }
 
 sealed class CheckoutState {}
 

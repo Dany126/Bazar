@@ -98,7 +98,7 @@ class CheckoutViewBody extends StatelessWidget {
                             loaded.selectedPaymentType ==
                                 CheckoutPaymentType.cash
                             ? 'Cash on Delivery'
-                            : 'Paymob Online',
+                            : 'Paymob card',
                         onTap: () => _showPaymentPicker(context, loaded),
                       ),
                     ],
@@ -227,25 +227,32 @@ class CheckoutViewBody extends StatelessWidget {
       return;
     }
 
-    // Online payment: create the order first, THEN request a payment link
+    // card payment: create the order first, THEN request a payment link
     // for that order's id — the endpoint is /payments/orders/:orderId/pay,
     // so we need a real id before calling Paymob.
-    final order = await context.read<OrderCubit>().createOrder(
-      products: products,
-      totalPrice: cart.subtotal ?? 0.0,
-      shippingAddress: shippingAddress,
-      paymentMethod: 'card',
-    );
+    if (state.selectedPaymentType == CheckoutPaymentType.card) {
+      await context.read<OrderCubit>().createOrder(
+        products: products,
+        totalPrice: cart.subtotal ?? 0.0,
+        shippingAddress: shippingAddress,
+        paymentMethod: 'card',
+      );
+    }
 
-    if (order == null)
-      return; // OrderCubit should already have emitted OrderError
+    final orderState = context.read<OrderCubit>().state;
+    if (orderState is! OrderCreated) {
+      throw Exception('Order was not created');
+    }
 
     try {
       final paymentData = await getIt<PaymobRemoteDataSource>().createPayment(
-        orderId: order.id,
-      ); // adjust field name to match your OrderEntity
+        orderId: orderState.order.id,
+      );
 
-      final paymentUrl = paymentData['url'] as String?;
+      final responseData = paymentData['data'] as Map<String, dynamic>?;
+      final paymentUrl = responseData?['checkoutUrl'] as String?;
+      log('Payment URL: $paymentUrl');
+
       if (paymentUrl == null) {
         throw Exception('No payment URL returned from server');
       }
@@ -336,13 +343,13 @@ class CheckoutViewBody extends StatelessWidget {
                 ),
                 ListTile(
                   leading: const Icon(Icons.credit_card_outlined),
-                  title: const Text('Paymob Online'),
+                  title: const Text('Paymob card'),
                   trailing:
-                      state.selectedPaymentType == CheckoutPaymentType.online
+                      state.selectedPaymentType == CheckoutPaymentType.card
                       ? const Icon(Icons.check_circle, color: Colors.green)
                       : null,
                   onTap: () {
-                    cubit.selectOnlinePayment();
+                    cubit.selectcardPayment();
                     Navigator.of(sheetContext).pop();
                   },
                 ),
