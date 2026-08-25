@@ -32,7 +32,7 @@ export const createCart = async (req, res) => {
       _id: products[0].variant,
       product: products[0].product,
     });
-    
+
     if (!variantOfProduct) {
       return res.status(400).json({
         status: "Failed",
@@ -132,47 +132,94 @@ export const getAllCarts = async (req, res) => {
   }
 };
 
-export const updateCart = async (req, res) => {
+export const updateCartProduct = async (req, res) => {
   try {
-    const { id } = req.params;
-    const updatedCart = await Cart.findByIdAndUpdate(id, req.body, {
-      returnDocument: "after",
-    });
-    if (!updatedCart) {
-      return res.status(400).json({
+    const { product, variant, quantity } = req.body;
+
+    const userId = req.user.id;
+
+    // Find user's cart
+    const cart = await Cart.findOne({ user: userId });
+
+    if (!cart) {
+      return res.status(404).json({
         status: "Failed",
-        message: "Something went wrong while updating cart!",
+        message: "Cart not found",
       });
     }
+
+    // Find the specific product + variant
+    const cartItem = cart.products.find(
+      (el) => el.product.equals(product) && el.variant.equals(variant),
+    );
+
+    if (!cartItem) {
+      return res.status(404).json({
+        status: "Failed",
+        message: "Product not found in cart",
+      });
+    }
+
+    // Update quantity
+    cartItem.quantity = quantity;
+
+    await cart.save();
+
     return res.status(200).json({
       status: "Success",
-      updatedCart,
+      message: "Cart quantity updated successfully",
+      cart,
     });
   } catch (err) {
     console.log(err);
+
     return res.status(500).json({
       status: "Failed",
-      message: "Internal Server Error",
+      message: "Internal server error",
     });
   }
 };
 
-export const deleteCart = async (req, res) => {
+export const deleteCartProduct = async (req, res) => {
   try {
-    const { id } = req.params;
-    const deletedCart = await Cart.findByIdAndDelete(id);
-    if (!deletedCart) {
-      return res.status(400).json({
+    const { productId, variantId } = req.params;
+
+    // Find user's cart
+    const cart = await Cart.findOne({ user: req.user.id });
+
+    if (!cart) {
+      return res.status(404).json({
         status: "Failed",
-        message: "Something went wrong while deleting cart!",
+        message: "Cart not found",
       });
     }
+
+    // Find the product/variant in the cart
+    const productExists = cart.products.some(
+      (el) => el.product.equals(productId) && el.variant.equals(variantId),
+    );
+
+    if (!productExists) {
+      return res.status(404).json({
+        status: "Failed",
+        message: "Product not found in cart",
+      });
+    }
+
+    // Remove the product
+    cart.products = cart.products.filter(
+      (el) => !(el.product.equals(productId) && el.variant.equals(variantId)),
+    );
+
+    await cart.save();
+
     return res.status(200).json({
       status: "Success",
-      message: "Cart deleted successfully",
+      message: "Product removed from cart successfully",
     });
   } catch (err) {
     console.log(err);
+
     return res.status(500).json({
       status: "Failed",
       message: "Internal Server Error",
