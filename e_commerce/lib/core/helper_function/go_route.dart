@@ -17,6 +17,8 @@ import 'package:e_commerce/features/home/presentation/views/widgets/new_arrivals
 import 'package:e_commerce/features/home/presentation/views/widgets/top_selling.dart';
 import 'package:e_commerce/features/notification/presentation/view/notification_view.dart';
 import 'package:e_commerce/features/order/presenation/view/order_view.dart';
+import 'package:e_commerce/features/payment_method/presentation/model_view/cubit/payment_cubit.dart';
+import 'package:e_commerce/features/payment_method/presentation/views/payment_methods_view.dart';
 import 'package:e_commerce/features/product_details/presentation/views/product_details_view.dart';
 import 'package:e_commerce/features/profile/presentation/view/my_favourite_view.dart';
 import 'package:e_commerce/features/profile/presentation/view/profile_view.dart';
@@ -109,6 +111,14 @@ Route onGenerateRoute(RouteSettings settings) {
         builder: (context) => BlocProvider<GetProductsCubit>(
           create: (_) => getIt<GetProductsCubit>(),
           child: const MyFavouriteView(),
+        ),
+      );
+
+    case PaymentMethodsView.routeName:
+      return MaterialPageRoute(
+        builder: (context) => BlocProvider<PaymentCubit>(
+          create: (_) => getIt<PaymentCubit>(),
+          child: const PaymentMethodsView(),
         ),
       );
 

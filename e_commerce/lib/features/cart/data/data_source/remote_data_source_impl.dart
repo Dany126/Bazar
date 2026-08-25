@@ -27,7 +27,7 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
   Future<Either<Failure, CartModel>> getCart() async {
     // final userId = _cachedUserId;
     // var userId= Hive.box('authBox').get('user')['id'] as String?;
-    final result = await apiService.get('$kBaseUrl/user/$cachedUserId/cart');
+    final result = await apiService.get('$kBaseUrl/cart');
     return result.fold((failure) => Left(failure), _parse);
   }
 

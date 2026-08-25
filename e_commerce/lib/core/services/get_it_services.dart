@@ -76,14 +76,19 @@ import 'package:e_commerce/features/order/domin/repo/order_repo.dart';
 import 'package:e_commerce/features/order/domin/use_case/create_order_use_case.dart';
 import 'package:e_commerce/features/order/domin/use_case/get_order_use_case.dart';
 import 'package:e_commerce/features/order/presenation/modelview/cubit/order_cubit.dart';
-import 'package:e_commerce/features/payment_method/data/data_source/payment_method_remote_data_source_impl.dart';
+import 'package:e_commerce/features/payment_method/data/data_source/payment_local_data_source_impl.dart';
 import 'package:e_commerce/features/payment_method/data/repo/payment_method_repo_impl.dart';
-import 'package:e_commerce/features/payment_method/domain/data_source/payment_method_remote_data_source.dart';
-import 'package:e_commerce/features/payment_method/domain/repo/payment_method_repo.dart';
-import 'package:e_commerce/features/payment_method/domain/use_case/add_payment_method_use_case.dart';
-import 'package:e_commerce/features/payment_method/domain/use_case/delete_payment_method_use_case.dart';
-import 'package:e_commerce/features/payment_method/domain/use_case/get_payment_methods_use_case.dart';
-import 'package:e_commerce/features/payment_method/presentation/model_view/cubit/payment_method_cubit.dart';
+
+import 'package:e_commerce/features/payment_method/domain/repo/payment_repo.dart';
+import 'package:e_commerce/features/payment_method/domain/use_case/add_card_use_case.dart';
+import 'package:e_commerce/features/payment_method/domain/use_case/remove_card_use_case.dart';
+import 'package:e_commerce/features/payment_method/domain/use_case/get_saved_cards_use_case.dart';
+import 'package:e_commerce/features/payment_method/presentation/model_view/cubit/payment_cubit.dart';
+import 'package:e_commerce/features/payment/data/data_source/paymob_remote_data_source.dart';
+import 'package:e_commerce/features/payment/data/repo/paymob_repository_impl.dart';
+import 'package:e_commerce/features/payment/domain/repo/paymob_repository.dart';
+import 'package:e_commerce/features/payment/domain/use_case/create_paymob_payment_use_case.dart';
+
 import 'package:e_commerce/features/product_details/data/data_source/remote_data_source_impl.dart';
 import 'package:e_commerce/features/product_details/data/data_source/review_remote_data_source.dart';
 import 'package:e_commerce/features/product_details/data/repo/product_details_repo_impl.dart';
@@ -554,32 +559,35 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
   // ==========================================================
   // PAYMENT METHOD
   // ==========================================================
-
-  getIt.registerLazySingleton<PaymentMethodRemoteDataSource>(
-    () => PaymentMethodRemoteDataSourceImpl(getIt<ApiService>()),
+  getIt.registerLazySingleton<PaymentLocalDataSource>(
+    () => PaymentLocalDataSource(),
   );
 
-  getIt.registerLazySingleton<PaymentMethodRepository>(
-    () => PaymentMethodRepositoryImpl(getIt<PaymentMethodRemoteDataSource>()),
+  getIt.registerLazySingleton<PaymentRepo>(
+    () => PaymentRepoImpl(getIt<PaymentLocalDataSource>()),
   );
 
-  getIt.registerLazySingleton<GetPaymentMethodsUseCase>(
-    () => GetPaymentMethodsUseCase(getIt<PaymentMethodRepository>()),
+  getIt.registerLazySingleton(() => GetSavedCardsUseCase(getIt<PaymentRepo>()));
+  getIt.registerLazySingleton(() => AddCardUseCase(getIt<PaymentRepo>()));
+  getIt.registerLazySingleton(() => RemoveCardUseCase(getIt<PaymentRepo>()));
+
+  getIt.registerLazySingleton<PaymobRemoteDataSource>(
+    () => PaymobRemoteDataSource(getIt<ApiService>()),
+  );
+  getIt.registerLazySingleton<PaymobRepository>(
+    () => PaymobRepositoryImpl(getIt<PaymobRemoteDataSource>()),
+  );
+  getIt.registerLazySingleton<CreatePaymobPaymentUseCase>(
+    () => CreatePaymobPaymentUseCase(getIt<PaymobRepository>()),
   );
 
-  getIt.registerLazySingleton<AddPaymentMethodUseCase>(
-    () => AddPaymentMethodUseCase(getIt<PaymentMethodRepository>()),
-  );
-
-  getIt.registerLazySingleton<DeletePaymentMethodUseCase>(
-    () => DeletePaymentMethodUseCase(getIt<PaymentMethodRepository>()),
-  );
-
-  getIt.registerFactory<PaymentMethodCubit>(
-    () => PaymentMethodCubit(
-      getPaymentMethodsUseCase: getIt<GetPaymentMethodsUseCase>(),
-      addPaymentMethodUseCase: getIt<AddPaymentMethodUseCase>(),
-      deletePaymentMethodUseCase: getIt<DeletePaymentMethodUseCase>(),
+  // Factory, not singleton — each visit to the payment feature should get
+  // a fresh cubit/card list for that session.
+  getIt.registerFactory(
+    () => PaymentCubit(
+      getSavedCardsUseCase: getIt<GetSavedCardsUseCase>(),
+      addCardUseCase: getIt<AddCardUseCase>(),
+      removeCardUseCase: getIt<RemoveCardUseCase>(),
     ),
   );
 
@@ -590,7 +598,7 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
   getIt.registerFactory<CheckoutCubit>(
     () => CheckoutCubit(
       getAddressesUseCase: getIt<GetAddressesUseCase>(),
-      getPaymentMethodsUseCase: getIt<GetPaymentMethodsUseCase>(),
+      getSavedCardsUseCase: getIt<GetSavedCardsUseCase>(),
     ),
   );
 

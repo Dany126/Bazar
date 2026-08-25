@@ -18,6 +18,7 @@ import { cartRouter } from "./routes/cart_routes.js";
 import { addressRouter } from "./routes/address_routes.js";
 import { wishlistRouter } from "./routes/wishlist_routes.js";
 import { paymentRouter } from "./routes/payment_routes.js";
+import { paymentRouter } from "./routes/payment_routes.js";
 
 const app = express();
 

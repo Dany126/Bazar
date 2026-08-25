@@ -43,7 +43,7 @@ class _CartSummaryState extends State<CartSummary> {
     final subtotal = cart.subtotal;
 
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

@@ -1,33 +1,67 @@
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/core/error/failure.dart';
-import 'package:e_commerce/features/payment_method/domain/data_source/payment_method_remote_data_source.dart';
-import 'package:e_commerce/features/payment_method/domain/entity/payment_method_entity.dart';
-import 'package:e_commerce/features/payment_method/domain/repo/payment_method_repo.dart';
+import 'package:e_commerce/features/payment_method/data/data_source/payment_local_data_source_impl.dart';
 
-class PaymentMethodRepositoryImpl implements PaymentMethodRepository {
-  final PaymentMethodRemoteDataSource remoteDataSource;
+import '../../domain/entity/saved_card_entity.dart';
 
-  PaymentMethodRepositoryImpl(this.remoteDataSource);
+import '../../domain/repo/payment_repo.dart';
 
-  @override
-  Future<Either<Failure, List<PaymentMethodEntity>>> getPaymentMethods() =>
-      remoteDataSource.getPaymentMethods();
+class PaymentRepoImpl implements PaymentRepo {
+  PaymentRepoImpl(this.localDataSource);
+  final PaymentLocalDataSource localDataSource;
 
   @override
-  Future<Either<Failure, PaymentMethodEntity>> addPaymentMethod({
-    required String brand,
-    required String last4,
-    bool isDefault = false,
-  }) {
-    return remoteDataSource.addPaymentMethod(
-      brand: brand,
-      last4: last4,
-      isDefault: isDefault,
-    );
+  Future<Either<Failure, List<SavedCardEntity>>> getSavedCards() async {
+    try {
+      final cards = await localDataSource.getSavedCards();
+      return Right(cards);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
   }
 
   @override
-  Future<Either<Failure, void>> deletePaymentMethod({
-    required String paymentMethodId,
-  }) => remoteDataSource.deletePaymentMethod(paymentMethodId: paymentMethodId);
+  Future<Either<Failure, SavedCardEntity>> addCard({
+    required String cardNumber,
+    required String ccv,
+    required String expiry,
+    required String cardholderName,
+  }) async {
+    final digits = cardNumber.replaceAll(RegExp(r'\D'), '');
+
+    if (digits.length < 12) {
+      return const Left(ServerFailure(message: 'Enter a valid card number'));
+    }
+    if (ccv.trim().length < 3) {
+      return const Left(ServerFailure(message: 'Enter a valid CCV'));
+    }
+    if (!RegExp(r'^\d{2}/\d{2}$').hasMatch(expiry.trim())) {
+      return const Left(ServerFailure(message: 'Exp must be in MM/YY format'));
+    }
+    if (cardholderName.trim().isEmpty) {
+      return const Left(ServerFailure(message: 'Enter the cardholder name'));
+    }
+
+    try {
+      final card = await localDataSource.addCard(
+        cardNumber: cardNumber,
+        ccv: ccv,
+        expiry: expiry,
+        cardholderName: cardholderName,
+      );
+      return Right(card);
+    } catch (e) {
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  @override
+  Future<Either<Failure, Unit>> removeCard(String id) async {
+    try {
+      await localDataSource.removeCard(id);
+      return const Right(unit);
+    } catch (e) {
+      return Left(ServerFailure(message: (e.toString())));
+    }
+  }
 }

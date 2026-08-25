@@ -1,5 +1,7 @@
 import 'package:e_commerce/features/address/domain/entity/address_entity.dart';
-import 'package:e_commerce/features/payment_method/domain/entity/payment_method_entity.dart';
+import 'package:e_commerce/features/payment_method/domain/entity/saved_card_entity.dart';
+
+enum CheckoutPaymentType { cash, online }
 
 sealed class CheckoutState {}
 
@@ -15,21 +17,24 @@ class CheckoutError extends CheckoutState {
 class CheckoutLoaded extends CheckoutState {
   final List<AddressEntity> addresses;
   final AddressEntity? selectedAddress;
-  final List<PaymentMethodEntity> paymentMethods;
-  final PaymentMethodEntity? selectedPaymentMethod;
+  final List<SavedCardEntity> paymentMethods;
+  final SavedCardEntity? selectedPaymentMethod;
+  final CheckoutPaymentType selectedPaymentType;
 
   CheckoutLoaded({
     required this.addresses,
     required this.selectedAddress,
     required this.paymentMethods,
     required this.selectedPaymentMethod,
+    required this.selectedPaymentType,
   });
 
   CheckoutLoaded copyWith({
     List<AddressEntity>? addresses,
     AddressEntity? selectedAddress,
-    List<PaymentMethodEntity>? paymentMethods,
-    PaymentMethodEntity? selectedPaymentMethod,
+    List<SavedCardEntity>? paymentMethods,
+    SavedCardEntity? selectedPaymentMethod,
+    CheckoutPaymentType? selectedPaymentType,
   }) {
     return CheckoutLoaded(
       addresses: addresses ?? this.addresses,
@@ -37,6 +42,7 @@ class CheckoutLoaded extends CheckoutState {
       paymentMethods: paymentMethods ?? this.paymentMethods,
       selectedPaymentMethod:
           selectedPaymentMethod ?? this.selectedPaymentMethod,
+      selectedPaymentType: selectedPaymentType ?? this.selectedPaymentType,
     );
   }
 }

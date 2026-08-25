@@ -1,3 +1,4 @@
+import 'package:e_commerce/features/address/presentation/views/map_view.dart';
 import 'package:e_commerce/features/cart/domain/entity/cart_entity.dart';
 import 'package:e_commerce/core/widgets/custom_app_bar.dart';
 import 'package:e_commerce/features/cart/presentation/view/widgets/cart_summary.dart';
@@ -6,8 +7,11 @@ import 'package:e_commerce/features/checkout/presentation/cubit/checkout_state.d
 import 'package:e_commerce/features/order/presenation/modelview/cubit/order_cubit.dart';
 import 'package:e_commerce/features/order/presenation/modelview/cubit/order_state.dart';
 import 'package:e_commerce/features/order/presenation/view/widgets/order_success_view.dart';
+import 'package:e_commerce/features/payment/domain/use_case/create_paymob_payment_use_case.dart';
+import 'package:e_commerce/core/services/get_it_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class CheckoutViewBody extends StatelessWidget {
   const CheckoutViewBody({super.key, required this.cart});
@@ -19,8 +23,26 @@ class CheckoutViewBody extends StatelessWidget {
     return BlocListener<OrderCubit, OrderState>(
       listener: (context, state) {
         if (state is OrderCreated) {
-          Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (_) => const OrderSuccessView()),
+          showDialog<void>(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogContext) => AlertDialog(
+              title: const Text('Success'),
+              content: const Text('Your cash order was created successfully.'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(dialogContext).pop();
+                    Navigator.of(context).pushReplacement(
+                      MaterialPageRoute(
+                        builder: (_) => const OrderSuccessView(),
+                      ),
+                    );
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
           );
         }
         if (state is OrderError) {
@@ -69,9 +91,11 @@ class CheckoutViewBody extends StatelessWidget {
                       _buildOptionCard(
                         context,
                         title: 'Payment Method',
-                        value: loaded.selectedPaymentMethod == null
-                            ? 'Add Payment Method'
-                            : '**** ${loaded.selectedPaymentMethod!.last4}',
+                        value:
+                            loaded.selectedPaymentType ==
+                                CheckoutPaymentType.cash
+                            ? 'Cash on Delivery'
+                            : 'Paymob Online',
                         onTap: () => _showPaymentPicker(context, loaded),
                       ),
                     ],
@@ -108,9 +132,7 @@ class CheckoutViewBody extends StatelessWidget {
     return BlocBuilder<CheckoutCubit, CheckoutState>(
       builder: (context, checkoutState) {
         final loaded = checkoutState is CheckoutLoaded ? checkoutState : null;
-        final canPlaceOrder =
-            loaded?.selectedAddress != null &&
-            loaded?.selectedPaymentMethod != null;
+        final canPlaceOrder = loaded?.selectedAddress != null;
         final total = cart.subtotal ?? 0.0;
 
         return BlocBuilder<OrderCubit, OrderState>(
@@ -170,10 +192,16 @@ class CheckoutViewBody extends StatelessWidget {
     );
   }
 
-  void _placeOrder(BuildContext context, CheckoutLoaded state) {
+  Future<void> _placeOrder(BuildContext context, CheckoutLoaded state) async {
     final address = state.selectedAddress;
-    final paymentMethod = state.selectedPaymentMethod;
-    if (address == null || paymentMethod == null) return;
+    if (address == null) return;
+
+    final shippingAddress = {
+      'street': address.street,
+      'city': address.city,
+      'country': address.country,
+      'postalCode': address.postalCode,
+    };
 
     final products = cart.items
         .map(
@@ -186,16 +214,56 @@ class CheckoutViewBody extends StatelessWidget {
         )
         .toList();
 
-    context.read<OrderCubit>().createOrder(
-      products: products,
-      totalPrice: cart.subtotal ?? 0.0,
-      shippingAddress: {
+    if (state.selectedPaymentType == CheckoutPaymentType.cash) {
+      context.read<OrderCubit>().createOrder(
+        products: products,
+        totalPrice: cart.subtotal ?? 0.0,
+        shippingAddress: shippingAddress,
+        paymentMethod: 'cash',
+      );
+      return;
+    }
+
+    final result = await getIt<CreatePaymobPaymentUseCase>()(
+      amountCents: ((cart.subtotal ?? 0.0) * 100).round(),
+      currency: 'EGP',
+      orderReference: 'checkout-${DateTime.now().millisecondsSinceEpoch}',
+      billingData: {
+        'first_name': 'Customer',
+        'last_name': 'Customer',
+        'email': 'customer@example.com',
+        'phone_number': address.phone,
         'street': address.street,
         'city': address.city,
         'country': address.country,
-        'postalCode': address.postalCode,
+        'postal_code': address.postalCode,
+        'building': address.buildingName ?? 'NA',
+        'floor': address.floor ?? 'NA',
+        'apartment': address.apartmentNumber ?? 'NA',
+        'shipping_method': 'PKG',
       },
-      paymentMethod: paymentMethod.brand,
+      products: products,
+      shippingAddress: shippingAddress,
+    );
+
+    if (!context.mounted) return;
+    result.fold(
+      (failure) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(failure.message)));
+      },
+      (payment) async {
+        final launched = await launchUrl(
+          Uri.parse(payment.checkoutUrl),
+          mode: LaunchMode.externalApplication,
+        );
+        if (!launched && context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Could not open Paymob checkout')),
+          );
+        }
+      },
     );
   }
 
@@ -233,7 +301,7 @@ class CheckoutViewBody extends StatelessWidget {
                 title: const Text('Add New Address'),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
-                  // TODO: push add-address flow, then cubit.init() on return.
+                  Navigator.pushNamed(context, MapView.routeName);
                 },
               ),
             ],
@@ -248,35 +316,38 @@ class CheckoutViewBody extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       builder: (sheetContext) {
-        return SafeArea(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (state.paymentMethods.isEmpty)
-                const Padding(
-                  padding: EdgeInsets.all(24),
-                  child: Text('No saved payment methods yet.'),
-                ),
-              for (final method in state.paymentMethods)
+        return SizedBox(
+          height: MediaQuery.of(context).size.height * 0.2,
+          child: SafeArea(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
                 ListTile(
-                  title: Text('**** ${method.last4}'),
-                  trailing: method.id == state.selectedPaymentMethod?.id
+                  leading: const Icon(Icons.money_outlined),
+                  title: const Text('Cash on Delivery'),
+                  trailing:
+                      state.selectedPaymentType == CheckoutPaymentType.cash
                       ? const Icon(Icons.check_circle, color: Colors.green)
                       : null,
                   onTap: () {
-                    cubit.selectPaymentMethod(method);
+                    cubit.selectCashPayment();
                     Navigator.of(sheetContext).pop();
                   },
                 ),
-              ListTile(
-                leading: const Icon(Icons.add),
-                title: const Text('Add New Payment Method'),
-                onTap: () {
-                  Navigator.of(sheetContext).pop();
-                  // TODO: push add-payment flow, then cubit.init() on return.
-                },
-              ),
-            ],
+                ListTile(
+                  leading: const Icon(Icons.credit_card_outlined),
+                  title: const Text('Paymob Online'),
+                  trailing:
+                      state.selectedPaymentType == CheckoutPaymentType.online
+                      ? const Icon(Icons.check_circle, color: Colors.green)
+                      : null,
+                  onTap: () {
+                    cubit.selectOnlinePayment();
+                    Navigator.of(sheetContext).pop();
+                  },
+                ),
+              ],
+            ),
           ),
         );
       },
