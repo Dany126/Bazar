@@ -185,7 +185,9 @@ export const deleteCartProduct = async (req, res) => {
     const userId = req.user.id;
 
     // Find user's cart
-    const cart = await Cart.findOne({ user: userId });
+    const cart = await Cart.findOne({ user: userId })
+      .populate("products.product")
+      .populate("products.variant");
 
     if (!cart) {
       return res.status(404).json({
@@ -212,6 +214,7 @@ export const deleteCartProduct = async (req, res) => {
     return res.status(200).json({
       status: "Success",
       message: "Product removed from cart successfully",
+      cart,
     });
   } catch (err) {
     console.log(err);
