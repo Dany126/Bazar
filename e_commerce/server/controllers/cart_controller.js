@@ -7,7 +7,9 @@ import { apiFeatures } from "../utils/apiFeatures.js";
 
 export const createCart = async (req, res) => {
   try {
-    const { user, products } = req.body;
+    const { products } = req.body;
+
+    const user = req.user.id;
 
     // 1. check if product exists
     const product = await Product.findById(products[0].product);
@@ -104,7 +106,7 @@ export const createCart = async (req, res) => {
 
 export const getAllCarts = async (req, res) => {
   try {
-    const query = { ...req.params, ...req.query };
+    const query = { ...req.params, ...req.query, user: req.user.id };
     const { filter, skip, limits, sortBy } = apiFeatures(query);
     const carts = await Cart.find(filter)
       .limit(limits)
