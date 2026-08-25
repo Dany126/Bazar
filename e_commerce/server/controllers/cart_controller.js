@@ -182,10 +182,14 @@ export const updateCartProduct = async (req, res) => {
 
 export const deleteCartProduct = async (req, res) => {
   try {
-    const { productId, variantId } = req.params;
+    const { product, variant } = req.body;
+
+    const userId = req.user.id;
 
     // Find user's cart
-    const cart = await Cart.findOne({ user: req.user.id });
+    const cart = await Cart.findOne({ user: userId });
+
+    console.log(cart);
 
     if (!cart) {
       return res.status(404).json({
@@ -194,12 +198,15 @@ export const deleteCartProduct = async (req, res) => {
       });
     }
 
+    console.log(cart.products);
     // Find the product/variant in the cart
-    const productExists = cart.products.some(
-      (el) => el.product.equals(productId) && el.variant.equals(variantId),
+    const cartItem = cart.products.find(
+      (el) => el.product.equals(product) && el.variant.equals(variant),
     );
 
-    if (!productExists) {
+    console.log("existing", cartItem);
+
+    if (!cartItem) {
       return res.status(404).json({
         status: "Failed",
         message: "Product not found in cart",
@@ -208,7 +215,7 @@ export const deleteCartProduct = async (req, res) => {
 
     // Remove the product
     cart.products = cart.products.filter(
-      (el) => !(el.product.equals(productId) && el.variant.equals(variantId)),
+      (el) => !(el.product.equals(product) && el.variant.equals(variant)),
     );
 
     await cart.save();
