@@ -4,7 +4,7 @@ import 'dart:developer';
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/error/failure.dart';
-import 'package:e_commerce/core/helper_function/get_user_id.dart';
+
 import 'package:e_commerce/core/services/api_services.dart';
 
 import 'package:e_commerce/features/cart/data/model/cart_model.dart';
@@ -28,6 +28,7 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
     // final userId = _cachedUserId;
     // var userId= Hive.box('authBox').get('user')['id'] as String?;
     final result = await apiService.get('$kBaseUrl/cart');
+
     return result.fold((failure) => Left(failure), _parse);
   }
 
@@ -37,17 +38,9 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
     required String variantId,
     required int quantity,
   }) async {
-    final userId = cachedUserId;
-    if (userId == null) {
-      return Left(
-        CacheFailure(message: 'No cached user id — user is not logged in'),
-      );
-    }
-
     final result = await apiService.post(
       '$kBaseUrl/cart',
       data: {
-        'user': userId,
         'products': [
           {'product': productId, 'variant': variantId, 'quantity': quantity},
         ],
@@ -63,9 +56,12 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
     required int quantity,
     required String variantId,
   }) async {
+    log(quantity.toString());
+    log(variantId);
+    log(itemId);
     final result = await apiService.patch(
       '$kBaseUrl/cart/',
-      data: {'quantity': quantity, 'variant': variantId, 'product': itemId},
+      data: {'product': itemId, 'variant': variantId, 'quantity': quantity},
     );
     return result.fold((failure) => Left(failure), _parse);
   }
@@ -89,6 +85,7 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
   }
 
   @override
+
   Future<Either<Failure, CartModel>> applyCoupon({required String code}) async {
     final result = await apiService.post(
       '$kBaseUrl/cart/coupon',
