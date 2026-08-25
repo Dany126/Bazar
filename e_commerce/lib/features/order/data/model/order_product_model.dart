@@ -1,6 +1,6 @@
 import 'package:e_commerce/features/home/data/models/product_model.dart';
 import 'package:e_commerce/features/home/data/models/category_model.dart';
-import 'package:e_commerce/features/home/domain/entity/product_entity.dart';
+
 import 'package:e_commerce/features/order/domin/entity/order_product_entity.dart';
 
 class OrderProductModel extends OrderProductEntity {

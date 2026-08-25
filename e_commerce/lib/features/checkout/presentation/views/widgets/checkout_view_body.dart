@@ -234,7 +234,7 @@ class CheckoutViewBody extends StatelessWidget {
       products: products,
       totalPrice: cart.subtotal ?? 0.0,
       shippingAddress: shippingAddress,
-      paymentMethod: 'online',
+      paymentMethod: 'card',
     );
 
     if (order == null)

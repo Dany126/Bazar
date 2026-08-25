@@ -47,10 +47,16 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
   Future<Either<Failure, List<OrderModel>>> getMyOrders({
     required String orderStatus,
   }) async {
-    final result = await apiService.get(
-      '$kBaseUrl/order',
-      queryParameters: {'orderStatus': orderStatus},
-    );
+    orderStatus = orderStatus.toString().split('.')[1];
+    final Either<Failure, dynamic> result;
+    if (orderStatus == 'all') {
+      result = await apiService.get('$kBaseUrl/order');
+    } else {
+      result = await apiService.get(
+        '$kBaseUrl/order/',
+        queryParameters: {'orderStatus': orderStatus},
+      );
+    }
     log(result.toString());
 
     return result.fold(
@@ -58,6 +64,7 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
         // Backend returns 400 + "No Orders Found" style message when the list is empty,
         // instead of 200 + []. Treat that as an empty list, not a real error.
         final message = failure.message.toLowerCase();
+        log(message);
         if (message.contains('no order') || message.contains('not found')) {
           return const Right(<OrderModel>[]);
         }
@@ -68,6 +75,7 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
           final List ordersJson = response is Map
               ? (response['orders'] ?? []) as List
               : response as List;
+          log(ordersJson.toString());
 
           final orders = ordersJson
               .map(
