@@ -8,7 +8,10 @@ class RemoveFromCartUseCase {
   final CartRepository repository;
   RemoveFromCartUseCase(this.repository);
 
-  Future<Either<Failure, CartEntity>> call({required String itemId}) {
-    return repository.removeFromCart(itemId: itemId);
+  Future<Either<Failure, CartEntity>> call({
+    required String itemId,
+    required String variantId,
+  }) {
+    return repository.removeFromCart(itemId: itemId, variantId: variantId);
   }
 }

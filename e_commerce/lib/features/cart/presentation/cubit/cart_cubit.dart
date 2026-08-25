@@ -60,11 +60,13 @@ class CartCubit extends Cubit<CartState> {
 
   Future<void> updateCartItemQuantity({
     required String itemId,
+    required String variantId,
     required int quantity,
   }) async {
     final result = await updateCartItemQuantityUseCase(
       itemId: itemId,
       quantity: quantity,
+      variantId: variantId,
     );
     result.fold(
       (failure) => emit(CartError(failure.message)),
@@ -72,8 +74,14 @@ class CartCubit extends Cubit<CartState> {
     );
   }
 
-  Future<void> removeFromCart({required String itemId}) async {
-    final result = await removeFromCartUseCase(itemId: itemId);
+  Future<void> removeFromCart({
+    required String itemId,
+    required String variantId,
+  }) async {
+    final result = await removeFromCartUseCase(
+      itemId: itemId,
+      variantId: variantId,
+    );
     result.fold(
       (failure) => emit(CartError(failure.message)),
       (cart) => emit(CartLoaded(cart)),

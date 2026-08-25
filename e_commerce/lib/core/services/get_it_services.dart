@@ -590,7 +590,7 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
       removeCardUseCase: getIt<RemoveCardUseCase>(),
     ),
   );
-
+ 
   // ==========================================================
   // CHECKOUT
   // ==========================================================

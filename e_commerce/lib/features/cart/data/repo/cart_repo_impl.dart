@@ -30,16 +30,24 @@ class CartRepositoryImpl implements CartRepository {
   Future<Either<Failure, CartEntity>> updateCartItemQuantity({
     required String itemId,
     required int quantity,
+    required String variantId,
   }) {
     return remoteDataSource.updateCartItemQuantity(
       itemId: itemId,
       quantity: quantity,
+      variantId: variantId,
     );
   }
 
   @override
-  Future<Either<Failure, CartEntity>> removeFromCart({required String itemId}) {
-    return remoteDataSource.removeFromCart(itemId: itemId);
+  Future<Either<Failure, CartEntity>> removeFromCart({
+    required String itemId,
+    required String variantId,
+  }) {
+    return remoteDataSource.removeFromCart(
+      itemId: itemId,
+      variantId: variantId,
+    );
   }
 
   @override

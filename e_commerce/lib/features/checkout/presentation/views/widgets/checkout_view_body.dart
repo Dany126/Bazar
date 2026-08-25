@@ -7,7 +7,7 @@ import 'package:e_commerce/features/checkout/presentation/cubit/checkout_state.d
 import 'package:e_commerce/features/order/presenation/modelview/cubit/order_cubit.dart';
 import 'package:e_commerce/features/order/presenation/modelview/cubit/order_state.dart';
 import 'package:e_commerce/features/order/presenation/view/widgets/order_success_view.dart';
-import 'package:e_commerce/features/payment/domain/use_case/create_paymob_payment_use_case.dart';
+import 'package:e_commerce/features/payment/data/data_source/paymob_remote_data_source.dart';
 import 'package:e_commerce/core/services/get_it_services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -224,47 +224,44 @@ class CheckoutViewBody extends StatelessWidget {
       return;
     }
 
-    final result = await getIt<CreatePaymobPaymentUseCase>()(
-      amountCents: ((cart.subtotal ?? 0.0) * 100).round(),
-      currency: 'EGP',
-      orderReference: 'checkout-${DateTime.now().millisecondsSinceEpoch}',
-      billingData: {
-        'first_name': 'Customer',
-        'last_name': 'Customer',
-        'email': 'customer@example.com',
-        'phone_number': address.phone,
-        'street': address.street,
-        'city': address.city,
-        'country': address.country,
-        'postal_code': address.postalCode,
-        'building': address.buildingName ?? 'NA',
-        'floor': address.floor ?? 'NA',
-        'apartment': address.apartmentNumber ?? 'NA',
-        'shipping_method': 'PKG',
-      },
+    // Online payment: create the order first, THEN request a payment link
+    // for that order's id — the endpoint is /payments/orders/:orderId/pay,
+    // so we need a real id before calling Paymob.
+    final order = await context.read<OrderCubit>().createOrder(
       products: products,
+      totalPrice: cart.subtotal ?? 0.0,
       shippingAddress: shippingAddress,
+      paymentMethod: 'online',
     );
 
-    if (!context.mounted) return;
-    result.fold(
-      (failure) {
+    if (order == null)
+      return; // OrderCubit should already have emitted OrderError
+
+    try {
+      final paymentData = await getIt<PaymobRemoteDataSource>().createPayment(
+        orderId: order.id,
+      ); // adjust field name to match your OrderEntity
+
+      final paymentUrl = paymentData['url'] as String?;
+      if (paymentUrl == null) {
+        throw Exception('No payment URL returned from server');
+      }
+
+      final launched = await launchUrl(
+        Uri.parse(paymentUrl),
+        mode: LaunchMode.externalApplication,
+      );
+
+      if (!launched) {
+        throw Exception('Could not open payment page');
+      }
+    } catch (e) {
+      if (context.mounted) {
         ScaffoldMessenger.of(
           context,
-        ).showSnackBar(SnackBar(content: Text(failure.message)));
-      },
-      (payment) async {
-        final launched = await launchUrl(
-          Uri.parse(payment.checkoutUrl),
-          mode: LaunchMode.externalApplication,
-        );
-        if (!launched && context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Could not open Paymob checkout')),
-          );
-        }
-      },
-    );
+        ).showSnackBar(SnackBar(content: Text('Payment failed: $e')));
+      }
+    }
   }
 
   // ------------------------------------------------------------

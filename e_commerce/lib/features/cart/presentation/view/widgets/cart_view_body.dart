@@ -79,6 +79,8 @@ class CartViewBody extends StatelessWidget {
                                 context
                                     .read<CartCubit>()
                                     .updateCartItemQuantity(
+                                      variantId: item.variantId,
+
                                       itemId: item.id,
                                       quantity: item.quantity + 1,
                                     );
@@ -89,6 +91,7 @@ class CartViewBody extends StatelessWidget {
                                       context
                                           .read<CartCubit>()
                                           .updateCartItemQuantity(
+                                            variantId: item.variantId,
                                             itemId: item.id,
                                             quantity: item.quantity - 1,
                                           );
@@ -97,6 +100,7 @@ class CartViewBody extends StatelessWidget {
 
                               onRemove: () {
                                 context.read<CartCubit>().removeFromCart(
+                                  variantId: item.variantId,
                                   itemId: item.id,
                                 );
                               },

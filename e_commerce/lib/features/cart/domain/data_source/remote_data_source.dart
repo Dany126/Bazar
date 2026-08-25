@@ -15,9 +15,13 @@ abstract class CartRemoteDataSource {
   Future<Either<Failure, CartModel>> updateCartItemQuantity({
     required String itemId,
     required int quantity,
+    required String variantId,
   });
 
-  Future<Either<Failure, CartModel>> removeFromCart({required String itemId});
+  Future<Either<Failure, CartModel>> removeFromCart({
+    required String itemId,
+    required String variantId,
+  });
 
   Future<Either<Failure, CartModel>> removeAllFromCart();
 

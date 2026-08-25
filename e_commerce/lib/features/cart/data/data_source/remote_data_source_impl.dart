@@ -61,10 +61,11 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
   Future<Either<Failure, CartModel>> updateCartItemQuantity({
     required String itemId,
     required int quantity,
+    required String variantId,
   }) async {
     final result = await apiService.patch(
-      '$kBaseUrl/cart/$itemId',
-      data: {'quantity': quantity},
+      '$kBaseUrl/cart/',
+      data: {'quantity': quantity, 'variant': variantId, 'product': itemId},
     );
     return result.fold((failure) => Left(failure), _parse);
   }
@@ -72,8 +73,12 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
   @override
   Future<Either<Failure, CartModel>> removeFromCart({
     required String itemId,
+    required String variantId,
   }) async {
-    final result = await apiService.delete('$kBaseUrl/cart/$itemId');
+    final result = await apiService.delete(
+      '$kBaseUrl/cart/',
+      data: {'product': itemId, 'variant': variantId},
+    );
     return result.fold((failure) => Left(failure), _parse);
   }
 

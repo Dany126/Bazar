@@ -1,3 +1,4 @@
+import 'package:e_commerce/features/order/domin/entity/order_entity.dart';
 import 'package:e_commerce/features/order/domin/use_case/create_order_use_case.dart';
 import 'package:e_commerce/features/order/domin/use_case/get_order_use_case.dart';
 import 'package:e_commerce/features/order/presenation/view/widgets/order_view_body.dart';
@@ -12,7 +13,10 @@ class OrderCubit extends Cubit<OrderState> {
   OrderCubit({required this.createOrderUseCase, required this.getOrdersUseCase})
     : super(OrderInitial());
 
-  Future<void> createOrder({
+  /// Returns the created order on success, or null on failure
+  /// (OrderError is still emitted either way, so the BlocListener
+  /// keeps working for the cash-on-delivery flow).
+  Future<OrderEntity?> createOrder({
     required List<Map<String, dynamic>> products,
     required double totalPrice,
     required Map<String, dynamic> shippingAddress,
@@ -27,12 +31,14 @@ class OrderCubit extends Cubit<OrderState> {
       paymentMethod: paymentMethod,
     );
 
-    result.fold(
+    return result.fold(
       (failure) {
         emit(OrderError(failure.message));
+        return null;
       },
       (order) {
         emit(OrderCreated(order));
+        return order;
       },
     );
   }
