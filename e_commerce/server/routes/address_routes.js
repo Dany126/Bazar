@@ -11,7 +11,7 @@ import { requireAuth } from "../middleware/requireAuth.js";
 
 export const addressRouter = express.Router();
 
-// addressRouter.use(requireAuth);
+addressRouter.use(requireAuth);
 
 addressRouter.route("/").post(createAddress).get(getAllAddresses);
 

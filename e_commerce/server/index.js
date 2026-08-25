@@ -17,6 +17,7 @@ import { variantRouter } from "./routes/product_variants_routes.js";
 import { cartRouter } from "./routes/cart_routes.js";
 import { addressRouter } from "./routes/address_routes.js";
 import { wishlistRouter } from "./routes/wishlist_routes.js";
+import { paymentRouter } from "./routes/payment_routes.js";
 
 const app = express();
 
@@ -50,6 +51,7 @@ app.use("/api/variant", variantRouter);
 app.use("/api/cart", cartRouter);
 app.use("/api/address", addressRouter);
 app.use("/api/wishlist", wishlistRouter);
+app.use("/api/payments", paymentRouter);
 
 app.all("*not", (req, res) => {
   return res.status(404).json({

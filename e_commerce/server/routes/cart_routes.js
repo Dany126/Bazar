@@ -11,7 +11,7 @@ import { checkID } from "../middleware/checkID.js";
 
 export const cartRouter = express.Router({ mergeParams: true });
 
-// cartRouter.use(requireAuth);
+cartRouter.use(requireAuth);
 
 cartRouter.route("/").post(checkStock, createCart).get(getAllCarts);
 

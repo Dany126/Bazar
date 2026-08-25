@@ -60,6 +60,31 @@ export const getAllCategories = async (req, res) => {
   }
 };
 
+export const updateCategory = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const updatedCategory = await Category.findByIdAndUpdate(id, req.body, {
+      returnDocument: "after",
+    });
+    if (!updatedCategory) {
+      return res.status(400).json({
+        status: "Failed",
+        message: "Something went wrong while updating category!",
+      });
+    }
+    return res.status(200).json({
+      status: "Success",
+      updatedCategory,
+    });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({
+      status: "Failed",
+      message: "Internal Server Error",
+    });
+  }
+};
+
 export const deleteCategory = async (req, res) => {
   try {
     const { id } = req.params;

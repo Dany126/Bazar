@@ -25,7 +25,7 @@ userRouter.post("/logout", logoutHandler);
 userRouter.post("/forget-password", forgetPassword);
 userRouter.post("/reset-password", resetPassword);
 
-// userRouter.use(requireAuth);
+userRouter.use(requireAuth);
 
 userRouter.use("/:user/order", orderRouter);
 userRouter.use("/:user/cart", cartRouter);
