@@ -12,6 +12,8 @@ import {
 export const createOrder = async (req, res) => {
   try {
     const { products } = req.body;
+    const userId = req.user.id;
+    console.log(userId);
     if (!products || products.length <= 0) {
       return res.status(400).json({
         status: "Failed",
@@ -36,6 +38,7 @@ export const createOrder = async (req, res) => {
     }
 
     const order = await Order.create({
+      user: userId,
       ...req.body,
       totalPrice,
     });
@@ -46,7 +49,7 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    const user = await User.findById(req.body.user);
+    const user = await User.findById(userId);
     console.log("user", user);
     console.log("token", user.fcm_token);
     await createNotification({
