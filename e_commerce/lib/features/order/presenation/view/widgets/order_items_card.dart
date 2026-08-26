@@ -1,3 +1,5 @@
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:e_commerce/core/helper_function/fix_image_utl.dart';
 import 'package:e_commerce/features/order/domin/entity/order_entity.dart';
 import 'package:flutter/material.dart';
 
@@ -38,14 +40,16 @@ class OrderItemsCard extends StatelessWidget {
                         child: ClipRRect(
                           borderRadius: BorderRadius.circular(12),
                           child: product.thumbnailUrl.isNotEmpty
-                              ? Image.network(
-                                  product.thumbnailUrl,
-                                  fit: BoxFit.cover,
-                                  errorBuilder: (_, _, _) {
-                                    return const Icon(
-                                      Icons.image_not_supported_outlined,
-                                    );
-                                  },
+                              ? CachedNetworkImage(
+                                  imageUrl: fixImageUrl(product.thumbnailUrl),
+                                  fit: BoxFit.fitHeight,
+                                  errorWidget: (context, url, error) =>
+                                      const Icon(
+                                        Icons.image_not_supported_outlined,
+                                      ),
+                                  placeholder: (context, url) => const Center(
+                                    child: CircularProgressIndicator(),
+                                  ),
                                 )
                               : const Icon(Icons.image_not_supported_outlined),
                         ),

@@ -14,8 +14,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class GetProductsCubit extends Cubit<GetProductsState> {
-  static final favoriteStates = ValueNotifier<Map<String, bool>>({});
-
   GetProductsCubit({
     required this.getFavoriteProductsUseCase,
     required this.getAllProductsUseCase,
@@ -32,74 +30,113 @@ class GetProductsCubit extends Cubit<GetProductsState> {
   final GetFavouriteProductsUseCase getFavoriteProductsUseCase;
   final GetNewtestProductUseCase getNewestProductsUseCase;
 
+  /// Single source of truth for favourite products.
+  ///
+  /// key   = product id
+  /// value = true if product is favourite
+  static final ValueNotifier<Map<String, bool>> favoriteProductIds =
+      ValueNotifier<Map<String, bool>>({});
+
+  // ============================================================
+  // LOAD FAVOURITES
+  // ============================================================
+
+  Future<Either<Failure, List<ProductEntity>>> loadFavouriteIds() async {
+    try {
+      final result = await getFavoriteProductsUseCase.call(
+        page: 1,
+        limit: 1000,
+      );
+
+      result.fold(
+        (failure) {
+          log('Failed to load favourites: ${failure.toString()}');
+        },
+        (products) {
+          final Map<String, bool> favourites = {};
+
+          for (final product in products) {
+            favourites[product.id] = true;
+          }
+
+          favoriteProductIds.value = favourites;
+
+          log(
+            'Favourite IDs loaded: '
+            '${favoriteProductIds.value.keys.toList()}',
+          );
+        },
+      );
+
+      return result;
+    } catch (e) {
+      log('loadFavouriteIds error: $e');
+
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  // ============================================================
+  // FETCH ALL PRODUCTS
+  // ============================================================
+
   Future<Either<Failure, List<ProductEntity>>> fetchAllProducts({
     required int page,
     required int limit,
   }) async {
     emit(GetProductsLoading());
+
     try {
+      // IMPORTANT:
+      // Load favourite IDs BEFORE loading Home products.
+      await loadFavouriteIds();
+
       final result = await getAllProductsUseCase.call(page: page, limit: limit);
-      result.fold(
-        (failure) => emit(GetProductsFailure(message: failure.toString())),
-        (products) => emit(GetProductsSuccess(products: products)),
-      );
-      return result;
-    } catch (e) {
-      emit(GetProductsFailure(message: e.toString()));
-      return Left(ServerFailure(message: e.toString()));
-    }
-  }
 
-  Future<Either<Failure, List<ProductEntity>>> fetchBestSellingProducts({
-    required int page,
-    required int limit,
-  }) async {
-    emit(GetProductsLoading());
-    try {
-      final result = await getBestSellingProductsUseCase.call(
-        page: page,
-        limit: limit,
-      );
       result.fold(
-        (failure) => emit(GetProductsFailure(message: failure.toString())),
-        (products) => emit(GetProductsSuccess(products: products)),
+        (failure) {
+          emit(GetProductsFailure(message: failure.toString()));
+        },
+        (products) {
+          final updatedProducts = _applyFavouriteState(products);
+
+          emit(GetProductsSuccess(products: updatedProducts));
+        },
       );
 
       return result;
     } catch (e) {
       emit(GetProductsFailure(message: e.toString()));
+
       return Left(ServerFailure(message: e.toString()));
     }
   }
 
-  Future<Either<Failure, List<ProductEntity>>> fetchFavoriteProducts({
-    required int page,
-    required int limit,
-  }) async {
-    emit(GetProductsLoading());
-    try {
-      final result = await getFavoriteProductsUseCase.call(
-        page: page,
-        limit: limit,
+  // ============================================================
+  // APPLY FAVOURITE STATE
+  // ============================================================
+
+  List<ProductEntity> _applyFavouriteState(List<ProductEntity> products) {
+    return products.map((product) {
+      return ProductEntity(
+        id: product.id,
+        name: product.name,
+        thumbnailUrl: product.thumbnailUrl,
+        category: product.category,
+        price: product.price,
+        rating: product.rating,
+        stock: product.stock,
+        soldCount: product.soldCount,
+        ratingsQuantity: product.ratingsQuantity,
+        isFavorite: favoriteProductIds.value[product.id] ?? false,
       );
-      result.fold(
-        (failure) => emit(GetProductsFailure(message: failure.toString())),
-        (products) => emit(GetProductsSuccess(products: products)),
-      );
-      log("result");
-      log(result.toString());
-      return result;
-    } catch (e) {
-      log(e.toString());
-      emit(GetProductsFailure(message: e.toString()));
-      return Left(ServerFailure(message: e.toString()));
-    }
+    }).toList();
   }
 
-  /// Toggles favourite status. On success, updates the currently held
-  /// list in place — removing the item outright when `isFavourite` is
-  /// false (the favorites screen listens for exactly this), or just
-  /// flipping the flag otherwise. No refetch, no GetProductsLoading.
+  // ============================================================
+  // TOGGLE FAVOURITE
+  // ============================================================
+
   Future<Either<Failure, Unit>> changeToIsFavourite({
     required String productId,
     required bool isFavourite,
@@ -109,80 +146,151 @@ class GetProductsCubit extends Cubit<GetProductsState> {
         productId: productId,
         isFavourite: isFavourite,
       );
-      result.fold(
-        (failure) => emit(GetProductsFailure(message: failure.toString())),
+
+      return result.fold(
+        (failure) {
+          emit(GetProductsFailure(message: failure.toString()));
+
+          return Left(failure);
+        },
         (_) {
-          favoriteStates.value = {
-            ...favoriteStates.value,
-            productId: isFavourite,
-          };
+          // --------------------------------------------------
+          // UPDATE GLOBAL FAVOURITE STATE
+          // --------------------------------------------------
 
-          final currentProducts = state is GetProductsSuccess
-              ? (state as GetProductsSuccess).products
-              : const <ProductEntity>[];
+          final updatedMap = Map<String, bool>.from(favoriteProductIds.value);
 
-          final updatedProducts = !isFavourite
-              ? currentProducts.where((p) => p.id != productId).toList()
-              : currentProducts
-                    .map(
-                      (p) => p.id == productId
-                          ? ProductEntity(
-                              id: p.id,
-                              name: p.name,
+          if (isFavourite) {
+            updatedMap[productId] = true;
+          } else {
+            updatedMap.remove(productId);
+          }
 
-                              thumbnailUrl: p.thumbnailUrl,
+          favoriteProductIds.value = updatedMap;
 
-                              category: p.category,
-
-                              price: p.price,
-
-                              rating: p.rating,
-                              stock: p.stock,
-                              soldCount: p.soldCount,
-                              ratingsQuantity: p.ratingsQuantity,
-                              isFavorite: isFavourite,
-                            )
-                          : p,
-                    )
-                    .toList();
-
-          emit(
-            ProductFavouriteChanged(
-              products: updatedProducts,
-              productId: productId,
-              isFavourite: isFavourite,
-            ),
+          log(
+            'Favourite changed: '
+            '$productId -> $isFavourite',
           );
+
+          // --------------------------------------------------
+          // UPDATE CURRENT PRODUCTS
+          // --------------------------------------------------
+
+          if (state is GetProductsSuccess) {
+            final currentProducts = (state as GetProductsSuccess).products;
+
+            final updatedProducts = currentProducts.map((product) {
+              if (product.id != productId) {
+                return product;
+              }
+
+              return ProductEntity(
+                id: product.id,
+                name: product.name,
+                thumbnailUrl: product.thumbnailUrl,
+                category: product.category,
+                price: product.price,
+                rating: product.rating,
+                stock: product.stock,
+                soldCount: product.soldCount,
+                ratingsQuantity: product.ratingsQuantity,
+                isFavorite: isFavourite,
+              );
+            }).toList();
+
+            emit(
+              ProductFavouriteChanged(
+                products: updatedProducts,
+                productId: productId,
+                isFavourite: isFavourite,
+              ),
+            );
+          }
+
+          return const Right(unit);
         },
       );
-      return result;
     } catch (e) {
       emit(GetProductsFailure(message: e.toString()));
+
       return Left(ServerFailure(message: e.toString()));
     }
   }
+
+  // ============================================================
+  // BEST SELLING
+  // ============================================================
+
+  Future<Either<Failure, List<ProductEntity>>> fetchBestSellingProducts({
+    required int page,
+    required int limit,
+  }) async {
+    emit(GetProductsLoading());
+
+    try {
+      await loadFavouriteIds();
+
+      final result = await getBestSellingProductsUseCase.call(
+        page: page,
+        limit: limit,
+      );
+
+      result.fold(
+        (failure) {
+          emit(GetProductsFailure(message: failure.toString()));
+        },
+        (products) {
+          emit(GetProductsSuccess(products: _applyFavouriteState(products)));
+        },
+      );
+
+      return result;
+    } catch (e) {
+      emit(GetProductsFailure(message: e.toString()));
+
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  // ============================================================
+  // NEW PRODUCTS
+  // ============================================================
 
   Future<Either<Failure, List<ProductEntity>>> fetchNewProducts({
     required int page,
     required int limit,
   }) async {
     emit(GetProductsLoading());
+
     try {
+      await loadFavouriteIds();
+
       final result = await getNewestProductsUseCase.call(
         page: page,
         limit: limit,
       );
+
       result.fold(
-        (failure) => emit(GetProductsFailure(message: failure.toString())),
-        (products) => emit(GetProductsSuccess(products: products)),
+        (failure) {
+          emit(GetProductsFailure(message: failure.toString()));
+        },
+        (products) {
+          emit(GetProductsSuccess(products: _applyFavouriteState(products)));
+        },
       );
 
       return result;
     } catch (e) {
       emit(GetProductsFailure(message: e.toString()));
+
       return Left(ServerFailure(message: e.toString()));
     }
   }
+
+  // ============================================================
+  // CATEGORY PRODUCTS
+  // ============================================================
 
   Future<Either<Failure, List<ProductEntity>>> fetchAllProductsByCategories({
     required int page,
@@ -190,19 +298,88 @@ class GetProductsCubit extends Cubit<GetProductsState> {
     required String categoryId,
   }) async {
     emit(GetProductsLoading());
+
     try {
+      await loadFavouriteIds();
+
       final result = await getAllProductsByCategoriesUseCase.call(
         page: page,
         limit: limit,
         categoryId: categoryId,
       );
+
       result.fold(
-        (failure) => emit(GetProductsFailure(message: failure.toString())),
-        (products) => emit(GetProductsSuccess(products: products)),
+        (failure) {
+          emit(GetProductsFailure(message: failure.toString()));
+        },
+        (products) {
+          emit(GetProductsSuccess(products: _applyFavouriteState(products)));
+        },
       );
+
       return result;
     } catch (e) {
       emit(GetProductsFailure(message: e.toString()));
+
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  // ============================================================
+  // FAVOURITE PRODUCTS
+  // ============================================================
+
+  Future<Either<Failure, List<ProductEntity>>> fetchFavoriteProducts({
+    required int page,
+    required int limit,
+  }) async {
+    emit(GetProductsLoading());
+
+    try {
+      final result = await getFavoriteProductsUseCase.call(
+        page: page,
+        limit: limit,
+      );
+
+      result.fold(
+        (failure) {
+          emit(GetProductsFailure(message: failure.toString()));
+        },
+        (products) {
+          // Make sure global state is updated.
+          final updatedMap = Map<String, bool>.from(favoriteProductIds.value);
+
+          for (final product in products) {
+            updatedMap[product.id] = true;
+          }
+
+          favoriteProductIds.value = updatedMap;
+
+          emit(
+            GetProductsSuccess(
+              products: products.map((product) {
+                return ProductEntity(
+                  id: product.id,
+                  name: product.name,
+                  thumbnailUrl: product.thumbnailUrl,
+                  category: product.category,
+                  price: product.price,
+                  rating: product.rating,
+                  stock: product.stock,
+                  soldCount: product.soldCount,
+                  ratingsQuantity: product.ratingsQuantity,
+                  isFavorite: true,
+                );
+              }).toList(),
+            ),
+          );
+        },
+      );
+
+      return result;
+    } catch (e) {
+      emit(GetProductsFailure(message: e.toString()));
+
       return Left(ServerFailure(message: e.toString()));
     }
   }

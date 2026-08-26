@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:e_commerce/features/address/presentation/views/map_view.dart';
 import 'package:e_commerce/features/cart/domain/entity/cart_entity.dart';
 import 'package:e_commerce/core/widgets/custom_app_bar.dart';
+import 'package:e_commerce/features/cart/presentation/cubit/cart_cubit.dart';
 import 'package:e_commerce/features/cart/presentation/view/widgets/cart_summary.dart';
 import 'package:e_commerce/features/checkout/presentation/cubit/checkout_cubit.dart';
 import 'package:e_commerce/features/checkout/presentation/cubit/checkout_state.dart';
@@ -25,6 +26,8 @@ class CheckoutViewBody extends StatelessWidget {
     return BlocListener<OrderCubit, OrderState>(
       listener: (context, state) {
         if (state is OrderCreated) {
+          context.read<CartCubit>().removeAllFromCart();
+
           showDialog<void>(
             context: context,
             barrierDismissible: false,

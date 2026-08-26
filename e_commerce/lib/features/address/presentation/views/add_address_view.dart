@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'package:e_commerce/core/widgets/custom_app_bar.dart';
 import 'package:e_commerce/features/address/presentation/model_view/cubit/address_cubit.dart';
 import 'package:e_commerce/features/address/presentation/model_view/cubit/address_state.dart';
+import 'package:e_commerce/features/address/presentation/views/address_view.dart';
 import 'package:e_commerce/features/address/presentation/views/widgets/add_address_view_body.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -19,7 +20,7 @@ class AddAddressView extends StatelessWidget {
       body: BlocListener<AddressCubit, AddressState>(
         listener: (context, state) {
           if (state is AddressLoaded) {
-            Navigator.of(context).pop(true);
+            Navigator.of(context).pushReplacementNamed(AddressView.routeName);
           }
 
           if (state is AddressError) {

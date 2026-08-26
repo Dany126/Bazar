@@ -1,6 +1,7 @@
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
 import 'package:e_commerce/core/utils/assets.dart';
+import 'package:e_commerce/main.dart';
 import 'package:e_commerce/features/auth/presentation/view/sign_in_view.dart';
 import 'package:e_commerce/features/auth/presentation/view_model/sign_out/cubit/sign_out_cubit.dart';
 import 'package:e_commerce/features/profile/presentation/view/widgets/profile_list_view.dart';
@@ -75,6 +76,27 @@ class ProfileViewBody extends StatelessWidget {
               const SizedBox(height: 20),
 
               ProfileListView(),
+
+              const SizedBox(height: 12),
+
+              ListTile(
+                tileColor: Theme.of(context).colorScheme.surface,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                leading: Icon(
+                  CustomerThemeScope.of(context).themeMode == ThemeMode.dark
+                      ? Icons.dark_mode_outlined
+                      : Icons.light_mode_outlined,
+                ),
+                title: const Text('Dark mood'),
+                trailing: Switch(
+                  value:
+                      CustomerThemeScope.of(context).themeMode ==
+                      ThemeMode.dark,
+                  onChanged: (_) => CustomerThemeScope.of(context).onToggle(),
+                ),
+              ),
 
               const SizedBox(height: 30),
 

@@ -38,6 +38,7 @@ class OrderCubit extends Cubit<OrderState> {
       },
       (order) {
         emit(OrderCreated(order));
+        
         return order;
       },
     );

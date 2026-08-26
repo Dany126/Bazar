@@ -18,11 +18,11 @@ class OrderDetailView extends StatelessWidget {
 
   List<TimelineStepDataModel> get _steps {
     const statusOrder = [
-      'pending',
+      'placed',
       'confirmed',
-      'processing',
       'shipped',
-      'delivered',
+      'delivered'
+          'cancelled',
     ];
 
     int currentIndex = statusOrder.indexOf(order.orderStatus);
@@ -82,7 +82,6 @@ class OrderDetailView extends StatelessWidget {
               ),
             ),
           ),
-          
         ),
       ),
       body: SafeArea(

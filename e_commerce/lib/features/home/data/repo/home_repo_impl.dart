@@ -17,11 +17,7 @@ class HomeRepositoryImpl implements HomeRepo {
 
   @override
   Future<Either<Failure, List<CategoryEntity>>> getAllCategories() async {
-    final result = await remoteDataSource.getAllCategories();
-    return result.fold(
-      (failure) => Left(failure),
-      (categories) => Right(categories),
-    );
+    return remoteDataSource.getAllCategories();
   }
 
   @override
@@ -29,14 +25,7 @@ class HomeRepositoryImpl implements HomeRepo {
     required int page,
     required int limit,
   }) async {
-    final result = await remoteDataSource.getAllProducts(
-      page: page,
-      limit: limit,
-    );
-    return result.fold(
-      (failure) => Left(failure),
-      (products) => Right(products),
-    );
+    return remoteDataSource.getAllProducts(page: page, limit: limit);
   }
 
   @override
@@ -44,14 +33,12 @@ class HomeRepositoryImpl implements HomeRepo {
     required int page,
     required int limit,
   }) async {
-    final result = await remoteDataSource.getFavoriteProducts(
-      page: page,
-      limit: limit,
-    );
-    return result.fold(
-      (failure) => Left(failure),
-      (products) => Right(products),
-    );
+    return remoteDataSource.getFavoriteProducts(page: page, limit: limit);
+  }
+
+  @override
+  Future<Either<Failure, Set<String>>> getFavoriteProductIds() async {
+    return remoteDataSource.getFavoriteProductIds();
   }
 
   @override
@@ -59,14 +46,7 @@ class HomeRepositoryImpl implements HomeRepo {
     required int page,
     required int limit,
   }) async {
-    final result = await remoteDataSource.getBestSellingProducts(
-      page: page,
-      limit: limit,
-    );
-    return result.fold(
-      (failure) => Left(failure),
-      (products) => Right(products),
-    );
+    return remoteDataSource.getBestSellingProducts(page: page, limit: limit);
   }
 
   @override
@@ -74,14 +54,7 @@ class HomeRepositoryImpl implements HomeRepo {
     required int page,
     required int limit,
   }) async {
-    final result = await remoteDataSource.getNewestProducts(
-      page: page,
-      limit: limit,
-    );
-    return result.fold(
-      (failure) => Left(failure),
-      (products) => Right(products),
-    );
+    return remoteDataSource.getNewestProducts(page: page, limit: limit);
   }
 
   @override
@@ -90,14 +63,10 @@ class HomeRepositoryImpl implements HomeRepo {
     required int page,
     required int limit,
   }) async {
-    final result = await remoteDataSource.getProductsByCategory(
+    return remoteDataSource.getProductsByCategory(
       category: category,
       page: page,
       limit: limit,
-    );
-    return result.fold(
-      (failure) => Left(failure),
-      (products) => Right(products),
     );
   }
 
@@ -107,15 +76,7 @@ class HomeRepositoryImpl implements HomeRepo {
     required int page,
     required int limit,
   }) async {
-    final result = await remoteDataSource.search(
-      query: query,
-      page: page,
-      limit: limit,
-    );
-    return result.fold(
-      (failure) => Left(failure),
-      (products) => Right(products),
-    );
+    return remoteDataSource.search(query: query, page: page, limit: limit);
   }
 
   @override
@@ -123,10 +84,9 @@ class HomeRepositoryImpl implements HomeRepo {
     required String productId,
     required bool isFavourite,
   }) async {
-    final result = await remoteDataSource.ChangeToIsFavourite(
+    return remoteDataSource.changeToIsFavourite(
       productId: productId,
       isFavourite: isFavourite,
     );
-    return result.fold((failure) => Left(failure), (_) => Right(unit));
   }
 }

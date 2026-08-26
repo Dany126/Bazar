@@ -18,7 +18,7 @@ abstract class HomeRepo {
     required int page,
     required int limit,
   });
-
+  Future<Either<Failure, Set<String>>> getFavoriteProductIds();
   Future<Either<Failure, List<ProductEntity>>> getProductsByCategory({
     required String category,
     required int page,

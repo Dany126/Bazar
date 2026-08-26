@@ -1,4 +1,3 @@
-// lib/features/product_details/data/data_source/product_details_remote_data_source_impl.dart
 import 'dart:developer';
 
 import 'package:dartz/dartz.dart';
@@ -19,32 +18,131 @@ class ProductDetailsRemoteDataSourceImpl
   Future<Either<Failure, ProductDetailsModel>> getProductDetails({
     required String productId,
   }) async {
-    final result = await apiService.get('$kBaseUrl/product/$productId/variant');
+    try {
+      // ---------------------------------------------------------
+      // 1. Get product details
+      // ---------------------------------------------------------
 
-    log(result.toString());
+      final result = await apiService.get(
+        '$kBaseUrl/product/$productId/variant',
+      );
 
-    return result.fold((failure) => Left(failure), (response) {
-      try {
-        final variants = response['variants'] as List<dynamic>? ?? [];
+      log('PRODUCT DETAILS RESULT: $result');
 
-        if (variants.isEmpty) {
-          return Left(ServerFailure(message: 'No product variants found'));
-        }
+      return await result.fold(
+        (failure) async {
+          return Left(failure);
+        },
+        (response) async {
+          try {
+            final variants = response['variants'] as List<dynamic>? ?? [];
 
-        final firstVariant = variants.first as Map<String, dynamic>;
+            if (variants.isEmpty) {
+              return Left(ServerFailure(message: 'No product variants found'));
+            }
 
-        final product = firstVariant['product'] as Map<String, dynamic>;
+            final firstVariant = variants.first as Map<String, dynamic>;
 
-        return Right(
-          ProductDetailsModel.fromVariantsJson(
-            product: product,
-            variantsJson: variants,
-          ),
-        );
-      } catch (e) {
-        return Left(ServerFailure(message: e.toString()));
-      }
-    });
+            final product = firstVariant['product'] as Map<String, dynamic>;
+
+            // ---------------------------------------------------------
+            // 2. Create ProductDetailsModel
+            // ---------------------------------------------------------
+
+            final productDetails = ProductDetailsModel.fromVariantsJson(
+              product: product,
+              variantsJson: variants,
+            );
+
+            // ---------------------------------------------------------
+            // 3. Check wishlist
+            // ---------------------------------------------------------
+
+            final isFavorite = await _isProductFavorite(productId);
+
+            // ---------------------------------------------------------
+            // 4. Set favorite status
+            // ---------------------------------------------------------
+
+            productDetails.isFavorite = isFavorite;
+
+            log(
+              'PRODUCT ID: $productId | '
+              'IS FAVORITE: $isFavorite',
+            );
+
+            return Right(productDetails);
+          } catch (e) {
+            log('PRODUCT DETAILS PARSE ERROR: $e');
+
+            return Left(ServerFailure(message: e.toString()));
+          }
+        },
+      );
+    } catch (e) {
+      log('PRODUCT DETAILS ERROR: $e');
+
+      return Left(ServerFailure(message: e.toString()));
+    }
+  }
+
+  // =============================================================
+  // Check if product exists in user's wishlist
+  // =============================================================
+
+  Future<bool> _isProductFavorite(String productId) async {
+    try {
+      final result = await apiService.get(
+        '$kBaseUrl/wishlist',
+        queryParameters: {'page': 1, 'limit': 100},
+      );
+
+      return result.fold(
+        (failure) {
+          log('WISHLIST CHECK FAILED: ${failure.toString()}');
+
+          return false;
+        },
+        (data) {
+          final wishlists = (data['wishList'] as List<dynamic>?) ?? [];
+
+          for (final wishlist in wishlists) {
+            if (wishlist is! Map<String, dynamic>) {
+              continue;
+            }
+
+            final product = wishlist['product'];
+
+            // product is an object
+            if (product is Map<String, dynamic>) {
+              final id = product['_id']?.toString();
+
+              if (id == productId) {
+                return true;
+              }
+            }
+
+            // product is a list
+            if (product is List) {
+              for (final item in product) {
+                if (item is Map<String, dynamic>) {
+                  final id = item['_id']?.toString();
+
+                  if (id == productId) {
+                    return true;
+                  }
+                }
+              }
+            }
+          }
+
+          return false;
+        },
+      );
+    } catch (e) {
+      log('WISHLIST CHECK ERROR: $e');
+      return false;
+    }
   }
 
   @override
@@ -63,6 +161,7 @@ class ProductDetailsRemoteDataSourceImpl
         final data = response is Map && response.containsKey('review')
             ? response['review'] as Map<String, dynamic>
             : response as Map<String, dynamic>;
+
         return Right(ReviewModel.fromJson(data));
       } catch (e) {
         return Left(ServerFailure(message: e.toString()));
