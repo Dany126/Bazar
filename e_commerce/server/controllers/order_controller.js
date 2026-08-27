@@ -1,19 +1,17 @@
 import { Order } from "../models/order_model.js";
-import { Product } from "../models/product_model.js";
 import { Variant } from "../models/product_variants_model.js";
 import { User } from "../models/user_model.js";
 import { apiFeatures } from "../utils/apiFeatures.js";
-import {
-  createNotification,
-  deleteNotification,
-  updateNotification,
-} from "./notification_controller.js";
+import { createNotification } from "./notification_controller.js";
 
 export const createOrder = async (req, res) => {
   try {
+    // get order specifications(product, variant, quantity, price) from body
     const { products } = req.body;
+
     const userId = req.user.id;
-    console.log(userId);
+
+    // check if no order specifications
     if (!products || products.length <= 0) {
       return res.status(400).json({
         status: "Failed",
@@ -21,14 +19,39 @@ export const createOrder = async (req, res) => {
       });
     }
     let totalPrice = 0;
+
+    // get all variants id in one array to prevent multiple DB queries
+    const variantIDs = products.map((item) => item.variant);
+
+    // get all variants from db
+    const variants = await Variant.find({
+      _id: { $in: variantIDs },
+    });
+
+    // put them in a map
+    const variantMap = new Map(variants.map((v) => [v._id.toString(), v]));
+
     for (const el of products) {
-      const variant = await Variant.findById(el.variant);
+      // get variant from map using the variant id
+      const variant = variantMap.get(el.variant.toString());
+
+      // check whether variant exists
       if (!variant) {
         return res.status(404).json({
-          message: "variant not found",
+          message: "No Variant Found With This ID!",
         });
       }
-      totalPrice += el.price * el.quantity;
+
+      // check whether variant exists for this product
+      if (!variant.product.equals(el.product)) {
+        return res.status(404).json({
+          status: "Failed",
+          message: "No Variant With This ID Found For This Product!",
+        });
+      }
+
+      // calculate total price and change the stock and soldCount
+      totalPrice += variant.price * el.quantity;
       await Variant.findByIdAndUpdate(el.variant, {
         $inc: {
           stock: -el.quantity,
@@ -37,11 +60,14 @@ export const createOrder = async (req, res) => {
       });
     }
 
+    // Place The Order
     const order = await Order.create({
       user: userId,
       ...req.body,
       totalPrice,
     });
+
+    // Check if there is a problem creating order
     if (!order) {
       return res.status(400).json({
         status: "Failed",
@@ -49,19 +75,9 @@ export const createOrder = async (req, res) => {
       });
     }
 
-    const user = await User.findById(userId);
-    console.log("user", user);
-    console.log("token", user.fcm_token);
-    await createNotification({
-      title: "Order Created Successfuly",
-      body: `Order Status is ${order.orderStatus}`,
-      fcm_token: user.fcm_token,
-      userId: user.id,
-      type: "ORDER",
-    });
-
     return res.status(200).json({
       status: "Success",
+      message: "Order Placed Successfully",
       order,
     });
   } catch (err) {

@@ -1,8 +1,6 @@
-import mongoose from "mongoose";
 import { Cart } from "../models/cart_model.js";
 import { Product } from "../models/product_model.js";
 import { Variant } from "../models/product_variants_model.js";
-import { User } from "../models/user_model.js";
 import { apiFeatures } from "../utils/apiFeatures.js";
 
 export const createCart = async (req, res) => {
@@ -221,6 +219,39 @@ export const deleteCartProduct = async (req, res) => {
   } catch (err) {
     console.log(err);
 
+    return res.status(500).json({
+      status: "Failed",
+      message: "Internal Server Error",
+    });
+  }
+};
+
+export const deleteAllCartProducts = async (req, res) => {
+  try {
+    const user = req.user.id;
+
+    // get cart of this user
+    const cart = await Cart.findOne({ user });
+
+    // check if the cart exists
+    if (!cart) {
+      return res.status(404).json({
+        status: "Failed",
+        message: "No Cart Found For This User!",
+      });
+    }
+
+    // empty the cart
+    cart.products = [];
+    await cart.save();
+
+    return res.status(200).json({
+      status: "Success",
+      message: "Cart Now Is Empty",
+      cart,
+    });
+  } catch (err) {
+    console.log(err);
     return res.status(500).json({
       status: "Failed",
       message: "Internal Server Error",

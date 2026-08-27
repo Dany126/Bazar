@@ -50,6 +50,11 @@ export const createPaymobIntention = async ({
             email: user.email,
           },
 
+          // This is what shows up as transaction.order.merchant_order_id
+          // in the webhook payload — must be your own Mongo order id.
+          special_reference: orderId,
+
+          // Keep this too as a fallback / for any custom metadata you want.
           extras: {
             order_id: orderId,
           },
