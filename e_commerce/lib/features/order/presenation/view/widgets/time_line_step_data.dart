@@ -2,8 +2,6 @@ import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
 import 'package:flutter/material.dart';
 
-
-
 // ---------------------------------------------------------
 // Timeline Tile
 // ---------------------------------------------------------

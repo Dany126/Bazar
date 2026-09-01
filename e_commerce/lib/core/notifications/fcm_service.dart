@@ -19,12 +19,24 @@ Future<void> firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   //
   // You can use this handler for saving data/logging if needed.
 
-  print('======================================');
-  print('BACKGROUND FCM MESSAGE');
-  print('Title: ${message.notification?.title}');
-  print('Body: ${message.notification?.body}');
-  print('Data: ${message.data}');
-  print('======================================');
+  if (kDebugMode) {
+    print('======================================');
+  }
+  if (kDebugMode) {
+    print('BACKGROUND FCM MESSAGE');
+  }
+  if (kDebugMode) {
+    print('Title: ${message.notification?.title}');
+  }
+  if (kDebugMode) {
+    print('Body: ${message.notification?.body}');
+  }
+  if (kDebugMode) {
+    print('Data: ${message.data}');
+  }
+  if (kDebugMode) {
+    print('======================================');
+  }
 }
 
 class FcmService {
@@ -44,13 +56,21 @@ class FcmService {
   // ============================================================
 
   Future<void> init() async {
-    print('======================================');
-    print('INITIALIZING FCM');
-    print('======================================');
+    if (kDebugMode) {
+      print('======================================');
+    }
+    if (kDebugMode) {
+      print('INITIALIZING FCM');
+    }
+    if (kDebugMode) {
+      print('======================================');
+    }
 
     // Skip FCM on web (push notifications not needed on web)
     if (kIsWeb) {
-      print('FCM SKIPPED ON WEB');
+      if (kDebugMode) {
+        print('FCM SKIPPED ON WEB');
+      }
       return;
     }
 
@@ -66,7 +86,9 @@ class FcmService {
       provisional: false,
     );
 
-    print('FCM AUTHORIZATION STATUS: ${permission.authorizationStatus}');
+    if (kDebugMode) {
+      print('FCM AUTHORIZATION STATUS: ${permission.authorizationStatus}');
+    }
 
     // ----------------------------------------------------------
     // ANDROID LOCAL NOTIFICATION INITIALIZATION
@@ -130,12 +152,24 @@ class FcmService {
     // ----------------------------------------------------------
 
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('======================================');
-      print('FOREGROUND FCM MESSAGE');
-      print('TITLE: ${message.notification?.title}');
-      print('BODY: ${message.notification?.body}');
-      print('DATA: ${message.data}');
-      print('======================================');
+      if (kDebugMode) {
+        print('======================================');
+      }
+      if (kDebugMode) {
+        print('FOREGROUND FCM MESSAGE');
+      }
+      if (kDebugMode) {
+        print('TITLE: ${message.notification?.title}');
+      }
+      if (kDebugMode) {
+        print('BODY: ${message.notification?.body}');
+      }
+      if (kDebugMode) {
+        print('DATA: ${message.data}');
+      }
+      if (kDebugMode) {
+        print('======================================');
+      }
 
       onForegroundMessage?.call(message.data);
 
@@ -147,10 +181,18 @@ class FcmService {
     // ----------------------------------------------------------
 
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
-      print('======================================');
-      print('NOTIFICATION CLICKED - BACKGROUND');
-      print('DATA: ${message.data}');
-      print('======================================');
+      if (kDebugMode) {
+        print('======================================');
+      }
+      if (kDebugMode) {
+        print('NOTIFICATION CLICKED - BACKGROUND');
+      }
+      if (kDebugMode) {
+        print('DATA: ${message.data}');
+      }
+      if (kDebugMode) {
+        print('======================================');
+      }
 
       _showLocalNotification(message);
 
@@ -164,10 +206,18 @@ class FcmService {
     final initialMessage = await _messaging.getInitialMessage();
 
     if (initialMessage != null) {
-      print('======================================');
-      print('NOTIFICATION CLICKED - TERMINATED');
-      print('DATA: ${initialMessage.data}');
-      print('======================================');
+      if (kDebugMode) {
+        print('======================================');
+      }
+      if (kDebugMode) {
+        print('NOTIFICATION CLICKED - TERMINATED');
+      }
+      if (kDebugMode) {
+        print('DATA: ${initialMessage.data}');
+      }
+      if (kDebugMode) {
+        print('======================================');
+      }
 
       onNotificationTap?.call(initialMessage.data);
     }
@@ -179,7 +229,9 @@ class FcmService {
     final token = await getToken();
 
     print('======================================');
-    print('FCM TOKEN');
+    if (kDebugMode) {
+      print('FCM TOKEN');
+    }
     print(token);
     print('======================================');
   }

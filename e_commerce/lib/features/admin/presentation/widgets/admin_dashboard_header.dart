@@ -15,84 +15,96 @@ class AdminDashboardHeader extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Dashboard',
+                'Dashboard Overview',
                 style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  color: AppColors.kTextColor,
-                ),
-              ),
-              const SizedBox(height: 6),
-              Text(
-                'Overview of your online store',
-                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                  color: AppColors.kSecondaryTextColor,
-                ),
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.kTextColor,
+                    ),
               ),
             ],
           ),
         ),
         if (isWide)
-          const Row(
+          Row(
             children: [
-              _HeaderAction(label: 'Export', icon: Icons.download_rounded),
-              SizedBox(width: 12),
-              _HeaderAction(
-                label: 'Add product',
-                icon: Icons.add_rounded,
-                filled: true,
+              // Search Bar
+              Container(
+                width: 250,
+                height: 44,
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade200),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.search_rounded, color: Colors.grey.shade400, size: 20),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Search...',
+                          hintStyle: TextStyle(color: Colors.grey.shade400, fontSize: 14),
+                          border: InputBorder.none,
+                          isDense: true,
+                          contentPadding: EdgeInsets.zero,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Notification Icon
+              Stack(
+                alignment: Alignment.topRight,
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.grey.shade200),
+                    ),
+                    child: const Icon(
+                      Icons.notifications_outlined,
+                      color: AppColors.kTextColor,
+                      size: 22,
+                    ),
+                  ),
+                  Positioned(
+                    top: 10,
+                    right: 12,
+                    child: Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(width: 16),
+              // User Avatar
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: AppColors.kPrimaryColor.withValues(alpha: 0.1),
+                ),
+                child: const Icon(
+                  Icons.person_rounded,
+                  color: AppColors.kPrimaryColor,
+                ),
               ),
             ],
           ),
       ],
-    );
-  }
-}
-
-class _HeaderAction extends StatelessWidget {
-  const _HeaderAction({
-    required this.label,
-    required this.icon,
-    this.filled = false,
-  });
-
-  final String label;
-  final IconData icon;
-  final bool filled;
-
-  @override
-  Widget build(BuildContext context) {
-    final isFilled = filled;
-
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: isFilled ? AppColors.kPrimaryColor : Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 6),
-          ),
-        ],
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            icon,
-            size: 18,
-            color: isFilled ? Colors.white : AppColors.kTextColor,
-          ),
-          const SizedBox(width: 8),
-          Text(
-            label,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: isFilled ? Colors.white : AppColors.kTextColor,
-            ),
-          ),
-        ],
-      ),
     );
   }
 }

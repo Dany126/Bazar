@@ -42,14 +42,19 @@ class AdminDashboardStats extends StatelessWidget {
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isWide = constraints.maxWidth >= 1200;
-        final isMedium = constraints.maxWidth >= 768;
-
+        final width = constraints.maxWidth;
         int crossAxisCount = 1;
-        if (isWide) {
+        double childAspectRatio = 2.4;
+
+        if (width >= 1100) {
           crossAxisCount = 4;
-        } else if (isMedium) {
+          childAspectRatio = width >= 1300 ? 1.45 : 1.25;
+        } else if (width >= 600) {
           crossAxisCount = 2;
+          childAspectRatio = width >= 800 ? 1.6 : 1.4;
+        } else {
+          crossAxisCount = 1;
+          childAspectRatio = width < 380 ? 2.0 : 2.5;
         }
 
         return GridView.count(
@@ -58,17 +63,17 @@ class AdminDashboardStats extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           mainAxisSpacing: 16,
           crossAxisSpacing: 16,
-          childAspectRatio: 1.2,
-          children: stats
-              .map(
-                (stat) => AdminDashboardStatCard(
-                  label: stat.label,
-                  value: stat.value,
-                  change: stat.change,
-                  color: stat.color,
-                ),
-              )
-              .toList(),
+          childAspectRatio: childAspectRatio,
+          children: List.generate(stats.length, (index) {
+            final stat = stats[index];
+            return AdminDashboardStatCard(
+              label: stat.label,
+              value: stat.value,
+              change: stat.change,
+              color: stat.color,
+              isPrimary: index == 0,
+            );
+          }),
         );
       },
     );
