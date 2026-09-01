@@ -2,6 +2,7 @@ import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/features/auth/domain/use_case/sign_in_usecase.dart';
 import 'package:e_commerce/features/auth/presentation/view_model/sign_in_cubit/sign_in_state.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'dart:developer';
 
 class SignInCubit extends Cubit<SignInState> {
   final SignInUsecase signInUsecase;
@@ -21,6 +22,7 @@ class SignInCubit extends Cubit<SignInState> {
           emit(SignInError(failure));
         },
         (user) {
+          log(user.role.toString());
           emit(SignInSuccess(user));
         },
       );

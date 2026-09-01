@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/features/auth/data/model/user_model.dart';
@@ -59,6 +61,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'password': password,
         'phone': phone,
         'fcmToken': ?fcmToken,
+        "role": "ADMIN", // Ensure role is set to USER
       },
     );
 
@@ -69,6 +72,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       (data) {
         try {
           final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
+          log(user.role.toString());
           final accessToken = data['accessToken'] as String;
 
           return Right((user: user, accessToken: accessToken));

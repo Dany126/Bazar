@@ -7,6 +7,7 @@ class UserEntity extends Equatable {
   final String phone;
   final String token;
   final String? imageUrl;
+  final String role;
 
   const UserEntity({
     required this.id,
@@ -14,9 +15,12 @@ class UserEntity extends Equatable {
     required this.email,
     required this.phone,
     required this.token,
+    required this.role,
     this.imageUrl,
   });
 
+  bool get isAdmin => role.toUpperCase() == 'ADMIN';
+
   @override
-  List<Object?> get props => [id, name, email, phone, token, imageUrl];
+  List<Object?> get props => [id, name, email, phone, token, imageUrl, role];
 }

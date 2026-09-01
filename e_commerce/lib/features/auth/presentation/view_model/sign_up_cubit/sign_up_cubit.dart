@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/features/auth/domain/entity/user_entity.dart';
@@ -27,6 +29,7 @@ class SignUpCubit extends Cubit<SignUpState> {
         emit(FailureState(failure));
       },
       (user) {
+        log(user.role.toString());
         emit(SuccessState(user));
       },
     );

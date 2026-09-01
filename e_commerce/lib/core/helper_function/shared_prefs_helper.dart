@@ -9,7 +9,12 @@ class SharedPrefsHelper {
     _prefs = await SharedPreferences.getInstance();
   }
 
-  static const String isLoggedInKey = "is_logged_in";
+  static const String isLoggedInKey = 'is_logged_in';
+  static const String userRoleKey = 'user_role';
+
+  // =========================
+  // LOGIN
+  // =========================
 
   static Future<void> setLoggedIn(bool value) async {
     await _prefs.setBool(isLoggedInKey, value);
@@ -19,7 +24,28 @@ class SharedPrefsHelper {
     return _prefs.getBool(isLoggedInKey) ?? false;
   }
 
+  // =========================
+  // ROLE
+  // =========================
+
+  static Future<void> setUserRole(String role) async {
+    await _prefs.setString(userRoleKey, role.trim().toUpperCase());
+  }
+
+  static String getUserRole() {
+    return _prefs.getString(userRoleKey) ?? 'USER';
+  }
+
+  static bool isAdmin() {
+    return getUserRole() == 'ADMIN';
+  }
+
+  // =========================
+  // LOGOUT
+  // =========================
+
   static Future<void> logout() async {
     await _prefs.remove(isLoggedInKey);
+    await _prefs.remove(userRoleKey);
   }
 }

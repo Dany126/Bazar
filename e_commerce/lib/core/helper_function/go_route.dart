@@ -3,6 +3,7 @@ import 'package:e_commerce/features/address/presentation/model_view/cubit/addres
 import 'package:e_commerce/features/address/presentation/views/add_address_view.dart';
 import 'package:e_commerce/features/address/presentation/views/address_view.dart';
 import 'package:e_commerce/features/address/presentation/views/map_view.dart';
+import 'package:e_commerce/features/admin/presentation/views/admin_dashboard_view.dart';
 import 'package:e_commerce/features/auth/presentation/view/reset_password_view.dart';
 import 'package:e_commerce/features/auth/presentation/view/sign_in_view.dart';
 import 'package:e_commerce/features/auth/presentation/view/signup_view.dart';
@@ -61,6 +62,10 @@ Route onGenerateRoute(RouteSettings settings) {
 
     case MainView.routeName:
       return MaterialPageRoute(builder: (context) => const MainView());
+    case AdminDashboardView.routeName:
+      return MaterialPageRoute(
+        builder: (context) => const AdminDashboardView(),
+      );
     case OrderView.routeName:
       return MaterialPageRoute(builder: (context) => const OrderView());
     case TopSelling.routeName:

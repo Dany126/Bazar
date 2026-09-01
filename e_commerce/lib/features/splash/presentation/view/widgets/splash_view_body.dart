@@ -83,12 +83,16 @@ class _SplashViewBodyState extends State<SplashViewBody>
 
     final loggedIn = SharedPrefsHelper.isLoggedIn();
 
-    if (context.mounted) {
-      if (loggedIn) {
-        Navigator.pushReplacementNamed(context, MainView.routeName);
-      } else {
-        Navigator.pushReplacementNamed(context, SignInView.routeName);
-      }
+    if (!context.mounted) return;
+
+    if (loggedIn) {
+      final targetRoute = SharedPrefsHelper.isAdmin()
+          ? 'admin_dashboard'
+          : MainView.routeName;
+
+      Navigator.pushReplacementNamed(context, targetRoute);
+    } else {
+      Navigator.pushReplacementNamed(context, SignInView.routeName);
     }
   }
 }

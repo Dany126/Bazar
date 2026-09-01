@@ -4,6 +4,7 @@ import 'package:e_commerce/features/cart/presentation/cubit/cart_cubit.dart';
 import 'package:e_commerce/features/splash/presentation/view/splash_view.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:hive_flutter/hive_flutter.dart';
@@ -39,13 +40,18 @@ Future<void> main() async {
   // COOKIE STORAGE
   // ==========================================================
 
-  final appDirectory = await getApplicationDocumentsDirectory();
+  late CookieJar cookieJar;
 
-  final cookieDirectory = '${appDirectory.path}/cookies';
-
-  debugPrint('COOKIE DIRECTORY: $cookieDirectory');
-
-  final cookieJar = PersistCookieJar(storage: FileStorage(cookieDirectory));
+  if (kIsWeb) {
+    // Web: Use in-memory cookie jar
+    cookieJar = CookieJar();
+  } else {
+    // Native: Use persistent cookie jar
+    final appDirectory = await getApplicationDocumentsDirectory();
+    final cookieDirectory = '${appDirectory.path}/cookies';
+    debugPrint('COOKIE DIRECTORY: $cookieDirectory');
+    cookieJar = PersistCookieJar(storage: FileStorage(cookieDirectory));
+  }
 
   // ==========================================================
   // GET IT
@@ -162,3 +168,4 @@ class CustomerThemeScope extends InheritedWidget {
     return themeMode != oldWidget.themeMode;
   }
 }
+// i need to make domain layer and data layer to make it real dashboard with out edit in backend i need integrate the  end point exist in server

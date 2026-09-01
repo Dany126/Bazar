@@ -30,6 +30,11 @@ import 'package:e_commerce/features/auth/domain/repo/auth_repo.dart';
 import 'package:e_commerce/features/auth/domain/use_case/log_out_use_case.dart';
 import 'package:e_commerce/features/auth/domain/use_case/sign_in_usecase.dart';
 import 'package:e_commerce/features/auth/domain/use_case/sign_up_usecase.dart';
+import 'package:e_commerce/features/admin/data/datasources/admin_dashboard_remote_data_source.dart';
+import 'package:e_commerce/features/admin/data/repositories/admin_dashboard_repository_impl.dart';
+import 'package:e_commerce/features/admin/domain/repositories/admin_dashboard_repository.dart';
+import 'package:e_commerce/features/admin/domain/usecases/get_admin_dashboard_data.dart';
+import 'package:e_commerce/features/admin/presentation/cubit/admin_dashboard_cubit.dart';
 import 'package:e_commerce/features/auth/presentation/view_model/sign_in_cubit/sign_in_cubit.dart';
 import 'package:e_commerce/features/auth/presentation/view_model/sign_out/cubit/sign_out_cubit.dart';
 import 'package:e_commerce/features/auth/presentation/view_model/sign_up_cubit/sign_up_cubit.dart';
@@ -111,7 +116,7 @@ import 'package:get_it/get_it.dart';
 
 final getIt = GetIt.instance;
 
-Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
+Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
   // ==========================================================
   // PREVENT DUPLICATE REGISTRATION
   // ==========================================================
@@ -124,7 +129,7 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
   // CORE
   // ==========================================================
 
-  getIt.registerLazySingleton<PersistCookieJar>(() => cookieJar);
+  getIt.registerLazySingleton<CookieJar>(() => cookieJar);
 
   getIt.registerLazySingleton<Connectivity>(() => Connectivity());
 
@@ -162,7 +167,7 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
   getIt.registerLazySingleton<ApiService>(
     () => ApiService(
       dio: getIt<Dio>(),
-      cookieJar: getIt<PersistCookieJar>(),
+      cookieJar: getIt<CookieJar>(),
       refreshTokenUrl: kRefreshTokenUrl,
     ),
   );
@@ -414,6 +419,30 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
   );
 
   // ==========================================================
+  // ADMIN DASHBOARD
+  // ==========================================================
+
+  getIt.registerLazySingleton<AdminDashboardRemoteDataSource>(
+    () => AdminDashboardRemoteDataSourceImpl(apiService: getIt<ApiService>()),
+  );
+
+  getIt.registerLazySingleton<AdminDashboardRepository>(
+    () => AdminDashboardRepositoryImpl(
+      remoteDataSource: getIt<AdminDashboardRemoteDataSource>(),
+    ),
+  );
+
+  getIt.registerLazySingleton<GetAdminDashboardDataUseCase>(
+    () => GetAdminDashboardDataUseCase(getIt<AdminDashboardRepository>()),
+  );
+
+  getIt.registerFactory<AdminDashboardCubit>(
+    () => AdminDashboardCubit(
+      getAdminDashboardDataUseCase: getIt<GetAdminDashboardDataUseCase>(),
+    ),
+  );
+
+  // ==========================================================
   // PRODUCT DETAILS DATA SOURCE
   // ==========================================================
 
@@ -590,7 +619,7 @@ Future<void> setupServiceLocator({required PersistCookieJar cookieJar}) async {
       removeCardUseCase: getIt<RemoveCardUseCase>(),
     ),
   );
- 
+
   // ==========================================================
   // CHECKOUT
   // ==========================================================

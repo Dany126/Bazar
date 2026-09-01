@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
 /// ============================================================
@@ -47,6 +48,12 @@ class FcmService {
     print('INITIALIZING FCM');
     print('======================================');
 
+    // Skip FCM on web (push notifications not needed on web)
+    if (kIsWeb) {
+      print('FCM SKIPPED ON WEB');
+      return;
+    }
+
     // ----------------------------------------------------------
     // REQUEST FIREBASE PERMISSION
     // ----------------------------------------------------------
@@ -89,7 +96,7 @@ class FcmService {
     // ANDROID 13+ NOTIFICATION PERMISSION
     // ----------------------------------------------------------
 
-    if (Platform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       final androidPlugin = _localNotifications
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin
@@ -102,7 +109,7 @@ class FcmService {
     // CREATE ANDROID NOTIFICATION CHANNEL
     // ----------------------------------------------------------
 
-    if (Platform.isAndroid) {
+    if (!kIsWeb && Platform.isAndroid) {
       final androidPlugin = _localNotifications
           .resolvePlatformSpecificImplementation<
             AndroidFlutterLocalNotificationsPlugin

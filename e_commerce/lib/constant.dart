@@ -1,18 +1,18 @@
+import 'package:flutter/foundation.dart';
 import 'package:e_commerce/features/home/domain/entity/category_entity.dart';
 import 'package:e_commerce/features/home/domain/entity/product_entity.dart';
 import 'package:e_commerce/features/order/domin/entity/order_entity.dart';
 import 'package:e_commerce/features/order/domin/entity/order_product_entity.dart';
 
-const String kBaseUrl = "http://10.0.2.2:5000/api";
+const String kBaseUrl = kIsWeb
+    ? "http://localhost:5000/api"
+    : "http://10.0.2.2:5000/api";
 const String kGetAllGategories = "$kBaseUrl/category";
 const String kGetAllProducts = "$kBaseUrl/product";
 const String kGetProductByCategory = "$kBaseUrl/category";
 const String kGetNewProductByCategory = "$kBaseUrl/product";
 const String kGetBestSellerProductByCategory = "$kBaseUrl/product";
 const String kRefreshTokenUrl = "$kBaseUrl/user/refresh";
-
-
-
 
 // // Categoty
 // POST /http://localhost:5000/api/category
@@ -333,3 +333,5 @@ final List<OrderEntity> kOrders = [
     orderStatus: 'pending',
   ),
 ];
+// ADMIN@gmail.com
+// Admin123!

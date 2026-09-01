@@ -2,6 +2,12 @@ import mongoose from "mongoose";
 
 const userSchema = new mongoose.Schema(
   {
+    role: {
+      type: String,
+      required: true,
+      enum: ["USER", "ADMIN"],
+      default: "USER",
+    },
     name: {
       type: String,
       required: true,
@@ -33,7 +39,7 @@ const userSchema = new mongoose.Schema(
     },
     fcm_token: {
       type: String,
-      required: true,
+      default: undefined,
     },
     wishList: [
       {

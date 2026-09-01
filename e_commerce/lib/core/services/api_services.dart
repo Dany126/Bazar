@@ -6,12 +6,13 @@ import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 
 import '../error/failure.dart';
 
 class ApiService {
   final Dio dio;
-  final PersistCookieJar cookieJar;
+  final CookieJar cookieJar;
   final String refreshTokenUrl;
 
   String? _accessToken;
@@ -30,10 +31,12 @@ class ApiService {
     required this.refreshTokenUrl,
   }) {
     // ======================================================
-    // COOKIE MANAGER
+    // COOKIE MANAGER (Native only)
     // ======================================================
 
-    dio.interceptors.add(CookieManager(cookieJar));
+    if (!kIsWeb) {
+      dio.interceptors.add(CookieManager(cookieJar));
+    }
 
     // ======================================================
     // AUTH INTERCEPTOR

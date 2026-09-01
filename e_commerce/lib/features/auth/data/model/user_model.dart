@@ -7,22 +7,25 @@ class UserModel extends UserEntity {
     required super.email,
     required super.phone,
     required super.token,
+    required super.role,
     super.imageUrl,
   });
 
   factory UserModel.fromMap(Map<String, dynamic> map) {
     return UserModel(
-      
       id: map['id'] ?? map['_id'] ?? '',
       token: map['token'] ?? map['accessToken'] ?? '',
       imageUrl: map['imageUrl'] ?? map['image'] ?? map['avatar'],
       name: map['name'] ?? '',
       email: map['email'] ?? '',
       phone: map['phone'] ?? '',
+      role: map['role'] ?? 'USER',
     );
   }
-  factory UserModel.fromJson(Map<String, dynamic> json) =>
-      UserModel.fromMap(json);
+
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel.fromMap(json);
+  }
 
   Map<String, dynamic> toMap() {
     return {
@@ -32,6 +35,7 @@ class UserModel extends UserEntity {
       'phone': phone,
       'token': token,
       'imageUrl': imageUrl,
+      'role': role,
     };
   }
 }
