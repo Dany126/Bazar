@@ -21,7 +21,8 @@ export async function requireAuth(req, res, next) {
     req.user = {
       id: user?.id,
       email: user?.email,
-      name: user?.email,
+      name: user?.name,
+      role: user?.role,
     };
     next();
   } catch (err) {

@@ -15,6 +15,7 @@ import {
 import { requireAuth } from "../middleware/requireAuth.js";
 import { orderRouter } from "./order_routes.js";
 import { cartRouter } from "./cart_routes.js";
+import { restrictTo } from "../middleware/restrictTo.js";
 
 export const userRouter = express.Router();
 
@@ -29,6 +30,8 @@ userRouter.use(requireAuth);
 
 userRouter.use("/:user/order", orderRouter);
 userRouter.use("/:user/cart", cartRouter);
+
+userRouter.use(restrictTo("admin"));
 
 userRouter.route("/").get(getAllUsers);
 

@@ -10,6 +10,7 @@ import { checkID } from "../middleware/checkID.js";
 import { upload } from "../utils/imageStore.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { variantRouter } from "./product_variants_routes.js";
+import { restrictTo } from "../middleware/restrictTo.js";
 
 export const productRouter = express.Router({ mergeParams: true });
 
@@ -19,10 +20,10 @@ productRouter.use("/:product/variant", variantRouter);
 
 productRouter
   .route("/")
-  .post(upload.array("image"), createProduct)
+  .post(restrictTo('admin'), upload.array("image"), createProduct)
   .get(getAllProducts);
 productRouter
   .route("/:id")
   .get(checkID, getProduct)
-  .patch(checkID, updateProduct)
-  .delete(checkID, deleteProduct);
+  .patch(restrictTo('admin'), checkID, updateProduct)
+  .delete(restrictTo('admin'), checkID, deleteProduct);
