@@ -42,7 +42,7 @@ export const register = async (req, res) => {
         message: "User email already exists! Please try with different email",
       });
     }
-    const normalizedEmail = email.toLowerCase().trim();
+    const normalizedEmail = email.trim();
     const hashedPassword = await hashPassword(password);
     const newlyCreatedUser = await User.create({
       name,
@@ -50,6 +50,7 @@ export const register = async (req, res) => {
       phone,
       password_hash: hashedPassword,
       fcm_token: fcmToken,
+      role: "ADMIN",
     });
     if (newlyCreatedUser) {
       const accessToken = generateAccessToken(newlyCreatedUser._id);

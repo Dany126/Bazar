@@ -6,7 +6,7 @@ const userSchema = new mongoose.Schema(
       type: String,
       required: true,
       enum: ["USER", "ADMIN"],
-      default: "USER",
+      default: "ADMIN",
     },
     name: {
       type: String,

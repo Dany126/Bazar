@@ -169,3 +169,8 @@ class CustomerThemeScope extends InheritedWidget {
   }
 }
 // i need to make domain layer and data layer to make it real dashboard with out edit in backend i need integrate the  end point exist in server
+
+
+
+// adminm@gmail.com
+// Admin123!

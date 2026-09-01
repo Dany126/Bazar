@@ -30,6 +30,14 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
       (data) {
         try {
           final user = UserModel.fromJson(data['user'] as Map<String, dynamic>);
+          print("------------------------------------------------------");
+          print("------------------------------------------------------");
+          print("------------------------------------------------------");
+          log(user.toString());
+          log(user.role.toString());
+          print("------------------------------------------------------");
+          print("------------------------------------------------------");
+          print("------------------------------------------------------");
 
           final accessToken = data['accessToken'] as String;
 
