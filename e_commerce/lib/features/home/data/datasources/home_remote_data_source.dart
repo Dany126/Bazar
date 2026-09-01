@@ -1,4 +1,4 @@
-import 'dart:developer';
+
 
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/constant.dart';
@@ -86,7 +86,6 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
 
     return response.fold(
       (failure) {
-        log('GET FAVORITE IDS ERROR: $failure');
         return Left(failure);
       },
       (data) {
@@ -123,8 +122,6 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
             }
           }
         }
-
-        log('FAVORITE IDS: $favoriteIds');
 
         return Right(favoriteIds);
       },
@@ -173,7 +170,6 @@ class HomeRemoteDataSourceImpl implements HomeRemoteDataSource {
 
     return response.fold(
       (failure) {
-        log('GET FAVORITES ERROR: $failure');
         return Left(failure);
       },
       (data) {

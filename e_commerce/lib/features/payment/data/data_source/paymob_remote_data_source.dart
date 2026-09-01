@@ -1,4 +1,4 @@
-import 'dart:developer';
+
 
 import 'package:e_commerce/core/services/api_services.dart';
 
@@ -9,7 +9,7 @@ class PaymobRemoteDataSource {
 
   Future<Map<String, dynamic>> createPayment({required String orderId}) async {
     final result = await apiService.post('/payments/orders/$orderId/pay');
-    log(result.toString());
+
 
     return result.fold(
       (failure) => throw Exception(failure.message),

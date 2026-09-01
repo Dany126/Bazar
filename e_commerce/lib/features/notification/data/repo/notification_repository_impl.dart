@@ -1,4 +1,5 @@
-import 'dart:developer';
+
+
 
 import 'package:dartz/dartz.dart';
 
@@ -29,7 +30,6 @@ class NotificationRepositoryImpl implements NotificationRepository {
     );
 
     return result.fold((failure) => Left(failure), (data) {
-      log('NOTIFICATION RESPONSE: $data');
 
       if (data is! Map) {
         return Left(ServerFailure(message: 'Invalid notification response'));
@@ -52,7 +52,6 @@ class NotificationRepositoryImpl implements NotificationRepository {
 
         return Right(notifications);
       } catch (e) {
-        log('Notification parsing error: $e');
 
         return Left(ServerFailure(message: 'Failed to parse notifications'));
       }
@@ -75,7 +74,6 @@ class NotificationRepositoryImpl implements NotificationRepository {
     );
 
     return result.fold((failure) => Left(failure), (data) {
-      log('NOTIFICATION RESPONSE: $data');
 
       if (data is! Map) {
         return Left(ServerFailure(message: 'Invalid notification response'));
@@ -98,7 +96,6 @@ class NotificationRepositoryImpl implements NotificationRepository {
 
         return Right(notifications);
       } catch (e) {
-        log('Notification parsing error: $e');
 
         return Left(ServerFailure(message: 'Failed to parse notifications'));
       }
@@ -121,7 +118,6 @@ class NotificationRepositoryImpl implements NotificationRepository {
     );
 
     return result.fold((failure) => Left(failure), (data) {
-      log('NOTIFICATION RESPONSE: $data');
 
       if (data is! Map) {
         return Left(ServerFailure(message: 'Invalid notification response'));
@@ -144,7 +140,6 @@ class NotificationRepositoryImpl implements NotificationRepository {
 
         return Right(notifications);
       } catch (e) {
-        log('Notification parsing error: $e');
 
         return Left(ServerFailure(message: 'Failed to parse notifications'));
       }
@@ -162,7 +157,6 @@ class NotificationRepositoryImpl implements NotificationRepository {
     );
 
     return result.fold((failure) => Left(failure), (data) {
-      log('NOTIFICATION RESPONSE: $data');
 
       if (data is! Map) {
         return Left(ServerFailure(message: 'Invalid notification response'));
@@ -185,7 +179,6 @@ class NotificationRepositoryImpl implements NotificationRepository {
 
         return Right(notifications);
       } catch (e) {
-        log('Notification parsing error: $e');
 
         return Left(ServerFailure(message: 'Failed to parse notifications'));
       }

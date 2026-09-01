@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/error/failure.dart';
@@ -26,8 +24,6 @@ class ProductDetailsRemoteDataSourceImpl
       final result = await apiService.get(
         '$kBaseUrl/product/$productId/variant',
       );
-
-      log('PRODUCT DETAILS RESULT: $result');
 
       return await result.fold(
         (failure) async {
@@ -66,22 +62,13 @@ class ProductDetailsRemoteDataSourceImpl
 
             productDetails.isFavorite = isFavorite;
 
-            log(
-              'PRODUCT ID: $productId | '
-              'IS FAVORITE: $isFavorite',
-            );
-
             return Right(productDetails);
           } catch (e) {
-            log('PRODUCT DETAILS PARSE ERROR: $e');
-
             return Left(ServerFailure(message: e.toString()));
           }
         },
       );
     } catch (e) {
-      log('PRODUCT DETAILS ERROR: $e');
-
       return Left(ServerFailure(message: e.toString()));
     }
   }
@@ -99,8 +86,6 @@ class ProductDetailsRemoteDataSourceImpl
 
       return result.fold(
         (failure) {
-          log('WISHLIST CHECK FAILED: ${failure.toString()}');
-
           return false;
         },
         (data) {
@@ -140,7 +125,6 @@ class ProductDetailsRemoteDataSourceImpl
         },
       );
     } catch (e) {
-      log('WISHLIST CHECK ERROR: $e');
       return false;
     }
   }

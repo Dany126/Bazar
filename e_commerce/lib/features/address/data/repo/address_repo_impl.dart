@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:e_commerce/core/error/failure.dart';
@@ -196,7 +194,6 @@ class AddressRepoImpl implements AddressRepo {
 
       return Right(saved);
     } on DioException catch (e) {
-      log(e.message.toString());
       return Left(
         ServerFailure(
           message: _dioFailureMessage(e, 'Could not save the address'),
@@ -204,7 +201,6 @@ class AddressRepoImpl implements AddressRepo {
         ),
       );
     } catch (e) {
-      log(e.toString());
       return Left(ServerFailure(message: 'Could not save the address'));
     }
   }
@@ -222,7 +218,6 @@ class AddressRepoImpl implements AddressRepo {
         ),
       );
     } catch (e) {
-      log(e.toString());
       return Left(ServerFailure(message: 'Could not load your addresses'));
     }
   }

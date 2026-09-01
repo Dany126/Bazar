@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/error/failure.dart';
@@ -30,7 +28,6 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
         'paymentStatus': 'pending',
       },
     );
-    log(result.toString());
 
     return result.fold((failure) => Left(failure), (response) {
       try {
@@ -58,14 +55,13 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
         queryParameters: {'orderStatus': orderStatus},
       );
     }
-    log(result.toString());
 
     return result.fold(
       (failure) {
         // Backend returns 400 + "No Orders Found" style message when the list is empty,
         // instead of 200 + []. Treat that as an empty list, not a real error.
         final message = failure.message.toLowerCase();
-        log(message);
+
         if (message.contains('no order') || message.contains('not found')) {
           return const Right(<OrderModel>[]);
         }
@@ -76,7 +72,6 @@ class OrderRemoteDataSourceImpl implements OrderRemoteDataSource {
           final List ordersJson = response is Map
               ? (response['orders'] ?? []) as List
               : response as List;
-          log(ordersJson.toString());
 
           final orders = ordersJson
               .map(

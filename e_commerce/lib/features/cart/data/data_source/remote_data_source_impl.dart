@@ -1,5 +1,4 @@
 // lib/features/cart/data/data_source/cart_remote_data_source_impl.dart
-import 'dart:developer';
 
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/constant.dart';
@@ -26,7 +25,6 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
   @override
   Future<Either<Failure, CartModel>> getCart() async {
     final result = await apiService.get('$kBaseUrl/cart/');
-    log(result.toString());
 
     return result.fold((failure) => Left(failure), _parse);
   }
@@ -45,7 +43,7 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
         ],
       },
     );
-    log(result.toString());
+
     return result.fold((failure) => Left(failure), _parse);
   }
 
@@ -55,9 +53,6 @@ class CartRemoteDataSourceImpl implements CartRemoteDataSource {
     required int quantity,
     required String variantId,
   }) async {
-    log(quantity.toString());
-    log(variantId);
-    log(itemId);
     final result = await apiService.patch(
       '$kBaseUrl/cart/',
       data: {'itemId': itemId, 'variant': variantId, 'quantity': quantity},
