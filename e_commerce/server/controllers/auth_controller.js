@@ -50,7 +50,6 @@ export const register = async (req, res) => {
       phone,
       password_hash: hashedPassword,
       fcm_token: fcmToken,
-      role: "ADMIN",
     });
     if (newlyCreatedUser) {
       const accessToken = generateAccessToken(newlyCreatedUser._id);

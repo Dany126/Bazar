@@ -109,7 +109,7 @@ export const deleteReview = async (req, res) => {
   try {
     const { id } = req.params;
     const review = await Review.findById(id);
-    const product = await Product.findById(review.Product);
+    const product = await Product.findById(review.product);
 
     if (!product) {
       return res.status(400).json({

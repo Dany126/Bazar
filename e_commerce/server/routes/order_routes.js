@@ -9,6 +9,7 @@ import {
 import { checkID } from "../middleware/checkID.js";
 import { checkStock } from "../middleware/checkStock.js";
 import { requireAuth } from "../middleware/requireAuth.js";
+import { restrictTo } from "../middleware/restrictTo.js";
 
 export const orderRouter = express.Router({ mergeParams: true });
 
@@ -18,5 +19,5 @@ orderRouter.route("/").post(checkStock, createOrder).get(getAllOrders);
 orderRouter
   .route("/:id")
   .get(checkID, getOrder)
-  .patch(checkID, updateOrder)
-  .delete(checkID, deleteOrder);
+  .patch(restrictTo("admin"), checkID, updateOrder)
+  .delete(restrictTo("admin"), checkID, deleteOrder);

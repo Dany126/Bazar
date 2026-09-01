@@ -8,15 +8,16 @@ import {
 } from "../controllers/product_variants_controller.js";
 import { checkID } from "../middleware/checkID.js";
 import { requireAuth } from "../middleware/requireAuth.js";
+import { restrictTo } from "../middleware/restrictTo.js";
 
 export const variantRouter = express.Router({ mergeParams: true });
 
 variantRouter.use(requireAuth);
 
-variantRouter.route("/").post(createVariant).get(getAllVariants);
+variantRouter.route("/").post(restrictTo('admin'), createVariant).get(getAllVariants);
 
 variantRouter
   .route("/:id")
-  .patch(checkID, updateVariant)
+  .patch(restrictTo('admin'), checkID, updateVariant)
   .get(checkID, getVariant)
-  .delete(checkID, deleteVariant);
+  .delete(restrictTo('admin'), checkID, deleteVariant);
