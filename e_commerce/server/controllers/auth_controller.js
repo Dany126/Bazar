@@ -74,6 +74,7 @@ export const register = async (req, res) => {
           name: newlyCreatedUser.name,
           email: newlyCreatedUser.email,
           phone: newlyCreatedUser.phone,
+          role: newlyCreatedUser.role,
         },
       });
     }
@@ -131,6 +132,7 @@ export const login = async (req, res) => {
         name: user.name,
         email: user.email,
         phone: user.phone,
+        role: user.role,
       },
     });
   } catch (err) {
@@ -199,10 +201,10 @@ export const refresh = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-return res.status(500).json({
-            status: "Failed",
-            message: "Internal Server Error"
-        })
+    return res.status(500).json({
+      status: "Failed",
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -253,10 +255,10 @@ export const forgetPassword = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-return res.status(500).json({
-            status: "Failed",
-            message: "Internal Server Error"
-        })
+    return res.status(500).json({
+      status: "Failed",
+      message: "Internal Server Error",
+    });
   }
 };
 
@@ -295,9 +297,9 @@ export const resetPassword = async (req, res) => {
     });
   } catch (err) {
     console.log(err);
-return res.status(500).json({
-            status: "Failed",
-            message: "Internal Server Error"
-        })
+    return res.status(500).json({
+      status: "Failed",
+      message: "Internal Server Error",
+    });
   }
 };
