@@ -41,9 +41,10 @@ app.use("/public", express.static(path.join(import.meta.dirname, "./public")));
 
 app.use(
   cors({
-    origin: "*",
-    methods: ["POST", "GET", "PUT", "DELETE"],
+    origin: true,
     credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
 

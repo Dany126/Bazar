@@ -523,23 +523,30 @@ class ApiService {
   // ==========================================================
 
   ServerFailure _handleDioError(DioException e) {
-    String message = 'Something went wrong';
+    final responseData = e.response?.data;
 
-    if (e.response?.data is Map) {
-      final data = e.response!.data as Map;
+    String message;
 
-      message = data['message']?.toString() ?? e.message ?? message;
+    if (responseData is Map) {
+      message =
+          responseData['message']?.toString() ??
+          responseData['error']?.toString() ??
+          e.message ??
+          e.error?.toString() ??
+          'Something went wrong';
     } else {
-      message = e.message ?? message;
+      message = e.message ?? e.error?.toString() ?? 'Something went wrong';
     }
 
+    print('======================================');
+    print('DIO ERROR TYPE: ${e.type}');
     print('DIO ERROR: $message');
-
+    print('RAW ERROR: ${e.error}');
     print('STATUS: ${e.response?.statusCode}');
-
     print('URL: ${e.requestOptions.uri}');
+    print('======================================');
 
-    return ServerFailure(message: message);
+    return ServerFailure(statusCode: e.response?.statusCode, message: message);
   }
 
   // ==========================================================
