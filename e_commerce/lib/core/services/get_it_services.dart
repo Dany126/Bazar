@@ -211,8 +211,9 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
     );
 
     if (kIsWeb) {
-      dio.httpClientAdapter = BrowserHttpClientAdapter()
-        ..withCredentials = true;
+      final adapter = HttpClientAdapter() as BrowserHttpClientAdapter;
+      adapter.withCredentials = true;
+      dio.httpClientAdapter = adapter;
     }
 
     dio.interceptors.add(DioErrorInterceptor());
