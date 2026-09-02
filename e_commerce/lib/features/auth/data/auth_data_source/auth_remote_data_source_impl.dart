@@ -69,7 +69,7 @@ class AuthRemoteDataSourceImpl implements AuthRemoteDataSource {
         'password': password,
         'phone': phone,
         'fcmToken': ?fcmToken,
-        "role": "ADMIN", // Ensure role is set to USER
+        "role": "admin", // Ensure role is set to USER
       },
     );
 
