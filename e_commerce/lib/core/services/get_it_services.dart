@@ -5,6 +5,8 @@ import 'package:e_commerce/features/admin/data/datasources/admin_users_remote_da
 import 'package:e_commerce/features/admin/data/repositories/admin_users_repository_impl.dart';
 import 'package:e_commerce/features/admin/domain/repositories/admin_users_repository.dart';
 import 'package:e_commerce/features/admin/domain/usecases/get_admin_users.dart';
+import 'package:e_commerce/features/admin/domain/usecases/get_all_admin_categories.dart';
+import 'package:e_commerce/features/admin/domain/usecases/update_admin_category.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_orders_cubit.dart';
 import 'package:get_it/get_it.dart';
 import 'package:e_commerce/constant.dart';
@@ -818,28 +820,47 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
   getIt.registerFactory<AdminUsersCubit>(
     () => AdminUsersCubit(useCase: getIt<GetAdminUsersUseCase>()),
   );
-  getIt.registerLazySingleton<AdminCategoryRemoteDataSource>(
-    () => AdminCategoryRemoteDataSourceImpl(apiService: getIt<ApiService>()),
+  getIt.registerLazySingleton<AdminCategoriesRemoteDataSource>(
+    () => AdminCategoriesRemoteDataSourceImpl(dio: getIt<Dio>()),
   );
 
-  getIt.registerLazySingleton<AdminCategoryRepository>(
-    () => AdminCategoryRepositoryImpl(
-      remoteDataSource: getIt<AdminCategoryRemoteDataSource>(),
+  getIt.registerLazySingleton<AdminCategoriesRepository>(
+    () => AdminCategoriesRepositoryImpl(
+      remoteDataSource: getIt<AdminCategoriesRemoteDataSource>(),
     ),
   );
 
-  getIt.registerLazySingleton<CreateAdminCategory>(
-    () => CreateAdminCategory(getIt<AdminCategoryRepository>()),
+  getIt.registerLazySingleton<GetAllAdminCategoriesUseCase>(
+    () => GetAllAdminCategoriesUseCase(
+      repository: getIt<AdminCategoriesRepository>(),
+    ),
   );
 
-  getIt.registerLazySingleton<DeleteAdminCategory>(
-    () => DeleteAdminCategory(getIt<AdminCategoryRepository>()),
+  getIt.registerLazySingleton<CreateAdminCategoryUseCase>(
+    () => CreateAdminCategoryUseCase(
+      repository: getIt<AdminCategoriesRepository>(),
+    ),
+  );
+
+  getIt.registerLazySingleton<UpdateAdminCategoryUseCase>(
+    () => UpdateAdminCategoryUseCase(
+      repository: getIt<AdminCategoriesRepository>(),
+    ),
+  );
+
+  getIt.registerLazySingleton<DeleteAdminCategoryUseCase>(
+    () => DeleteAdminCategoryUseCase(
+      repository: getIt<AdminCategoriesRepository>(),
+    ),
   );
 
   getIt.registerFactory<AdminCategoriesCubit>(
     () => AdminCategoriesCubit(
-      createAdminCategory: getIt<CreateAdminCategory>(),
-      deleteAdminCategory: getIt<DeleteAdminCategory>(),
+      getAllAdminCategoriesUseCase: getIt<GetAllAdminCategoriesUseCase>(),
+      createAdminCategoryUseCase: getIt<CreateAdminCategoryUseCase>(),
+      updateAdminCategoryUseCase: getIt<UpdateAdminCategoryUseCase>(),
+      deleteAdminCategoryUseCase: getIt<DeleteAdminCategoryUseCase>(),
+      getAllAdminProductsUseCase: getIt<GetAllAdminProductsUseCase>(),
     ),
   );
   // =========================

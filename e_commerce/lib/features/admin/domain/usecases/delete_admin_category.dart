@@ -1,14 +1,13 @@
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/core/error/failure.dart';
+import 'package:e_commerce/features/admin/domain/repositories/admin_category_repository.dart';
 
-import '../repositories/admin_category_repository.dart';
+class DeleteAdminCategoryUseCase {
+  final AdminCategoriesRepository repository;
 
-class DeleteAdminCategory {
-  final AdminCategoryRepository repository;
+  const DeleteAdminCategoryUseCase({required this.repository});
 
-  DeleteAdminCategory(this.repository);
-
-  Future<Either<Failure, Unit>> call({required String categoryId}) {
-    return repository.deleteCategory(categoryId: categoryId);
+  Future<Either<Failure, void>> call({required String id}) {
+    return repository.deleteCategory(id: id);
   }
 }

@@ -1,64 +1,178 @@
-import 'package:dio/dio.dart';
+import 'package:e_commerce/features/admin/domain/usecases/create_admin_category.dart';
+import 'package:e_commerce/features/admin/domain/usecases/delete_admin_category.dart';
+import 'package:e_commerce/features/admin/domain/usecases/get_all_admin_categories.dart';
+import 'package:e_commerce/features/admin/domain/usecases/update_admin_category.dart';
+import 'package:e_commerce/features/admin/domain/usecases/get_all_admin_products.dart';
+import 'package:e_commerce/features/admin/presentation/cubit/admin_categories_state.dart';
+import 'package:e_commerce/features/home/data/models/category_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
-import '../../domain/usecases/create_admin_category.dart';
-import '../../domain/usecases/delete_admin_category.dart';
-import 'admin_categories_state.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AdminCategoriesCubit extends Cubit<AdminCategoriesState> {
-  final CreateAdminCategory createAdminCategory;
-  final DeleteAdminCategory deleteAdminCategory;
+  final GetAllAdminCategoriesUseCase getAllAdminCategoriesUseCase;
+  final CreateAdminCategoryUseCase createAdminCategoryUseCase;
+  final UpdateAdminCategoryUseCase updateAdminCategoryUseCase;
+  final DeleteAdminCategoryUseCase deleteAdminCategoryUseCase;
+
+  final GetAllAdminProductsUseCase getAllAdminProductsUseCase;
 
   AdminCategoriesCubit({
-    required this.createAdminCategory,
-    required this.deleteAdminCategory,
+    required this.getAllAdminCategoriesUseCase,
+    required this.createAdminCategoryUseCase,
+    required this.updateAdminCategoryUseCase,
+    required this.deleteAdminCategoryUseCase,
+    required this.getAllAdminProductsUseCase,
   }) : super(const AdminCategoriesInitial());
+
+  // ============================================================
+  // LOAD CATEGORIES + PRODUCTS
+  // ============================================================
+
+  Future<void> loadCategories() async {
+    emit(const AdminCategoriesLoading());
+
+    final categoriesResult = await getAllAdminCategoriesUseCase();
+
+    if (categoriesResult.isLeft()) {
+      categoriesResult.fold((failure) {
+        emit(AdminCategoriesError(failure.message));
+      }, (_) {});
+
+      return;
+    }
+
+    final productsResult = await getAllAdminProductsUseCase();
+
+    if (productsResult.isLeft()) {
+      productsResult.fold((failure) {
+        emit(AdminCategoriesError(failure.message));
+      }, (_) {});
+
+      return;
+    }
+
+    final categories = categoriesResult.getOrElse(() => []);
+
+    final products = productsResult.getOrElse(() => []);
+
+    emit(AdminCategoriesLoaded(categories: categories, products: products));
+  }
+
+  // ============================================================
+  // SELECT CATEGORY
+  // ============================================================
+
+  void selectCategory(CategoryModel category) {
+    final currentState = state;
+
+    if (currentState is! AdminCategoriesLoaded) {
+      return;
+    }
+
+    emit(
+      currentState.copyWith(
+        selectedCategoryId: category.id,
+        selectedCategoryName: category.name,
+      ),
+    );
+  }
+
+  // ============================================================
+  // SHOW ALL PRODUCTS
+  // ============================================================
+
+  void showAllProducts() {
+    final currentState = state;
+
+    if (currentState is! AdminCategoriesLoaded) {
+      return;
+    }
+
+    emit(currentState.copyWith(clearSelection: true));
+  }
+
+  // ============================================================
+  // CREATE CATEGORY
+  // ============================================================
 
   Future<void> createCategory({
     required String name,
-    required MultipartFile image,
+    required XFile image,
   }) async {
-    if (isClosed) return;
+    final currentState = state;
 
-    emit(const AdminCategoriesCreating());
+    if (currentState is! AdminCategoriesLoaded) {
+      return;
+    }
 
-    final result = await createAdminCategory(name: name, image: image);
-
-    if (isClosed) return;
+    final result = await createAdminCategoryUseCase(name: name, image: image);
 
     result.fold(
       (failure) {
-        if (isClosed) return;
+        emit(AdminCategoriesError(failure.message));
 
-        emit(AdminCategoriesFailure(failure.message));
+        emit(currentState);
       },
-      (category) {
-        if (isClosed) return;
-
-        emit(AdminCategoriesCreated(category));
+      (_) async {
+        await loadCategories();
       },
     );
   }
 
-  Future<void> deleteCategory({required String categoryId}) async {
-    if (isClosed) return;
+  // ============================================================
+  // UPDATE CATEGORY
+  // ============================================================
 
-    emit(AdminCategoriesDeleting(categoryId));
+  Future<void> updateCategory({
+    required String id,
+    required String name,
+    XFile? image,
+  }) async {
+    final currentState = state;
 
-    final result = await deleteAdminCategory(categoryId: categoryId);
+    if (currentState is! AdminCategoriesLoaded) {
+      return;
+    }
 
-    if (isClosed) return;
+    final result = await updateAdminCategoryUseCase(
+      id: id,
+      name: name,
+      image: image,
+    );
 
     result.fold(
       (failure) {
-        if (isClosed) return;
+        emit(AdminCategoriesError(failure.message));
 
-        emit(AdminCategoriesFailure(failure.message));
+        emit(currentState);
       },
-      (_) {
-        if (isClosed) return;
+      (_) async {
+        await loadCategories();
+      },
+    );
+  }
 
-        emit(AdminCategoriesDeleted(categoryId));
+  // ============================================================
+  // DELETE CATEGORY
+  // ============================================================
+
+  Future<void> deleteCategory({required String id}) async {
+    final currentState = state;
+
+    if (currentState is! AdminCategoriesLoaded) {
+      return;
+    }
+
+    final result = await deleteAdminCategoryUseCase(id: id);
+
+    result.fold(
+      (failure) {
+        emit(AdminCategoriesError(failure.message));
+
+        emit(currentState);
+      },
+      (_) async {
+        await loadCategories();
       },
     );
   }
