@@ -167,6 +167,11 @@ import 'package:e_commerce/features/search/domain/repo/search_repo.dart';
 import 'package:e_commerce/features/search/domain/use_case/search_products_use_case.dart';
 import 'package:e_commerce/features/search/presentation/cubit/search_cubit.dart';
 
+// ==========================================================
+
+import 'package:dio/browser.dart';
+import 'package:flutter/foundation.dart';
+
 final getIt = GetIt.instance;
 
 Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
@@ -205,11 +210,16 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
       ),
     );
 
+    // Required for refreshToken HttpOnly cookie on Flutter Web
+    if (kIsWeb) {
+      dio.httpClientAdapter = BrowserHttpClientAdapter()
+        ..withCredentials = true;
+    }
+
     dio.interceptors.add(DioErrorInterceptor());
 
     return dio;
   });
-
   // ==========================================================
   // API SERVICE
   // ==========================================================

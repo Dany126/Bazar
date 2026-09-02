@@ -65,8 +65,8 @@ Future<void> main() async {
 
   final apiService = getIt<ApiService>();
 
+  await apiService.restoreAccessToken();
   await apiService.restoreSession();
-
   // ==========================================================
   // FCM
   // ==========================================================

@@ -6,7 +6,8 @@ import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
-import 'package:flutter/foundation.dart';
+
+import 'package:hive/hive.dart';
 
 import '../error/failure.dart';
 
@@ -34,9 +35,7 @@ class ApiService {
     // COOKIE MANAGER (Native only)
     // ======================================================
 
-    if (!kIsWeb) {
-      dio.interceptors.add(CookieManager(cookieJar));
-    }
+    dio.interceptors.add(CookieManager(cookieJar));
 
     // ======================================================
     // AUTH INTERCEPTOR
@@ -114,11 +113,7 @@ class ApiService {
   // ==========================================================
 
   Future<void> setAccessToken(String accessToken) async {
-    _accessToken = accessToken;
-
-    print('ACCESS TOKEN SAVED: $_accessToken');
-
-    _scheduleProactiveRefresh(accessToken);
+    await saveAccessToken(accessToken);
   }
 
   String? get accessToken => _accessToken;
@@ -622,5 +617,54 @@ class ApiService {
     _refreshTimer?.cancel();
 
     _refreshTimer = null;
+  }
+
+  Future<void> saveAccessToken(String token) async {
+    final box = Hive.box('authBox');
+
+    await box.put('accessToken', token);
+
+    _accessToken = token;
+
+    print('======================================');
+    print('ACCESS TOKEN SAVED');
+    print('TOKEN EXISTS: ${token.isNotEmpty}');
+    print('======================================');
+
+    _scheduleProactiveRefresh(token);
+  }
+
+  Future<void> restoreAccessToken() async {
+    final box = Hive.box('authBox');
+
+    final token = box.get('accessToken');
+
+    if (token == null || token.toString().isEmpty) {
+      print('======================================');
+      print('NO SAVED ACCESS TOKEN');
+      print('======================================');
+      return;
+    }
+
+    _accessToken = token.toString();
+
+    print('======================================');
+    print('ACCESS TOKEN RESTORED');
+    print('TOKEN EXISTS: true');
+    print('======================================');
+
+    _scheduleProactiveRefresh(_accessToken!);
+  }
+
+  Future<void> clearAccessToken() async {
+    final box = Hive.box('authBox');
+
+    await box.delete('accessToken');
+
+    _accessToken = null;
+
+    _refreshTimer?.cancel();
+
+    print('ACCESS TOKEN CLEARED');
   }
 }
