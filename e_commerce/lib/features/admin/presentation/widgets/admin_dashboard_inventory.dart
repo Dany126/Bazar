@@ -4,45 +4,17 @@ import 'package:flutter/material.dart';
 
 class AdminDashboardInventory extends StatelessWidget {
   const AdminDashboardInventory({super.key, required this.items});
-
   final List<AdminInventoryItem> items;
-
   @override
   Widget build(BuildContext context) {
-    final list = items.isEmpty
-        ? const [AdminInventoryItem(name: 'No low-stock products', count: 0)]
-        : items;
-
     return AdminDashboardPanel(
       title: 'Low inventory',
-      child: Column(
-        children: list.map((item) {
-          return Container(
-            margin: const EdgeInsets.only(bottom: 12),
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF7F7FA),
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    item.name,
-                    style: Theme.of(context).textTheme.bodyLarge,
-                  ),
-                ),
-                Text(
-                  item.count == 0 ? 'No stock' : '${item.count} left',
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: const Color(0xFFEC8B18),
-                  ),
-                ),
-              ],
-            ),
-          );
-        }).toList(),
-      ),
+      child: items.isEmpty
+          ? const SizedBox(height: 120, child: Center(child: Text('No data')))
+          : Column(children: items.map((item) {
+              final details = [if (item.size?.isNotEmpty == true) item.size!, if (item.color?.isNotEmpty == true) item.color!].join(' • ');
+              return Container(margin: const EdgeInsets.only(bottom: 12), padding: const EdgeInsets.all(12), decoration: BoxDecoration(color: const Color(0xFFF7F7FA), borderRadius: BorderRadius.circular(12)), child: Row(children: [Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Text(item.name), if (details.isNotEmpty) Text(details, style: const TextStyle(fontSize: 12))])), Text('${item.count} left') ]));
+            }).toList()),
     );
   }
 }

@@ -68,10 +68,16 @@ const orderSchema = new mongoose.Schema(
       ],
       default: "pending",
     },
+    visitorId: {
+  type: String,
+  default: null,
+  index: true,
+},
   },
   {
     timestamps: true,
   },
+  
 );
 
 export const Order = mongoose.model("Order", orderSchema);

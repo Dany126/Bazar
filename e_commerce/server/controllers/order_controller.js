@@ -3,6 +3,7 @@ import { Variant } from "../models/product_variants_model.js";
 import { User } from "../models/user_model.js";
 import { apiFeatures } from "../utils/apiFeatures.js";
 import { createNotification } from "./notification_controller.js";
+import { Visitor } from "../models/visitor_model.js";
 
 export const createOrder = async (req, res) => {
   try {
@@ -74,6 +75,16 @@ export const createOrder = async (req, res) => {
         message: "Failed creating an order",
       });
     }
+    if (order.visitorId) {
+  const monthKey = `${order.createdAt.getUTCFullYear()}-${String(
+    order.createdAt.getUTCMonth() + 1,
+  ).padStart(2, "0")}`;
+
+  await Visitor.updateMany(
+    { visitorId: order.visitorId, monthKey },
+    { $set: { converted: true } },
+  );
+}
 
     return res.status(200).json({
       status: "Success",

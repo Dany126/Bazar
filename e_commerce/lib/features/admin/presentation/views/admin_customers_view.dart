@@ -1,61 +1,96 @@
+import 'package:e_commerce/core/services/get_it_services.dart';
+import 'package:e_commerce/features/admin/domain/entity/admin_user.dart';
+import 'package:e_commerce/features/admin/presentation/cubit/admin_users_cubit.dart';
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AdminCustomersView extends StatelessWidget {
   const AdminCustomersView({super.key});
-
   @override
-  Widget build(BuildContext context) {
-    final customers = [
-      {'name': 'Sarah Johnson', 'email': 'sarah.j@email.com', 'spent': 1240.00, 'orders': 12},
-      {'name': 'Michael Chen', 'email': 'michael.c@email.com', 'spent': 890.50, 'orders': 8},
-      {'name': 'Emma Williams', 'email': 'emma.w@email.com', 'spent': 2150.00, 'orders': 23},
-      {'name': 'James Brown', 'email': 'james.b@email.com', 'spent': 560.75, 'orders': 5},
-      {'name': 'Olivia Davis', 'email': 'olivia.d@email.com', 'spent': 3420.00, 'orders': 31},
-    ];
+  Widget build(BuildContext context) => BlocProvider(
+    create: (_) => getIt<AdminUsersCubit>()..load(),
+    child: const _CustomersBody(),
+  );
+}
 
-    return SingleChildScrollView(
+class _CustomersBody extends StatelessWidget {
+  const _CustomersBody();
+  @override
+  Widget build(BuildContext context) => RefreshIndicator(
+    onRefresh: () => context.read<AdminUsersCubit>().load(),
+    child: SingleChildScrollView(
+      physics: const AlwaysScrollableScrollPhysics(),
       padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             'Customers',
-            style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
           ),
           const SizedBox(height: 24),
-          Card(
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            child: ListView.separated(
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              itemCount: customers.length,
-              separatorBuilder: (context, index) => const Divider(height: 1),
-              itemBuilder: (context, index) {
-                final c = customers[index];
-                return ListTile(
-                  leading: CircleAvatar(
-                    backgroundColor: AppColors.kPrimaryColor.withValues(alpha: 0.1),
-                    child: Text(
-                      (c['name'] as String).substring(0, 1),
-                      style: const TextStyle(color: AppColors.kPrimaryColor, fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                  title: Text(c['name'] as String, style: const TextStyle(fontWeight: FontWeight.w600)),
-                  subtitle: Text(c['email'] as String),
-                  trailing: Text(
-                    '\$${(c['spent'] as double).toStringAsFixed(2)}',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
+          BlocBuilder<AdminUsersCubit, AdminUsersState>(
+            builder: (context, state) {
+              if (state is AdminUsersLoading || state is AdminUsersInitial)
+                return const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(60),
+                    child: CircularProgressIndicator(),
                   ),
                 );
-              },
-            ),
+              if (state is AdminUsersFailure)
+                return Center(child: Text(state.message));
+              final users = (state as AdminUsersLoaded).users
+                  .where((u) => u.role.toLowerCase() != 'admin')
+                  .toList();
+              if (users.isEmpty)
+                return const Padding(
+                  padding: EdgeInsets.all(60),
+                  child: Center(child: Text('No data')),
+                );
+              return Card(
+                elevation: 0,
+                child: ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  itemCount: users.length,
+                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  itemBuilder: (context, i) {
+                    final u = users[i];
+                    return _UserTile(user: u);
+                  },
+                ),
+              );
+            },
           ),
         ],
       ),
+    ),
+  );
+}
+
+class _UserTile extends StatelessWidget {
+  final AdminUser user;
+  const _UserTile({required this.user});
+  @override
+  Widget build(BuildContext context) {
+    final initial = user.name.trim().isEmpty
+        ? '?'
+        : user.name.trim()[0].toUpperCase();
+    return ListTile(
+      leading: CircleAvatar(
+        backgroundColor: AppColors.kPrimaryColor.withValues(alpha: .1),
+        child: Text(
+          initial,
+          style: const TextStyle(color: AppColors.kPrimaryColor),
+        ),
+      ),
+      title: Text(user.name.isEmpty ? 'No name' : user.name),
+      subtitle: Text(user.email.isEmpty ? 'No email' : user.email),
+      trailing: user.phone == null ? null : Text(user.phone!),
     );
   }
 }

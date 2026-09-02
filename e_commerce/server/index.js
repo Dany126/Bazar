@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 dotenv.config({ path: "./.env" });
 
 import path from "path";
+import { dashboardRouter } from "./routes/dashboard_routes.js";
 import { connectToDB } from "./database/index.js";
 import { userRouter } from "./routes/user_routes.js";
 import { categoryRouter } from "./routes/category_routes.js";
@@ -60,6 +61,7 @@ app.use("/api/cart", cartRouter);
 app.use("/api/address", addressRouter);
 app.use("/api/wishlist", wishlistRouter);
 app.use("/api/payments", paymentRouter);
+app.use("/api/admin/dashboard", dashboardRouter);
 
 app.all("*not", (req, res) => {
   return res.status(404).json({

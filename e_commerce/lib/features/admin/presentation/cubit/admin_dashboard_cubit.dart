@@ -11,11 +11,11 @@ class AdminDashboardCubit extends Cubit<AdminDashboardState> {
   AdminDashboardCubit({required this.getAdminDashboardDataUseCase})
     : super(AdminDashboardInitial());
 
-  Future<void> loadDashboard() async {
+  Future<void> loadDashboard({String period = 'month'}) async {
     emit(AdminDashboardLoading());
 
     final Either<Failure, AdminDashboardData> result =
-        await getAdminDashboardDataUseCase.call();
+        await getAdminDashboardDataUseCase.call(period: period);
 
     result.fold(
       (failure) => emit(AdminDashboardFailure(failure.message)),

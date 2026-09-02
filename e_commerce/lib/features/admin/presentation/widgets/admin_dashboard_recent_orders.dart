@@ -10,16 +10,7 @@ class AdminDashboardRecentOrders extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final rows = orders.isEmpty
-        ? const [
-            AdminRecentOrder(
-              id: '#0000',
-              customer: 'No orders yet',
-              total: 0,
-              status: 'Pending',
-            ),
-          ]
-        : orders;
+    final rows = orders;
 
     return AdminDashboardPanel(
       title: 'Recent orders',

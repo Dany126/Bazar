@@ -8,6 +8,7 @@ class AdminDashboardStatCard extends StatelessWidget {
     required this.value,
     required this.change,
     required this.color,
+    this.comparisonLabel = 'vs previous period',
     this.isPrimary = false,
   });
 
@@ -16,6 +17,7 @@ class AdminDashboardStatCard extends StatelessWidget {
   final String change;
   final Color color;
   final bool isPrimary;
+  final String comparisonLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -82,7 +84,7 @@ class AdminDashboardStatCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
-                      Icons.trending_up_rounded,
+                      change == 'No data' ? Icons.remove_rounded : Icons.trending_up_rounded,
                       color: isPrimary ? Colors.white : color,
                       size: 18,
                     ),
@@ -108,21 +110,21 @@ class AdminDashboardStatCard extends StatelessWidget {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Icon(
-                    Icons.trending_up_rounded,
-                    color: isPrimary ? Colors.greenAccent : const Color(0xFF1DAF73),
+                    change == 'No data' ? Icons.remove_rounded : Icons.trending_up_rounded,
+                    color: change == 'No data' ? (isPrimary ? Colors.white54 : AppColors.kSecondaryTextColor) : (isPrimary ? Colors.greenAccent : const Color(0xFF1DAF73)),
                     size: 14,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     change,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: isPrimary ? Colors.greenAccent : const Color(0xFF1DAF73),
+                          color: change == 'No data' ? (isPrimary ? Colors.white54 : AppColors.kSecondaryTextColor) : (isPrimary ? Colors.greenAccent : const Color(0xFF1DAF73)),
                           fontWeight: FontWeight.w600,
                         ),
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'vs last month',
+                    comparisonLabel,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: isPrimary
                               ? Colors.white54

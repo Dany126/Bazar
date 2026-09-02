@@ -4,90 +4,39 @@ import 'package:flutter/material.dart';
 
 class AdminDashboardStats extends StatelessWidget {
   const AdminDashboardStats({super.key, required this.data});
-
-  factory AdminDashboardStats.fromData({required AdminDashboardData data}) {
-    return AdminDashboardStats(data: data);
-  }
-
+  factory AdminDashboardStats.fromData({required AdminDashboardData data}) => AdminDashboardStats(data: data);
   final AdminDashboardData data;
+
+  String money(double value) => '\$ ${value.toStringAsFixed(2)}';
+  String change(double? value) => value == null ? 'No data' : '${value >= 0 ? '+' : ''}${value.toStringAsFixed(1)}%';
+  String conversion(double? value) => value == null ? 'No data' : '${value.toStringAsFixed(2)}%';
 
   @override
   Widget build(BuildContext context) {
     final stats = [
-      _MetricStat(
-        label: 'Total revenue',
-        value: '\$ ${data.totalRevenue.toStringAsFixed(0)}',
-        change: '+12.5%',
-        color: const Color(0xFF8E6CEF),
-      ),
-      _MetricStat(
-        label: 'Orders',
-        value: data.totalOrders.toString(),
-        change: '+8.2%',
-        color: const Color(0xFF4EC5A5),
-      ),
-      _MetricStat(
-        label: 'Active Products',
-        value: data.totalProducts.toString(),
-        change: '0.0%',
-        color: const Color(0xFF1F2937),
-      ),
-      _MetricStat(
-        label: 'Low Stock Alerts',
-        value: data.lowInventory.length.toString(),
-        change: '+3 items',
-        color: const Color(0xFFDC2626),
-      ),
+      _MetricStat('Total revenue', money(data.totalRevenue), change(data.changes.revenue), const Color(0xFF8E6CEF)),
+      _MetricStat('Orders', data.totalOrders.toString(), change(data.changes.orders), const Color(0xFF4EC5A5)),
+      _MetricStat('Visitors', data.totalVisitors.toString(), change(data.changes.visitors), const Color(0xFF1F2937)),
+      _MetricStat('Conversion rate', conversion(data.conversionRate), change(data.changes.conversionRate), const Color(0xFFDC2626)),
     ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-        int crossAxisCount = 1;
-        double childAspectRatio = 2.4;
-
-        if (width >= 1100) {
-          crossAxisCount = 4;
-          childAspectRatio = width >= 1300 ? 1.45 : 1.25;
-        } else if (width >= 600) {
-          crossAxisCount = 2;
-          childAspectRatio = width >= 800 ? 1.6 : 1.4;
-        } else {
-          crossAxisCount = 1;
-          childAspectRatio = width < 380 ? 2.0 : 2.5;
-        }
-
-        return GridView.count(
-          crossAxisCount: crossAxisCount,
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: childAspectRatio,
-          children: List.generate(stats.length, (index) {
-            final stat = stats[index];
-            return AdminDashboardStatCard(
-              label: stat.label,
-              value: stat.value,
-              change: stat.change,
-              color: stat.color,
-              isPrimary: index == 0,
-            );
-          }),
-        );
-      },
-    );
+    return LayoutBuilder(builder: (context, constraints) {
+      final width = constraints.maxWidth;
+      final count = width >= 1100 ? 4 : width >= 600 ? 2 : 1;
+      return GridView.count(
+        crossAxisCount: count,
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        mainAxisSpacing: 16,
+        crossAxisSpacing: 16,
+        childAspectRatio: width >= 1100 ? 1.45 : width >= 600 ? 1.6 : 2.4,
+        children: [for (final s in stats) AdminDashboardStatCard(label: s.label, value: s.value, change: s.change, color: s.color, comparisonLabel: 'vs previous ${data.period}')],
+      );
+    });
   }
 }
 
 class _MetricStat {
-  const _MetricStat({
-    required this.label,
-    required this.value,
-    required this.change,
-    required this.color,
-  });
-
+  const _MetricStat(this.label, this.value, this.change, this.color);
   final String label;
   final String value;
   final String change;

@@ -16,93 +16,113 @@ class AdminSidebar extends StatelessWidget {
     return Container(
       width: 250,
       color: Colors.white,
-      child: Column(
-        children: [
-          const SizedBox(height: 32),
-          // Branding Logo
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24),
-            child: Row(
-              children: [
-                Container(
-                  width: 32,
-                  height: 32,
-                  decoration: BoxDecoration(
-                    color: AppColors.kPrimaryColor,
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: const Icon(Icons.storefront, color: Colors.white, size: 20),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'Marketplace',
-                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        fontWeight: FontWeight.w700,
+      child: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const SizedBox(height: 32),
+
+              // Branding
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 32,
+                      height: 32,
+                      decoration: BoxDecoration(
+                        color: AppColors.kPrimaryColor,
+                        borderRadius: BorderRadius.circular(8),
                       ),
+                      child: const Icon(
+                        Icons.storefront,
+                        color: Colors.white,
+                        size: 20,
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Text(
+                        'Marketplace',
+                        overflow: TextOverflow.ellipsis,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 48),
+              ),
 
-          // Main Navigation
-          const _SidebarSection(title: 'MAIN'),
-          _SidebarItem(
-            icon: Icons.dashboard_rounded,
-            title: 'Dashboard',
-            isActive: selectedIndex == 0,
-            onTap: () => onItemSelected(0),
-          ),
-          _SidebarItem(
-            icon: Icons.pie_chart_rounded,
-            title: 'Overview',
-            isActive: selectedIndex == 1,
-            onTap: () => onItemSelected(1),
-          ),
-          _SidebarItem(
-            icon: Icons.people_alt_rounded,
-            title: 'Customers',
-            isActive: selectedIndex == 2,
-            onTap: () => onItemSelected(2),
-          ),
-          _SidebarItem(
-            icon: Icons.inventory_2_rounded,
-            title: 'Products',
-            isActive: selectedIndex == 3,
-            onTap: () => onItemSelected(3),
-          ),
-          _SidebarItem(
-            icon: Icons.work_rounded,
-            title: 'Workspace',
-            isActive: selectedIndex == 4,
-            onTap: () => onItemSelected(4),
-          ),
-          _SidebarItem(
-            icon: Icons.settings_rounded,
-            title: 'Settings',
-            isActive: selectedIndex == 5,
-            onTap: () => onItemSelected(5),
-          ),
+              const SizedBox(height: 32),
 
-          const SizedBox(height: 24),
-          const _SidebarSection(title: 'FINANCE'),
-          _SidebarItem(
-            icon: Icons.account_balance_wallet_rounded,
-            title: 'Earnings',
-            isActive: selectedIndex == 6,
-            onTap: () => onItemSelected(6),
-          ),
-          _SidebarItem(
-            icon: Icons.payments_rounded,
-            title: 'Payouts',
-            isActive: selectedIndex == 7,
-            onTap: () => onItemSelected(7),
-          ),
+              const _SidebarSection(title: 'MAIN'),
 
-          const Spacer(),
-          // Logout or Profile section could go here
-          const SizedBox(height: 32),
-        ],
+              _SidebarItem(
+                icon: Icons.dashboard_rounded,
+                title: 'Dashboard',
+                isActive: selectedIndex == 0,
+                onTap: () => onItemSelected(0),
+              ),
+
+              _SidebarItem(
+                icon: Icons.pie_chart_rounded,
+                title: 'Overview',
+                isActive: selectedIndex == 1,
+                onTap: () => onItemSelected(1),
+              ),
+
+              _SidebarItem(
+                icon: Icons.people_alt_rounded,
+                title: 'Customers',
+                isActive: selectedIndex == 2,
+                onTap: () => onItemSelected(2),
+              ),
+
+              _SidebarItem(
+                icon: Icons.inventory_2_rounded,
+                title: 'Products',
+                isActive: selectedIndex == 3,
+                onTap: () => onItemSelected(3),
+              ),
+
+              _SidebarItem(
+                icon: Icons.work_rounded,
+                title: 'Workspace',
+                isActive: selectedIndex == 4,
+                onTap: () => onItemSelected(4),
+              ),
+
+              _SidebarItem(
+                icon: Icons.settings_rounded,
+                title: 'Settings',
+                isActive: selectedIndex == 5,
+                onTap: () => onItemSelected(5),
+              ),
+
+              const SizedBox(height: 16),
+
+              const _SidebarSection(title: 'FINANCE'),
+
+              _SidebarItem(
+                icon: Icons.account_balance_wallet_rounded,
+                title: 'Earnings',
+                isActive: selectedIndex == 6,
+                onTap: () => onItemSelected(6),
+              ),
+
+              _SidebarItem(
+                icon: Icons.payments_rounded,
+                title: 'Payouts',
+                isActive: selectedIndex == 7,
+                onTap: () => onItemSelected(7),
+              ),
+
+              const SizedBox(height: 24),
+            ],
+          ),
+        ),
       ),
     );
   }
@@ -110,21 +130,22 @@ class AdminSidebar extends StatelessWidget {
 
 class _SidebarSection extends StatelessWidget {
   const _SidebarSection({required this.title});
+
   final String title;
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 10),
       child: Align(
         alignment: Alignment.centerLeft,
         child: Text(
           title,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: AppColors.kSecondaryTextColor,
-                letterSpacing: 1.2,
-                fontWeight: FontWeight.w600,
-              ),
+            color: AppColors.kSecondaryTextColor,
+            letterSpacing: 1.2,
+            fontWeight: FontWeight.w600,
+          ),
         ),
       ),
     );
@@ -135,8 +156,8 @@ class _SidebarItem extends StatelessWidget {
   const _SidebarItem({
     required this.icon,
     required this.title,
-    this.isActive = false,
     required this.onTap,
+    this.isActive = false,
   });
 
   final IconData icon;
@@ -147,7 +168,7 @@ class _SidebarItem extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 3),
       child: Container(
         decoration: BoxDecoration(
           color: isActive
@@ -161,7 +182,7 @@ class _SidebarItem extends StatelessWidget {
             borderRadius: BorderRadius.circular(12),
             onTap: onTap,
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 11),
               child: Row(
                 children: [
                   Icon(
@@ -172,20 +193,24 @@ class _SidebarItem extends StatelessWidget {
                     size: 20,
                   ),
                   const SizedBox(width: 16),
-                  Text(
-                    title,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: isActive
-                              ? AppColors.kPrimaryColor
-                              : AppColors.kSecondaryTextColor,
-                          fontWeight: isActive ? FontWeight.w600 : FontWeight.w500,
-                        ),
+                  Expanded(
+                    child: Text(
+                      title,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                        color: isActive
+                            ? AppColors.kPrimaryColor
+                            : AppColors.kSecondaryTextColor,
+                        fontWeight: isActive
+                            ? FontWeight.w600
+                            : FontWeight.w500,
+                      ),
+                    ),
                   ),
-                  const Spacer(),
                   if (isActive)
                     Container(
-                      width: 4,
-                      height: 4,
+                      width: 5,
+                      height: 5,
                       decoration: const BoxDecoration(
                         color: AppColors.kPrimaryColor,
                         shape: BoxShape.circle,
