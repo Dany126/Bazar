@@ -6,6 +6,7 @@ import 'package:dartz/dartz.dart';
 import 'package:dio/dio.dart';
 import 'package:dio_cookie_manager/dio_cookie_manager.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:hive/hive.dart';
 
@@ -32,10 +33,14 @@ class ApiService {
     required this.refreshTokenUrl,
   }) {
     // ======================================================
-    // COOKIE MANAGER (Native only)
+    // COOKIE MANAGER
+    // Native only.
+    // dio_cookie_manager does NOT support Flutter Web.
     // ======================================================
 
-    dio.interceptors.add(CookieManager(cookieJar));
+    if (!kIsWeb) {
+      dio.interceptors.add(CookieManager(cookieJar));
+    }
 
     // ======================================================
     // AUTH INTERCEPTOR
@@ -50,14 +55,16 @@ class ApiService {
 
           print('======================================');
           print('REQUEST: ${options.method} ${options.uri}');
-          print('ACCESS TOKEN: $_accessToken');
+          print(
+            'ACCESS TOKEN EXISTS: '
+            '${_accessToken != null && _accessToken!.isNotEmpty}',
+          );
 
           handler.next(options);
         },
 
         onError: (error, handler) async {
           final statusCode = error.response?.statusCode;
-
           final request = error.requestOptions;
 
           final isRefreshRequest =
@@ -107,7 +114,6 @@ class ApiService {
       ),
     );
   }
-
   // ==========================================================
   // ACCESS TOKEN
   // ==========================================================
@@ -202,9 +208,7 @@ class ApiService {
   Future<void> _refreshAccessToken() async {
     if (_isRefreshing) {
       final completer = Completer<void>();
-
       _refreshQueue.add(completer);
-
       return completer.future;
     }
 
@@ -216,47 +220,52 @@ class ApiService {
       print('URL: $refreshTokenUrl');
 
       // ======================================================
-      // LOAD COOKIES
+      // NATIVE ONLY
       // ======================================================
+      //
+      // On Android/iOS/Desktop, CookieJar contains the
+      // refreshToken cookie.
+      //
+      // On Web, the HttpOnly cookie belongs to the browser
+      // and cannot be read through CookieJar.
+      //
+      if (!kIsWeb) {
+        final cookies = await cookieJar.loadForRequest(
+          Uri.parse(refreshTokenUrl),
+        );
 
-      final cookies = await cookieJar.loadForRequest(
-        Uri.parse(refreshTokenUrl),
-      );
+        print('COOKIES BEFORE REFRESH:');
 
-      print('COOKIES BEFORE REFRESH:');
+        for (final cookie in cookies) {
+          print('${cookie.name} = ${cookie.value}');
+        }
 
-      for (final cookie in cookies) {
-        print('${cookie.name} = ${cookie.value}');
-      }
+        final hasRefreshToken = cookies.any(
+          (cookie) => cookie.name == 'refreshToken' && cookie.value.isNotEmpty,
+        );
 
-      // IMPORTANT:
-      // Your server cookie is called refreshToken.
-      final refreshCookie = cookies.where(
-        (cookie) => cookie.name == 'refreshToken' && cookie.value.isNotEmpty,
-      );
-
-      if (refreshCookie.isEmpty) {
-        throw Exception('Refresh token cookie not found');
+        if (!hasRefreshToken) {
+          throw Exception('Refresh token cookie not found');
+        }
+      } else {
+        print('WEB: refreshToken will be sent by browser');
       }
 
       // ======================================================
       // REFRESH REQUEST
       // ======================================================
-
+      //
+      // On Web, BrowserHttpClientAdapter with
+      // withCredentials = true makes Chrome send the
+      // HttpOnly refreshToken cookie automatically.
+      //
       final response = await dio.post(refreshTokenUrl);
 
-      print(
-        'REFRESH STATUS: '
-        '${response.statusCode}',
-      );
-
-      print(
-        'REFRESH RESPONSE: '
-        '${response.data}',
-      );
+      print('REFRESH STATUS: ${response.statusCode}');
+      print('REFRESH RESPONSE: ${response.data}');
 
       // ======================================================
-      // RESPONSE
+      // VALIDATE RESPONSE
       // ======================================================
 
       if (response.data is! Map) {
@@ -270,7 +279,7 @@ class ApiService {
       }
 
       // ======================================================
-      // SAVE ACCESS TOKEN
+      // SAVE NEW ACCESS TOKEN
       // ======================================================
 
       await setAccessToken(newAccessToken);
@@ -304,7 +313,6 @@ class ApiService {
       _isRefreshing = false;
     }
   }
-
   // ==========================================================
   // RESTORE SESSION
   // ==========================================================
@@ -314,36 +322,41 @@ class ApiService {
     print('CHECKING SESSION');
 
     try {
-      final cookies = await cookieJar.loadForRequest(
-        Uri.parse(refreshTokenUrl),
-      );
+      // ======================================================
+      // NATIVE
+      // ======================================================
 
-      print('STORED COOKIES: $cookies');
-
-      for (final cookie in cookies) {
-        print(
-          'COOKIE: '
-          '${cookie.name} = ${cookie.value}',
+      if (!kIsWeb) {
+        final cookies = await cookieJar.loadForRequest(
+          Uri.parse(refreshTokenUrl),
         );
+
+        print('STORED COOKIES: $cookies');
+
+        final hasRefreshToken = cookies.any(
+          (cookie) => cookie.name == 'refreshToken' && cookie.value.isNotEmpty,
+        );
+
+        if (!hasRefreshToken) {
+          print('NO REFRESH TOKEN COOKIE');
+          return false;
+        }
+
+        print('REFRESH TOKEN FOUND');
       }
 
-      // IMPORTANT:
-      // Server sends refreshToken
-      final hasRefreshToken = cookies.any(
-        (cookie) => cookie.name == 'refreshToken' && cookie.value.isNotEmpty,
-      );
+      // ======================================================
+      // WEB
+      // ======================================================
+      //
+      // We cannot read an HttpOnly cookie from Dart.
+      // Chrome will automatically send it with this request
+      // because withCredentials = true.
+      //
 
-      if (!hasRefreshToken) {
-        print('NO REFRESH TOKEN COOKIE');
-
-        return false;
+      if (kIsWeb) {
+        print('WEB: CHECKING SESSION THROUGH /refresh');
       }
-
-      print('REFRESH TOKEN FOUND');
-
-      // ======================================================
-      // GET NEW ACCESS TOKEN
-      // ======================================================
 
       await _refreshAccessToken();
 
@@ -353,14 +366,11 @@ class ApiService {
     } catch (e) {
       print('SESSION RESTORE FAILED: $e');
 
-      // Don't allow cookie filesystem errors
-      // to crash the application.
       await clearAuthTokens();
 
       return false;
     }
   }
-
   // ==========================================================
   // FCM TOKEN
   // ==========================================================

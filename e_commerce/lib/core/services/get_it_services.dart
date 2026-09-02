@@ -210,7 +210,6 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
       ),
     );
 
-    // Required for refreshToken HttpOnly cookie on Flutter Web
     if (kIsWeb) {
       dio.httpClientAdapter = BrowserHttpClientAdapter()
         ..withCredentials = true;
