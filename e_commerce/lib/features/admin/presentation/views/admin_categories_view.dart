@@ -8,7 +8,6 @@ import 'package:e_commerce/features/admin/presentation/cubit/admin_categories_st
 import 'package:e_commerce/features/home/data/models/category_model.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/categories_cubit/get_categories_cubit.dart';
 import 'package:e_commerce/features/home/presentation/viewModel/categories_cubit/get_categories_state.dart';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -20,10 +19,12 @@ class AdminCategoriesView extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider(
+        BlocProvider<GetCategoriesCubit>(
           create: (_) => getIt<GetCategoriesCubit>()..fetchAllCategories(),
         ),
-        BlocProvider(create: (_) => getIt<AdminCategoriesCubit>()),
+        BlocProvider<AdminCategoriesCubit>(
+          create: (_) => getIt<AdminCategoriesCubit>(),
+        ),
       ],
       child: const _AdminCategoriesViewBody(),
     );
@@ -69,9 +70,9 @@ class _AdminCategoriesViewBody extends StatelessWidget {
   Widget _buildHeader(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final small = constraints.maxWidth < 650;
+        final isSmall = constraints.maxWidth < 650;
 
-        if (small) {
+        if (isSmall) {
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -179,42 +180,70 @@ class _AdminCategoriesViewBody extends StatelessWidget {
   // ============================================================
 
   Widget _buildCategories(BuildContext context) {
-    return BlocConsumer<GetCategoriesCubit, GetCategoriesState>(
-      listener: (context, state) {},
-      builder: (context, state) {
-        if (state is GetCategoriesLoading) {
-          return const _LoadingState();
-        }
+    return BlocListener<AdminCategoriesCubit, AdminCategoriesState>(
+      listener: (context, state) {
+        if (state is AdminCategoriesCreated) {
+          context.read<GetCategoriesCubit>().fetchAllCategories();
 
-        if (state is GetCategoriesFailure) {
-          return _ErrorState(
-            message: state.message,
-            onRetry: () {
-              context.read<GetCategoriesCubit>().fetchAllCategories;
-            },
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Category created successfully')),
           );
         }
 
-        if (state is GetCategoriesSuccess) {
-          final categories = state.categories;
+        if (state is AdminCategoriesDeleted) {
+          context.read<GetCategoriesCubit>().fetchAllCategories();
 
-          if (categories.isEmpty) {
-            return const _EmptyState();
-          }
-
-          return _CategoriesGrid(categories: categories as List<CategoryModel>);
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Category deleted successfully')),
+          );
         }
 
-        return const SizedBox.shrink();
+        if (state is AdminCategoriesFailure) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
+        }
       },
+      child: BlocBuilder<GetCategoriesCubit, GetCategoriesState>(
+        builder: (context, state) {
+          if (state is GetCategoriesLoading) {
+            return const _LoadingState();
+          }
+
+          if (state is GetCategoriesFailure) {
+            return _ErrorState(
+              message: state.message,
+              onRetry: () {
+                context.read<GetCategoriesCubit>().fetchAllCategories();
+              },
+            );
+          }
+
+          if (state is GetCategoriesSuccess) {
+            final categories = state.categories;
+
+            if (categories.isEmpty) {
+              return const _EmptyState();
+            }
+
+            return _CategoriesGrid(
+              categories: categories as List<CategoryModel>,
+            );
+          }
+
+          return const SizedBox.shrink();
+        },
+      ),
     );
   }
 
   // ============================================================
-  // ADD CATEGORY
+  // ADD CATEGORY DIALOG
   // ============================================================
 
   Future<void> _showAddCategoryDialog(BuildContext context) async {
+    final adminCategoriesCubit = context.read<AdminCategoriesCubit>();
+
     final nameController = TextEditingController();
 
     Uint8List? imageBytes;
@@ -224,190 +253,237 @@ class _AdminCategoriesViewBody extends StatelessWidget {
       context: context,
       barrierDismissible: false,
       builder: (dialogContext) {
-        return BlocListener<AdminCategoriesCubit, AdminCategoriesState>(
-          listener: (context, state) {
-            if (state is AdminCategoriesCreated) {
-              Navigator.of(dialogContext).pop();
-
-              context.read<GetCategoriesCubit>().fetchAllCategories();
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Category created successfully')),
-              );
-            }
-
-            if (state is AdminCategoriesFailure) {
-              ScaffoldMessenger.of(
-                context,
-              ).showSnackBar(SnackBar(content: Text(state.message)));
-            }
-          },
-          child: StatefulBuilder(
-            builder: (context, setState) {
-              final creating =
-                  context.watch<AdminCategoriesCubit>().state
-                      is AdminCategoriesCreating;
-
-              return AlertDialog(
-                title: const Text('Add Category'),
-                content: SizedBox(
-                  width: 450,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      TextField(
-                        controller: nameController,
-                        enabled: !creating,
-                        decoration: InputDecoration(
-                          labelText: 'Category name',
-                          hintText: 'Enter category name',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 20),
-
-                      InkWell(
-                        onTap: creating
-                            ? null
-                            : () async {
-                                final picker = ImagePicker();
-
-                                final XFile? file = await picker.pickImage(
-                                  source: ImageSource.gallery,
-                                );
-
-                                if (file == null) {
-                                  return;
-                                }
-
-                                final bytes = await file.readAsBytes();
-
-                                setState(() {
-                                  imageBytes = bytes;
-                                  imageName = file.name;
-                                });
-                              },
-                        borderRadius: BorderRadius.circular(12),
-                        child: Container(
-                          width: double.infinity,
-                          height: 180,
-                          decoration: BoxDecoration(
-                            color: const Color(0xFFF1F3F5),
-                            borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: Colors.grey.shade300),
-                          ),
-                          child: imageBytes != null
-                              ? ClipRRect(
-                                  borderRadius: BorderRadius.circular(12),
-                                  child: Image.memory(
-                                    imageBytes!,
-                                    width: double.infinity,
-                                    height: double.infinity,
-                                    fit: BoxFit.cover,
-                                  ),
-                                )
-                              : Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.cloud_upload_outlined,
-                                      size: 42,
-                                      color: Colors.grey.shade500,
-                                    ),
-                                    const SizedBox(height: 10),
-                                    const Text('Select category image'),
-                                    const SizedBox(height: 4),
-                                    Text(
-                                      'Click to choose an image',
-                                      style: TextStyle(
-                                        fontSize: 12,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                        ),
-                      ),
-
-                      if (imageName != null) ...[
-                        const SizedBox(height: 8),
-                        Text(
-                          imageName!,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: Colors.grey.shade700,
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: creating
-                        ? null
-                        : () {
-                            Navigator.of(dialogContext).pop();
-                          },
-                    child: const Text('Cancel'),
-                  ),
-                  SizedBox(
-                    width: 120,
-                    height: 44,
-                    child: ElevatedButton(
-                      onPressed: creating || imageBytes == null
-                          ? null
-                          : () async {
-                              final name = nameController.text.trim();
-
-                              if (name.isEmpty) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('Category name is required'),
-                                  ),
-                                );
-                                return;
-                              }
-
-                              final multipartFile = MultipartFile.fromBytes(
-                                imageBytes!,
-                                filename: imageName ?? 'category.jpg',
-                              );
-
-                              await context
-                                  .read<AdminCategoriesCubit>()
-                                  .createCategory(
-                                    name: name,
-                                    image: multipartFile,
-                                  );
-                            },
-                      child: creating
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Create'),
-                    ),
-                  ),
-                ],
-              );
+        return BlocProvider.value(
+          value: adminCategoriesCubit,
+          child: _AddCategoryDialog(
+            nameController: nameController,
+            onImageSelected: (bytes, name) {
+              imageBytes = bytes;
+              imageName = name;
             },
+            getImageBytes: () => imageBytes,
+            getImageName: () => imageName,
           ),
         );
       },
     );
 
     nameController.dispose();
+  }
+}
+
+// ================================================================
+// ADD CATEGORY DIALOG
+// ================================================================
+
+class _AddCategoryDialog extends StatefulWidget {
+  const _AddCategoryDialog({
+    required this.nameController,
+    required this.onImageSelected,
+    required this.getImageBytes,
+    required this.getImageName,
+  });
+
+  final TextEditingController nameController;
+
+  final void Function(Uint8List bytes, String name) onImageSelected;
+
+  final Uint8List? Function() getImageBytes;
+
+  final String? Function() getImageName;
+
+  @override
+  State<_AddCategoryDialog> createState() => _AddCategoryDialogState();
+}
+
+class _AddCategoryDialogState extends State<_AddCategoryDialog> {
+  Uint8List? _imageBytes;
+  String? _imageName;
+
+  bool _loading = false;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+
+    final XFile? file = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 85,
+    );
+
+    if (file == null) {
+      return;
+    }
+
+    final bytes = await file.readAsBytes();
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _imageBytes = bytes;
+      _imageName = file.name;
+    });
+
+    widget.onImageSelected(bytes, file.name);
+  }
+
+  Future<void> _createCategory() async {
+    final name = widget.nameController.text.trim();
+
+    if (name.isEmpty) {
+      _showError('Category name is required.');
+      return;
+    }
+
+    if (_imageBytes == null) {
+      _showError('Please select a category image.');
+      return;
+    }
+
+    setState(() {
+      _loading = true;
+    });
+
+    final image = MultipartFile.fromBytes(
+      _imageBytes!,
+      filename: _imageName ?? 'category.jpg',
+    );
+
+    await context.read<AdminCategoriesCubit>().createCategory(
+      name: name,
+      image: image,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    final state = context.read<AdminCategoriesCubit>().state;
+
+    if (state is AdminCategoriesCreated) {
+      Navigator.of(context).pop();
+      return;
+    }
+
+    setState(() {
+      _loading = false;
+    });
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      title: const Text('Add Category'),
+      content: SizedBox(
+        width: 450,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: widget.nameController,
+              enabled: !_loading,
+              decoration: InputDecoration(
+                labelText: 'Category name',
+                hintText: 'Enter category name',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            GestureDetector(
+              onTap: _loading ? null : _pickImage,
+              child: Container(
+                width: double.infinity,
+                height: 190,
+                decoration: BoxDecoration(
+                  color: const Color(0xFFF1F3F5),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.grey.shade300),
+                ),
+                child: _imageBytes != null
+                    ? ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: Image.memory(
+                          _imageBytes!,
+                          width: double.infinity,
+                          height: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      )
+                    : Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(
+                            Icons.cloud_upload_outlined,
+                            size: 42,
+                            color: Colors.grey.shade500,
+                          ),
+                          const SizedBox(height: 10),
+                          const Text('Select category image'),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Click to choose an image',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Colors.grey.shade600,
+                            ),
+                          ),
+                        ],
+                      ),
+              ),
+            ),
+
+            if (_imageName != null) ...[
+              const SizedBox(height: 8),
+              Text(
+                _imageName!,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(fontSize: 13, color: Colors.grey.shade700),
+              ),
+            ],
+          ],
+        ),
+      ),
+      actions: [
+        TextButton(
+          onPressed: _loading
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                },
+          child: const Text('Cancel'),
+        ),
+        SizedBox(
+          width: 120,
+          height: 44,
+          child: ElevatedButton(
+            onPressed: _loading ? null : _createCategory,
+            child: _loading
+                ? const SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      color: Colors.white,
+                    ),
+                  )
+                : const Text('Create'),
+          ),
+        ),
+      ],
+    );
   }
 }
 
@@ -426,16 +502,16 @@ class _CategoriesGrid extends StatelessWidget {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
 
-        int crossAxisCount;
+        int count;
 
         if (width >= 1400) {
-          crossAxisCount = 4;
+          count = 4;
         } else if (width >= 950) {
-          crossAxisCount = 3;
+          count = 3;
         } else if (width >= 600) {
-          crossAxisCount = 2;
+          count = 2;
         } else {
-          crossAxisCount = 1;
+          count = 1;
         }
 
         return GridView.builder(
@@ -443,7 +519,7 @@ class _CategoriesGrid extends StatelessWidget {
           physics: const NeverScrollableScrollPhysics(),
           itemCount: categories.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
+            crossAxisCount: count,
             crossAxisSpacing: 20,
             mainAxisSpacing: 20,
             childAspectRatio: 1.35,
@@ -458,7 +534,7 @@ class _CategoriesGrid extends StatelessWidget {
 }
 
 // ================================================================
-// CARD
+// CATEGORY CARD
 // ================================================================
 
 class _CategoryCard extends StatelessWidget {
@@ -483,7 +559,6 @@ class _CategoryCard extends StatelessWidget {
       ),
       clipBehavior: Clip.antiAlias,
       child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Expanded(
             child: SizedBox(
@@ -491,9 +566,8 @@ class _CategoryCard extends StatelessWidget {
               child: _CategoryImage(imageUrl: category.imageUrl),
             ),
           ),
-
           Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
+            padding: const EdgeInsets.fromLTRB(16, 10, 8, 10),
             child: Row(
               children: [
                 Expanded(
@@ -508,16 +582,14 @@ class _CategoryCard extends StatelessWidget {
                     ),
                   ),
                 ),
-
                 IconButton(
                   tooltip: 'Delete category',
                   onPressed: () {
-                    _confirmDelete(context, category);
+                    _deleteCategory(context, category);
                   },
                   icon: const Icon(
                     Icons.delete_outline_rounded,
                     color: Colors.red,
-                    size: 21,
                   ),
                 ),
               ],
@@ -528,7 +600,7 @@ class _CategoryCard extends StatelessWidget {
     );
   }
 
-  Future<void> _confirmDelete(
+  Future<void> _deleteCategory(
     BuildContext context,
     CategoryModel category,
   ) async {
@@ -561,29 +633,9 @@ class _CategoryCard extends StatelessWidget {
       return;
     }
 
-    final cubit = context.read<AdminCategoriesCubit>();
-
-    await cubit.deleteCategory(categoryId: category.id);
-
-    if (!context.mounted) {
-      return;
-    }
-
-    final state = cubit.state;
-
-    if (state is AdminCategoriesDeleted) {
-      context.read<GetCategoriesCubit>().fetchAllCategories();
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Category deleted successfully')),
-      );
-    }
-
-    if (state is AdminCategoriesFailure) {
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(SnackBar(content: Text(state.message)));
-    }
+    await context.read<AdminCategoriesCubit>().deleteCategory(
+      categoryId: category.id,
+    );
   }
 }
 
@@ -608,8 +660,8 @@ class _CategoryImage extends StatelessWidget {
       errorBuilder: (context, error, stackTrace) {
         return _placeholder();
       },
-      loadingBuilder: (context, child, loadingProgress) {
-        if (loadingProgress == null) {
+      loadingBuilder: (context, child, progress) {
+        if (progress == null) {
           return child;
         }
 
