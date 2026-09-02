@@ -5,6 +5,7 @@ import 'package:e_commerce/features/admin/data/datasources/admin_users_remote_da
 import 'package:e_commerce/features/admin/data/repositories/admin_users_repository_impl.dart';
 import 'package:e_commerce/features/admin/domain/repositories/admin_users_repository.dart';
 import 'package:e_commerce/features/admin/domain/usecases/get_admin_users.dart';
+import 'package:e_commerce/features/admin/presentation/cubit/admin_orders_cubit.dart';
 import 'package:get_it/get_it.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/network/dio_error_interceptor.dart';
@@ -841,7 +842,7 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
       deleteAdminCategory: getIt<DeleteAdminCategory>(),
     ),
   );
-    // =========================
+  // =========================
   // ADMIN ORDERS
   // =========================
 
@@ -869,5 +870,13 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
 
   getIt.registerLazySingleton<DeleteAdminOrder>(
     () => DeleteAdminOrder(getIt<AdminOrderRepository>()),
+  );
+  getIt.registerFactory<AdminOrdersCubit>(
+    () => AdminOrdersCubit(
+      getAllAdminOrders: getIt<GetAllAdminOrders>(),
+      getAdminOrder: getIt<GetAdminOrder>(),
+      updateAdminOrder: getIt<UpdateAdminOrder>(),
+      deleteAdminOrder: getIt<DeleteAdminOrder>(),
+    ),
   );
 }

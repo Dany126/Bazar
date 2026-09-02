@@ -4,6 +4,7 @@ import 'package:e_commerce/features/admin/presentation/cubit/admin_dashboard_cub
 import 'package:e_commerce/features/admin/presentation/cubit/admin_dashboard_state.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_navigation_cubit.dart';
 import 'package:e_commerce/features/admin/presentation/views/admin_categories_view.dart';
+import 'package:e_commerce/features/admin/presentation/views/admin_orders_view.dart';
 import 'package:e_commerce/features/admin/presentation/widgets/admin_dashboard_categories.dart';
 import 'package:e_commerce/features/admin/presentation/widgets/admin_dashboard_header.dart';
 import 'package:e_commerce/features/admin/presentation/widgets/admin_dashboard_inventory.dart';
@@ -51,6 +52,7 @@ class _AdminDashboardBody extends StatelessWidget {
     switch (index) {
       case 0:
         return _dashboard(wide, medium);
+
       case 1:
         return const AdminOverviewView();
 
@@ -63,16 +65,20 @@ class _AdminDashboardBody extends StatelessWidget {
       case 4:
         return const AdminCategoriesView();
 
+      // Orders
       case 5:
-        return const AdminWorkspaceView();
+        return const AdminOrdersView();
 
       case 6:
-        return const AdminSettingsView();
+        return const AdminWorkspaceView();
 
       case 7:
-        return const AdminEarningsView();
+        return const AdminSettingsView();
 
       case 8:
+        return const AdminEarningsView();
+
+      case 9:
         return const AdminPayoutsView();
 
       default:

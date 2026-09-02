@@ -1,9 +1,8 @@
 import 'package:e_commerce/core/services/get_it_services.dart';
+import 'package:e_commerce/features/admin/presentation/cubit/admin_orders_cubit.dart';
+import 'package:e_commerce/features/admin/presentation/cubit/admin_orders_state.dart';
 import 'package:e_commerce/features/order/domin/entity/order_entity.dart';
-import 'package:e_commerce/features/order/presenation/modelview/cubit/order_cubit.dart';
-import 'package:e_commerce/features/order/presenation/modelview/cubit/order_state.dart';
 import 'package:e_commerce/features/order/presenation/view/widgets/order_detail_view.dart';
-import 'package:e_commerce/features/order/presenation/view/widgets/order_view_body.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
@@ -14,7 +13,7 @@ class AdminOrdersView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => getIt<OrderCubit>()..getMyOrders(filter: OrderStatus.all),
+      create: (_) => getIt<AdminOrdersCubit>()..loadOrders(),
       child: const _AdminOrdersBody(),
     );
   }
@@ -27,7 +26,7 @@ class _AdminOrdersBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return RefreshIndicator(
       onRefresh: () {
-        return context.read<OrderCubit>().getMyOrders(filter: OrderStatus.all);
+        return context.read<AdminOrdersCubit>().loadOrders();
       },
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -49,27 +48,46 @@ class _AdminOrdersBody extends StatelessWidget {
               ).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade600),
             ),
             const SizedBox(height: 24),
-            BlocBuilder<OrderCubit, OrderState>(
+
+            BlocBuilder<AdminOrdersCubit, AdminOrdersState>(
               builder: (context, state) {
-                if (state is OrderLoading) {
+                if (state is AdminOrdersLoading) {
                   return const Padding(
                     padding: EdgeInsets.symmetric(vertical: 80),
                     child: Center(child: CircularProgressIndicator()),
                   );
                 }
 
-                if (state is OrderError) {
+                if (state is AdminOrdersFailure) {
                   return _ErrorState(
                     message: state.message,
                     onRetry: () {
-                      context.read<OrderCubit>().getMyOrders(
-                        filter: OrderStatus.all,
-                      );
+                      context.read<AdminOrdersCubit>().loadOrders();
                     },
                   );
                 }
 
-                if (state is OrdersLoaded) {
+                if (state is AdminOrdersLoaded) {
+                  if (state.orders.isEmpty) {
+                    return const _EmptyOrders();
+                  }
+
+                  return _OrdersTable(orders: state.orders);
+                }
+
+                if (state is AdminOrdersUpdating) {
+                  return _OrdersTable(orders: state.orders, isUpdating: true);
+                }
+
+                if (state is AdminOrdersUpdated) {
+                  return _OrdersTable(orders: state.orders);
+                }
+
+                if (state is AdminOrdersDeleting) {
+                  return _OrdersTable(orders: state.orders, isDeleting: true);
+                }
+
+                if (state is AdminOrdersDeleted) {
                   if (state.orders.isEmpty) {
                     return const _EmptyOrders();
                   }
@@ -89,8 +107,14 @@ class _AdminOrdersBody extends StatelessWidget {
 
 class _OrdersTable extends StatelessWidget {
   final List<OrderEntity> orders;
+  final bool isUpdating;
+  final bool isDeleting;
 
-  const _OrdersTable({required this.orders});
+  const _OrdersTable({
+    required this.orders,
+    this.isUpdating = false,
+    this.isDeleting = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -145,16 +169,33 @@ class _OrdersTable extends StatelessWidget {
                   ),
                 ),
                 DataCell(
-                  IconButton(
-                    tooltip: 'View order',
-                    icon: const Icon(Icons.visibility_outlined),
-                    onPressed: () {
-                      Navigator.of(context).push(
-                        MaterialPageRoute(
-                          builder: (_) => OrderDetailView(order: order),
-                        ),
-                      );
-                    },
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        tooltip: 'View order',
+                        icon: const Icon(Icons.visibility_outlined),
+                        onPressed: isDeleting
+                            ? null
+                            : () {
+                                Navigator.of(context).push(
+                                  MaterialPageRoute(
+                                    builder: (_) =>
+                                        OrderDetailView(order: order),
+                                  ),
+                                );
+                              },
+                      ),
+                      IconButton(
+                        tooltip: 'Delete order',
+                        icon: const Icon(Icons.delete_outline),
+                        onPressed: isUpdating || isDeleting
+                            ? null
+                            : () {
+                                _showDeleteDialog(context, order);
+                              },
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -171,6 +212,34 @@ class _OrdersTable extends StatelessWidget {
     }
 
     return '${value.substring(0, 6)}...';
+  }
+
+  void _showDeleteDialog(BuildContext context, OrderEntity order) {
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Delete Order'),
+          content: const Text('Are you sure you want to delete this order?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.pop(dialogContext);
+
+                context.read<AdminOrdersCubit>().deleteOrder(orderId: order.id);
+              },
+              child: const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
   }
 }
 

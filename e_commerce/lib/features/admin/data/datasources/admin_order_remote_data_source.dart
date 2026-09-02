@@ -1,4 +1,5 @@
 import 'package:dartz/dartz.dart';
+import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/core/services/api_services.dart';
 
@@ -24,7 +25,7 @@ class AdminOrderRemoteDataSourceImpl implements AdminOrderRemoteDataSource {
 
   @override
   Future<Either<Failure, List<OrderModel>>> getAllOrders() async {
-    final result = await apiService.get('/api/order');
+    final result = await apiService.get('$kBaseUrl/order');
 
     return result.fold((failure) => Left(failure), (response) {
       try {
@@ -45,7 +46,7 @@ class AdminOrderRemoteDataSourceImpl implements AdminOrderRemoteDataSource {
   Future<Either<Failure, OrderModel>> getOrder({
     required String orderId,
   }) async {
-    final result = await apiService.get('/api/order/$orderId');
+    final result = await apiService.get('$kBaseUrl/order/$orderId');
 
     return result.fold((failure) => Left(failure), (response) {
       try {
@@ -63,7 +64,10 @@ class AdminOrderRemoteDataSourceImpl implements AdminOrderRemoteDataSource {
     required String orderId,
     required Map<String, dynamic> data,
   }) async {
-    final result = await apiService.patch('/api/order/$orderId', data: data);
+    final result = await apiService.patch(
+      '$kBaseUrl/order/$orderId',
+      data: data,
+    );
 
     return result.fold((failure) => Left(failure), (response) {
       try {
@@ -78,7 +82,7 @@ class AdminOrderRemoteDataSourceImpl implements AdminOrderRemoteDataSource {
 
   @override
   Future<Either<Failure, Unit>> deleteOrder({required String orderId}) async {
-    final result = await apiService.delete('/api/order/$orderId');
+    final result = await apiService.delete('$kBaseUrl/order/$orderId');
 
     return result.fold((failure) => Left(failure), (_) => const Right(unit));
   }

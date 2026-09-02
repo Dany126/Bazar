@@ -59,6 +59,7 @@ class AdminSidebar extends StatelessWidget {
 
               const _SidebarSection(title: 'MAIN'),
 
+              // 0
               _SidebarItem(
                 icon: Icons.dashboard_rounded,
                 title: 'Dashboard',
@@ -66,6 +67,7 @@ class AdminSidebar extends StatelessWidget {
                 onTap: () => onItemSelected(0),
               ),
 
+              // 1
               _SidebarItem(
                 icon: Icons.pie_chart_rounded,
                 title: 'Overview',
@@ -73,6 +75,7 @@ class AdminSidebar extends StatelessWidget {
                 onTap: () => onItemSelected(1),
               ),
 
+              // 2
               _SidebarItem(
                 icon: Icons.people_alt_rounded,
                 title: 'Customers',
@@ -80,6 +83,7 @@ class AdminSidebar extends StatelessWidget {
                 onTap: () => onItemSelected(2),
               ),
 
+              // 3
               _SidebarItem(
                 icon: Icons.inventory_2_rounded,
                 title: 'Products',
@@ -87,6 +91,7 @@ class AdminSidebar extends StatelessWidget {
                 onTap: () => onItemSelected(3),
               ),
 
+              // 4
               _SidebarItem(
                 icon: Icons.category_rounded,
                 title: 'Categories',
@@ -94,35 +99,48 @@ class AdminSidebar extends StatelessWidget {
                 onTap: () => onItemSelected(4),
               ),
 
+              // 5 - NEW
               _SidebarItem(
-                icon: Icons.work_rounded,
-                title: 'Workspace',
+                icon: Icons.shopping_bag_rounded,
+                title: 'Orders',
                 isActive: selectedIndex == 5,
                 onTap: () => onItemSelected(5),
               ),
 
+              // 6
               _SidebarItem(
-                icon: Icons.settings_rounded,
-                title: 'Settings',
+                icon: Icons.work_rounded,
+                title: 'Workspace',
                 isActive: selectedIndex == 6,
                 onTap: () => onItemSelected(6),
               ),
-              const SizedBox(height: 16),
 
-              const _SidebarSection(title: 'FINANCE'),
-
+              // 7
               _SidebarItem(
-                icon: Icons.account_balance_wallet_rounded,
-                title: 'Earnings',
+                icon: Icons.settings_rounded,
+                title: 'Settings',
                 isActive: selectedIndex == 7,
                 onTap: () => onItemSelected(7),
               ),
 
+              const SizedBox(height: 16),
+
+              const _SidebarSection(title: 'FINANCE'),
+
+              // 8
+              _SidebarItem(
+                icon: Icons.account_balance_wallet_rounded,
+                title: 'Earnings',
+                isActive: selectedIndex == 8,
+                onTap: () => onItemSelected(8),
+              ),
+
+              // 9
               _SidebarItem(
                 icon: Icons.payments_rounded,
                 title: 'Payouts',
-                isActive: selectedIndex == 8,
-                onTap: () => onItemSelected(8),
+                isActive: selectedIndex == 9,
+                onTap: () => onItemSelected(9),
               ),
 
               const SizedBox(height: 24),
