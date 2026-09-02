@@ -6,7 +6,6 @@ import 'package:e_commerce/features/admin/data/repositories/admin_users_reposito
 import 'package:e_commerce/features/admin/domain/repositories/admin_users_repository.dart';
 import 'package:e_commerce/features/admin/domain/usecases/get_admin_users.dart';
 import 'package:get_it/get_it.dart';
-
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/network/dio_error_interceptor.dart';
 import 'package:e_commerce/core/network/network_info.dart';
@@ -17,7 +16,6 @@ import 'package:e_commerce/core/services/api_services.dart';
 // ==========================================================
 // ADDRESS
 // ==========================================================
-
 import 'package:e_commerce/features/address/data/data_source/address_remote_data_source_impl.dart';
 import 'package:e_commerce/features/address/data/repo/address_repo_impl.dart';
 import 'package:e_commerce/features/address/domain/repo/address_repo.dart';
@@ -34,13 +32,11 @@ import 'package:e_commerce/features/address/presentation/model_view/cubit/addres
 // ==========================================================
 // ADMIN
 // ==========================================================
-
 import 'package:e_commerce/features/admin/data/datasources/admin_dashboard_remote_data_source.dart';
 import 'package:e_commerce/features/admin/data/repositories/admin_dashboard_repository_impl.dart';
 import 'package:e_commerce/features/admin/domain/repositories/admin_dashboard_repository.dart';
 import 'package:e_commerce/features/admin/domain/usecases/get_admin_dashboard_data.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_dashboard_cubit.dart';
-
 import 'package:e_commerce/features/admin/data/datasources/admin_product_remote_data_source.dart';
 import 'package:e_commerce/features/admin/data/repositories/admin_product_repository_impl.dart';
 import 'package:e_commerce/features/admin/domain/repositories/admin_product_repository.dart';
@@ -54,7 +50,6 @@ import 'package:e_commerce/features/admin/presentation/cubit/admin_users_cubit.d
 // ==========================================================
 // AUTH
 // ==========================================================
-
 import 'package:e_commerce/features/auth/data/auth_data_source/auth_local_data_source.dart';
 import 'package:e_commerce/features/auth/data/auth_data_source/auth_remote_data_source_impl.dart';
 import 'package:e_commerce/features/auth/data/repo/auth_repo_auth.dart';
@@ -70,7 +65,6 @@ import 'package:e_commerce/features/auth/presentation/view_model/sign_up_cubit/s
 // ==========================================================
 // CART
 // ==========================================================
-
 import 'package:e_commerce/features/cart/data/data_source/remote_data_source_impl.dart';
 import 'package:e_commerce/features/cart/data/repo/cart_repo_impl.dart';
 import 'package:e_commerce/features/cart/domain/data_source/remote_data_source.dart';
@@ -86,13 +80,11 @@ import 'package:e_commerce/features/cart/presentation/cubit/cart_cubit.dart';
 // ==========================================================
 // CHECKOUT
 // ==========================================================
-
 import 'package:e_commerce/features/checkout/presentation/cubit/checkout_cubit.dart';
 
 // ==========================================================
 // HOME
 // ==========================================================
-
 import 'package:e_commerce/features/home/data/datasources/home_remote_data_source.dart';
 import 'package:e_commerce/features/home/data/repo/home_repo_impl.dart';
 import 'package:e_commerce/features/home/domain/repos/home_repo.dart';
@@ -109,7 +101,6 @@ import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/g
 // ==========================================================
 // NOTIFICATION
 // ==========================================================
-
 import 'package:e_commerce/features/notification/data/repo/notification_repository_impl.dart';
 import 'package:e_commerce/features/notification/domain/repo/notification_repository.dart';
 import 'package:e_commerce/features/notification/domain/usecases/delete_notification.dart';
@@ -124,7 +115,6 @@ import 'package:e_commerce/features/notification/presentation/cubit/notification
 // ==========================================================
 // ORDER
 // ==========================================================
-
 import 'package:e_commerce/features/order/data/data_source/remote_data_source/order_remo_data_source_impl.dart';
 import 'package:e_commerce/features/order/data/repo/order_repo_impl.dart';
 import 'package:e_commerce/features/order/domin/data_source/remote_data_source/order_remo_data_source.dart';
@@ -136,7 +126,6 @@ import 'package:e_commerce/features/order/presenation/modelview/cubit/order_cubi
 // ==========================================================
 // PAYMENT
 // ==========================================================
-
 import 'package:e_commerce/features/payment/data/data_source/paymob_remote_data_source.dart';
 import 'package:e_commerce/features/payment/data/repo/paymob_repository_impl.dart';
 import 'package:e_commerce/features/payment/domain/repo/paymob_repository.dart';
@@ -145,7 +134,6 @@ import 'package:e_commerce/features/payment/domain/use_case/create_paymob_paymen
 // ==========================================================
 // PAYMENT METHOD
 // ==========================================================
-
 import 'package:e_commerce/features/payment_method/data/data_source/payment_local_data_source_impl.dart';
 import 'package:e_commerce/features/payment_method/data/repo/payment_method_repo_impl.dart';
 import 'package:e_commerce/features/payment_method/domain/repo/payment_repo.dart';
@@ -157,7 +145,6 @@ import 'package:e_commerce/features/payment_method/presentation/model_view/cubit
 // ==========================================================
 // PRODUCT DETAILS
 // ==========================================================
-
 import 'package:e_commerce/features/product_details/data/data_source/remote_data_source_impl.dart';
 import 'package:e_commerce/features/product_details/data/data_source/review_remote_data_source.dart';
 import 'package:e_commerce/features/product_details/data/repo/product_details_repo_impl.dart';
@@ -173,7 +160,6 @@ import 'package:e_commerce/features/product_details/presentation/model_view/revi
 // ==========================================================
 // SEARCH
 // ==========================================================
-
 import 'package:e_commerce/features/search/data/data_source/search_remote_data_impl.dart';
 import 'package:e_commerce/features/search/data/repo/search_repo_impl.dart';
 import 'package:e_commerce/features/search/domain/data_source/search_remote_data.dart';
@@ -185,17 +171,9 @@ final getIt = GetIt.instance;
 
 Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
   // ==========================================================
-  // IMPORTANT
+  // RESET
   // ==========================================================
-  //
-  // DO NOT call getIt.reset() here.
-  //
-  // reset() deletes all registered factories/singletons.
-  // If setupServiceLocator() is called twice, the old version
-  // could erase registrations and cause:
-  //
-  // Bad state: GetIt ... is not registered
-  //
+
   await getIt.reset();
 
   // ==========================================================
@@ -220,9 +198,6 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
         baseUrl: kBaseUrl,
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 15),
-
-        // Removed sendTimeout because it causes the Web warning:
-        // "sendTimeout cannot be used without a request body to send on Web"
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
@@ -501,30 +476,6 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
     () => OrderCubit(
       createOrderUseCase: getIt<CreateOrderUseCase>(),
       getOrdersUseCase: getIt<GetOrdersUseCase>(),
-    ),
-  );
-
-  // ==========================================================
-  // ADMIN DASHBOARD
-  // ==========================================================
-
-  getIt.registerLazySingleton<AdminDashboardRemoteDataSource>(
-    () => AdminDashboardRemoteDataSourceImpl(apiService: getIt<ApiService>()),
-  );
-
-  getIt.registerLazySingleton<AdminDashboardRepository>(
-    () => AdminDashboardRepositoryImpl(
-      remoteDataSource: getIt<AdminDashboardRemoteDataSource>(),
-    ),
-  );
-
-  getIt.registerLazySingleton<GetAdminDashboardDataUseCase>(
-    () => GetAdminDashboardDataUseCase(getIt<AdminDashboardRepository>()),
-  );
-
-  getIt.registerFactory<AdminDashboardCubit>(
-    () => AdminDashboardCubit(
-      getAdminDashboardDataUseCase: getIt<GetAdminDashboardDataUseCase>(),
     ),
   );
 
