@@ -86,19 +86,31 @@ class AdminSidebar extends StatelessWidget {
                 isActive: selectedIndex == 3,
                 onTap: () => onItemSelected(3),
               ),
-
               _SidebarItem(
-                icon: Icons.work_rounded,
-                title: 'Workspace',
+                icon: Icons.shopping_bag_rounded,
+                title: 'Categories',
+                isActive: selectedIndex == 4,
+                onTap: () => onItemSelected(4),
+              ),
+              _SidebarItem(
+                icon: Icons.shopping_bag_rounded,
+                title: 'Orders',
                 isActive: selectedIndex == 4,
                 onTap: () => onItemSelected(4),
               ),
 
               _SidebarItem(
-                icon: Icons.settings_rounded,
-                title: 'Settings',
+                icon: Icons.work_rounded,
+                title: 'Workspace',
                 isActive: selectedIndex == 5,
                 onTap: () => onItemSelected(5),
+              ),
+
+              _SidebarItem(
+                icon: Icons.settings_rounded,
+                title: 'Settings',
+                isActive: selectedIndex == 6,
+                onTap: () => onItemSelected(6),
               ),
 
               const SizedBox(height: 16),
@@ -108,15 +120,15 @@ class AdminSidebar extends StatelessWidget {
               _SidebarItem(
                 icon: Icons.account_balance_wallet_rounded,
                 title: 'Earnings',
-                isActive: selectedIndex == 6,
-                onTap: () => onItemSelected(6),
+                isActive: selectedIndex == 7,
+                onTap: () => onItemSelected(7),
               ),
 
               _SidebarItem(
                 icon: Icons.payments_rounded,
                 title: 'Payouts',
-                isActive: selectedIndex == 7,
-                onTap: () => onItemSelected(7),
+                isActive: selectedIndex == 8,
+                onTap: () => onItemSelected(8),
               ),
 
               const SizedBox(height: 24),
