@@ -33,7 +33,12 @@ class ApiErrorHandler {
 
       case DioExceptionType.unknown:
         return UnknownFailure(
-          message: error.message ?? 'An unexpected error occurred.',
+          message: [
+            if (error.message != null) 'message: ${error.message}',
+            if (error.error != null) 'error: ${error.error}',
+            'type: ${error.type}',
+            'uri: ${error.requestOptions.uri}',
+          ].join('\n'),
         );
       case DioExceptionType.transformTimeout:
         return const TimeoutFailure();
