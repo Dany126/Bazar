@@ -12,14 +12,37 @@ class AdminDashboardCategories extends StatelessWidget {
       title: 'Top categories',
       child: categories.isEmpty
           ? const SizedBox(height: 120, child: Center(child: Text('No data')))
-          : Column(children: categories.map((entry) => Padding(
-              padding: const EdgeInsets.only(bottom: 16),
-              child: Column(children: [
-                Row(children: [Expanded(child: Text(entry.name)), Text('${entry.percent.toStringAsFixed(0)}%')]),
-                const SizedBox(height: 8),
-                ClipRRect(borderRadius: BorderRadius.circular(999), child: LinearProgressIndicator(value: (entry.percent / 100).clamp(0, 1), minHeight: 8, backgroundColor: const Color(0xFFF0F0F5), valueColor: const AlwaysStoppedAnimation(AppColors.kPrimaryColor))),
-              ]),
-            )).toList()),
+          : Column(
+              children: categories
+                  .map(
+                    (entry) => Padding(
+                      padding: const EdgeInsets.only(bottom: 16),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              Expanded(child: Text(entry.name)),
+                              Text('${entry.percent.toStringAsFixed(0)}%'),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(999),
+                            child: LinearProgressIndicator(
+                              value: (entry.percent / 100).clamp(0, 1),
+                              minHeight: 8,
+                              backgroundColor: const Color(0xFFF0F0F5),
+                              valueColor: const AlwaysStoppedAnimation(
+                                AppColors.kPrimaryColor,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  )
+                  .toList(),
+            ),
     );
   }
 }

@@ -168,7 +168,13 @@ import 'package:e_commerce/features/search/domain/use_case/search_products_use_c
 import 'package:e_commerce/features/search/presentation/cubit/search_cubit.dart';
 
 // ==========================================================
-
+import 'package:e_commerce/features/admin/data/datasources/admin_category_remote_data_source.dart';
+import 'package:e_commerce/features/admin/data/repositories/admin_category_repository_impl.dart';
+import 'package:e_commerce/features/admin/domain/repositories/admin_category_repository.dart';
+import 'package:e_commerce/features/admin/domain/usecases/create_admin_category.dart';
+import 'package:e_commerce/features/admin/domain/usecases/delete_admin_category.dart';
+import 'package:e_commerce/features/admin/presentation/cubit/admin_categories_cubit.dart';
+// ==========================================================
 import 'package:dio/browser.dart';
 import 'package:flutter/foundation.dart';
 
@@ -801,5 +807,29 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
 
   getIt.registerFactory<AdminUsersCubit>(
     () => AdminUsersCubit(useCase: getIt<GetAdminUsersUseCase>()),
+  );
+  getIt.registerLazySingleton<AdminCategoryRemoteDataSource>(
+    () => AdminCategoryRemoteDataSourceImpl(apiService: getIt<ApiService>()),
+  );
+
+  getIt.registerLazySingleton<AdminCategoryRepository>(
+    () => AdminCategoryRepositoryImpl(
+      remoteDataSource: getIt<AdminCategoryRemoteDataSource>(),
+    ),
+  );
+
+  getIt.registerLazySingleton<CreateAdminCategory>(
+    () => CreateAdminCategory(getIt<AdminCategoryRepository>()),
+  );
+
+  getIt.registerLazySingleton<DeleteAdminCategory>(
+    () => DeleteAdminCategory(getIt<AdminCategoryRepository>()),
+  );
+
+  getIt.registerFactory<AdminCategoriesCubit>(
+    () => AdminCategoriesCubit(
+      createAdminCategory: getIt<CreateAdminCategory>(),
+      deleteAdminCategory: getIt<DeleteAdminCategory>(),
+    ),
   );
 }
