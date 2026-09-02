@@ -86,15 +86,10 @@ class AdminSidebar extends StatelessWidget {
                 isActive: selectedIndex == 3,
                 onTap: () => onItemSelected(3),
               ),
+
               _SidebarItem(
-                icon: Icons.shopping_bag_rounded,
+                icon: Icons.category_rounded,
                 title: 'Categories',
-                isActive: selectedIndex == 4,
-                onTap: () => onItemSelected(4),
-              ),
-              _SidebarItem(
-                icon: Icons.shopping_bag_rounded,
-                title: 'Orders',
                 isActive: selectedIndex == 4,
                 onTap: () => onItemSelected(4),
               ),
@@ -112,7 +107,6 @@ class AdminSidebar extends StatelessWidget {
                 isActive: selectedIndex == 6,
                 onTap: () => onItemSelected(6),
               ),
-
               const SizedBox(height: 16),
 
               const _SidebarSection(title: 'FINANCE'),
