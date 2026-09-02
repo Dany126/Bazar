@@ -175,6 +175,15 @@ import 'package:e_commerce/features/admin/domain/usecases/create_admin_category.
 import 'package:e_commerce/features/admin/domain/usecases/delete_admin_category.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_categories_cubit.dart';
 // ==========================================================
+import 'package:e_commerce/features/admin/data/datasources/admin_order_remote_data_source.dart';
+import 'package:e_commerce/features/admin/data/repositories/admin_order_repository_impl.dart';
+import 'package:e_commerce/features/admin/domain/repositories/admin_order_repository.dart';
+import 'package:e_commerce/features/admin/domain/usecases/delete_admin_order.dart';
+import 'package:e_commerce/features/admin/domain/usecases/get_admin_order.dart';
+import 'package:e_commerce/features/admin/domain/usecases/get_all_admin_orders.dart';
+import 'package:e_commerce/features/admin/domain/usecases/update_admin_order.dart';
+// ==========================================================
+// ==========================================================
 import 'package:dio/browser.dart';
 import 'package:flutter/foundation.dart';
 
@@ -831,5 +840,34 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
       createAdminCategory: getIt<CreateAdminCategory>(),
       deleteAdminCategory: getIt<DeleteAdminCategory>(),
     ),
+  );
+    // =========================
+  // ADMIN ORDERS
+  // =========================
+
+  getIt.registerLazySingleton<AdminOrderRemoteDataSource>(
+    () => AdminOrderRemoteDataSourceImpl(apiService: getIt<ApiService>()),
+  );
+
+  getIt.registerLazySingleton<AdminOrderRepository>(
+    () => AdminOrderRepositoryImpl(
+      remoteDataSource: getIt<AdminOrderRemoteDataSource>(),
+    ),
+  );
+
+  getIt.registerLazySingleton<GetAllAdminOrders>(
+    () => GetAllAdminOrders(getIt<AdminOrderRepository>()),
+  );
+
+  getIt.registerLazySingleton<GetAdminOrder>(
+    () => GetAdminOrder(getIt<AdminOrderRepository>()),
+  );
+
+  getIt.registerLazySingleton<UpdateAdminOrder>(
+    () => UpdateAdminOrder(getIt<AdminOrderRepository>()),
+  );
+
+  getIt.registerLazySingleton<DeleteAdminOrder>(
+    () => DeleteAdminOrder(getIt<AdminOrderRepository>()),
   );
 }
