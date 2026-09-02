@@ -1,5 +1,4 @@
 import 'package:e_commerce/core/utils/app_styles.dart';
-
 import 'package:e_commerce/features/order/domin/entity/order_entity.dart';
 import 'package:e_commerce/features/order/data/model/time_line_step_model_data.dart';
 import 'package:e_commerce/features/order/presenation/view/widgets/cancelled_order_card.dart';
@@ -21,13 +20,12 @@ class OrderDetailView extends StatelessWidget {
       'placed',
       'confirmed',
       'shipped',
-      'delivered'
-          'cancelled',
+      'delivered',
+      'cancelled',
     ];
 
     int currentIndex = statusOrder.indexOf(order.orderStatus);
 
-    // Cancelled orders should not continue the normal delivery timeline.
     if (currentIndex == -1) {
       currentIndex = 0;
     }
@@ -51,23 +49,31 @@ class OrderDetailView extends StatelessWidget {
     final dateLabel = order.createdAt != null
         ? DateFormat('d MMM').format(order.createdAt!)
         : '—';
+
     final isCancelled = order.orderStatus == 'cancelled';
 
     return Scaffold(
       backgroundColor: Colors.white,
+
       appBar: AppBar(
         backgroundColor: Colors.white,
         elevation: 0,
         centerTitle: true,
+
         title: Text(
           'Order #${order.id}',
+          overflow: TextOverflow.ellipsis,
           style: AppStyles.textStylesBold22Mono(
             context,
           ).copyWith(color: Colors.black),
         ),
-        leadingWidth: MediaQuery.of(context).size.width * 0.18,
+
+        // Don't use 18% of the screen for the leading widget.
+        // It can create bad spacing/overflow on responsive layouts.
+        leadingWidth: 56,
+
         leading: Padding(
-          padding: const EdgeInsets.only(left: 0),
+          padding: const EdgeInsets.only(left: 8),
           child: Material(
             color: const Color(0xFFF2F2F5),
             shape: const CircleBorder(),
@@ -84,88 +90,148 @@ class OrderDetailView extends StatelessWidget {
           ),
         ),
       ),
+
       body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: SingleChildScrollView(
-            physics: const BouncingScrollPhysics(),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const SizedBox(height: 8),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth;
 
-                // Header
-                const SizedBox(height: 24),
+            final isDesktop = width >= 900;
 
-                // Cancelled order
-                if (isCancelled) ...[
-                  CancelledOrderCard(),
-                  const SizedBox(height: 20),
-                ] else ...[
-                  // Order Timeline
-                  ..._steps.asMap().entries.map((entry) {
-                    final index = entry.key;
-                    final step = entry.value;
+            final contentWidth = isDesktop ? width * 0.5 : width;
 
-                    return TimelineTile(
-                      label: step.label,
-                      dateLabel: dateLabel,
-                      completed: step.completed,
-                      isFirst: index == 0,
-                      isLast: index == _steps.length - 1,
-                    );
-                  }),
-                ],
+            final horizontalPadding = width < 500
+                ? 12.0
+                : width < 900
+                ? 20.0
+                : 0.0;
 
-                const SizedBox(height: 8),
+            return Center(
+              child: SizedBox(
+                width: contentWidth,
+                child: SingleChildScrollView(
+                  physics: const BouncingScrollPhysics(),
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(
+                      horizontal: horizontalPadding,
+                      vertical: 8,
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 16),
 
-                // Order Items
-                Text(
-                  'Order Items',
-                  style: AppStyles.textStylesBold16Mono(
-                    context,
-                  ).copyWith(color: Colors.black),
+                        // =====================================================
+                        // ORDER STATUS
+                        // =====================================================
+                        if (isCancelled) ...[
+                          SizedBox(
+                            width: double.infinity,
+                            child: CancelledOrderCard(),
+                          ),
+
+                          const SizedBox(height: 20),
+                        ] else ...[
+                          SizedBox(
+                            width: double.infinity,
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                ..._steps.asMap().entries.map((entry) {
+                                  final index = entry.key;
+                                  final step = entry.value;
+
+                                  return SizedBox(
+                                    width: double.infinity,
+                                    child: TimelineTile(
+                                      label: step.label,
+                                      dateLabel: dateLabel,
+                                      completed: step.completed,
+                                      isFirst: index == 0,
+                                      isLast: index == _steps.length - 1,
+                                    ),
+                                  );
+                                }),
+                              ],
+                            ),
+                          ),
+                        ],
+
+                        const SizedBox(height: 16),
+
+                        // =====================================================
+                        // ORDER ITEMS
+                        // =====================================================
+                        Text(
+                          'Order Items',
+                          style: AppStyles.textStylesBold16Mono(
+                            context,
+                          ).copyWith(color: Colors.black),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        SizedBox(
+                          width: double.infinity,
+                          child: OrderItemsCard(order: order),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // =====================================================
+                        // SHIPPING DETAILS
+                        // =====================================================
+                        Text(
+                          'Shipping details',
+                          style: AppStyles.textStylesBold16Mono(
+                            context,
+                          ).copyWith(color: Colors.black),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        SizedBox(
+                          width: double.infinity,
+                          child: ShippingDetails(order: order),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // =====================================================
+                        // PAYMENT DETAILS
+                        // =====================================================
+                        Text(
+                          'Payment details',
+                          style: AppStyles.textStylesBold16Mono(
+                            context,
+                          ).copyWith(color: Colors.black),
+                        ),
+
+                        const SizedBox(height: 12),
+
+                        SizedBox(
+                          width: double.infinity,
+                          child: PaymentDetails(order: order),
+                        ),
+
+                        const SizedBox(height: 20),
+
+                        // =====================================================
+                        // TOTAL
+                        // =====================================================
+                        SizedBox(
+                          width: double.infinity,
+                          child: TotalPrice(totalPrice: order.totalPrice),
+                        ),
+
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ),
                 ),
-
-                const SizedBox(height: 12),
-
-                OrderItemsCard(order: order),
-
-                const SizedBox(height: 20),
-
-                // Shipping Details
-                Text(
-                  'Shipping details',
-                  style: AppStyles.textStylesBold16Mono(
-                    context,
-                  ).copyWith(color: Colors.black),
-                ),
-
-                const SizedBox(height: 12),
-
-                ShippingDetails(order: order),
-
-                const SizedBox(height: 20),
-
-                // Payment Details
-                Text(
-                  'Payment details',
-                  style: AppStyles.textStylesBold16Mono(
-                    context,
-                  ).copyWith(color: Colors.black),
-                ),
-
-                const SizedBox(height: 12),
-
-                PaymentDetails(order: order),
-
-                const SizedBox(height: 20),
-
-                // Total
-                TotalPrice(totalPrice: order.totalPrice),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );

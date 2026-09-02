@@ -12,12 +12,14 @@ class AdminSidebar extends StatelessWidget {
   final ValueChanged<int> onItemSelected;
 
   @override
+  @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       width: 250,
-      color: Colors.white,
-      child: SafeArea(
-        child: SingleChildScrollView(
+      height: double.infinity,
+      child: Container(
+        color: Colors.white,
+        child: SafeArea(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
@@ -44,7 +46,7 @@ class AdminSidebar extends StatelessWidget {
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'Marketplace',
+                        'Bazar',
                         overflow: TextOverflow.ellipsis,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           fontWeight: FontWeight.w700,
@@ -57,93 +59,93 @@ class AdminSidebar extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              const _SidebarSection(title: 'MAIN'),
+              // Navigation takes the remaining height
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const _SidebarSection(title: 'MAIN'),
 
-              // 0
-              _SidebarItem(
-                icon: Icons.dashboard_rounded,
-                title: 'Dashboard',
-                isActive: selectedIndex == 0,
-                onTap: () => onItemSelected(0),
+                      _SidebarItem(
+                        icon: Icons.dashboard_rounded,
+                        title: 'Dashboard',
+                        isActive: selectedIndex == 0,
+                        onTap: () => onItemSelected(0),
+                      ),
+
+                      _SidebarItem(
+                        icon: Icons.pie_chart_rounded,
+                        title: 'Overview',
+                        isActive: selectedIndex == 1,
+                        onTap: () => onItemSelected(1),
+                      ),
+
+                      _SidebarItem(
+                        icon: Icons.people_alt_rounded,
+                        title: 'Customers',
+                        isActive: selectedIndex == 2,
+                        onTap: () => onItemSelected(2),
+                      ),
+
+                      _SidebarItem(
+                        icon: Icons.inventory_2_rounded,
+                        title: 'Products',
+                        isActive: selectedIndex == 3,
+                        onTap: () => onItemSelected(3),
+                      ),
+
+                      _SidebarItem(
+                        icon: Icons.category_rounded,
+                        title: 'Categories',
+                        isActive: selectedIndex == 4,
+                        onTap: () => onItemSelected(4),
+                      ),
+
+                      _SidebarItem(
+                        icon: Icons.shopping_bag_rounded,
+                        title: 'Orders',
+                        isActive: selectedIndex == 5,
+                        onTap: () => onItemSelected(5),
+                      ),
+
+                      _SidebarItem(
+                        icon: Icons.work_rounded,
+                        title: 'Workspace',
+                        isActive: selectedIndex == 6,
+                        onTap: () => onItemSelected(6),
+                      ),
+
+                      _SidebarItem(
+                        icon: Icons.settings_rounded,
+                        title: 'Settings',
+                        isActive: selectedIndex == 7,
+                        onTap: () => onItemSelected(7),
+                      ),
+
+                      const SizedBox(height: 16),
+
+                      const _SidebarSection(title: 'FINANCE'),
+
+                      _SidebarItem(
+                        icon: Icons.account_balance_wallet_rounded,
+                        title: 'Earnings',
+                        isActive: selectedIndex == 8,
+                        onTap: () => onItemSelected(8),
+                      ),
+
+                      _SidebarItem(
+                        icon: Icons.payments_rounded,
+                        title: 'Payouts',
+                        isActive: selectedIndex == 9,
+                        onTap: () => onItemSelected(9),
+                      ),
+
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
               ),
-
-              // 1
-              _SidebarItem(
-                icon: Icons.pie_chart_rounded,
-                title: 'Overview',
-                isActive: selectedIndex == 1,
-                onTap: () => onItemSelected(1),
-              ),
-
-              // 2
-              _SidebarItem(
-                icon: Icons.people_alt_rounded,
-                title: 'Customers',
-                isActive: selectedIndex == 2,
-                onTap: () => onItemSelected(2),
-              ),
-
-              // 3
-              _SidebarItem(
-                icon: Icons.inventory_2_rounded,
-                title: 'Products',
-                isActive: selectedIndex == 3,
-                onTap: () => onItemSelected(3),
-              ),
-
-              // 4
-              _SidebarItem(
-                icon: Icons.category_rounded,
-                title: 'Categories',
-                isActive: selectedIndex == 4,
-                onTap: () => onItemSelected(4),
-              ),
-
-              // 5 - NEW
-              _SidebarItem(
-                icon: Icons.shopping_bag_rounded,
-                title: 'Orders',
-                isActive: selectedIndex == 5,
-                onTap: () => onItemSelected(5),
-              ),
-
-              // 6
-              _SidebarItem(
-                icon: Icons.work_rounded,
-                title: 'Workspace',
-                isActive: selectedIndex == 6,
-                onTap: () => onItemSelected(6),
-              ),
-
-              // 7
-              _SidebarItem(
-                icon: Icons.settings_rounded,
-                title: 'Settings',
-                isActive: selectedIndex == 7,
-                onTap: () => onItemSelected(7),
-              ),
-
-              const SizedBox(height: 16),
-
-              const _SidebarSection(title: 'FINANCE'),
-
-              // 8
-              _SidebarItem(
-                icon: Icons.account_balance_wallet_rounded,
-                title: 'Earnings',
-                isActive: selectedIndex == 8,
-                onTap: () => onItemSelected(8),
-              ),
-
-              // 9
-              _SidebarItem(
-                icon: Icons.payments_rounded,
-                title: 'Payouts',
-                isActive: selectedIndex == 9,
-                onTap: () => onItemSelected(9),
-              ),
-
-              const SizedBox(height: 24),
             ],
           ),
         ),

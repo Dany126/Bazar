@@ -65,7 +65,6 @@ class _AdminDashboardBody extends StatelessWidget {
       case 4:
         return const AdminCategoriesView();
 
-      // Orders
       case 5:
         return const AdminOrdersView();
 
@@ -205,22 +204,30 @@ class _AdminDashboardBody extends StatelessWidget {
         final wide = constraints.maxWidth >= 1100;
         final medium = constraints.maxWidth >= 760;
         final sidebarVisible = constraints.maxWidth >= 900;
+
         return BlocBuilder<AdminNavigationCubit, int>(
           builder: (context, index) {
             final sidebar = AdminSidebar(
               selectedIndex: index,
               onItemSelected: (i) {
                 context.read<AdminNavigationCubit>().updateIndex(i);
-                if (!sidebarVisible) Navigator.of(context).pop();
+
+                if (!sidebarVisible) {
+                  Navigator.of(context).pop();
+                }
               },
             );
+
             return Scaffold(
               backgroundColor: const Color(0xFFF3F5F9),
               drawer: sidebarVisible ? null : Drawer(child: sidebar),
+
               body: SafeArea(
                 child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
                     if (sidebarVisible) sidebar,
+
                     Expanded(child: _content(index, wide, medium)),
                   ],
                 ),
