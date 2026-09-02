@@ -1,11 +1,10 @@
+import 'package:e_commerce/features/order/domin/entity/order_entity.dart';
+import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:e_commerce/core/services/get_it_services.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_orders_cubit.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_orders_state.dart';
-import 'package:e_commerce/features/order/domin/entity/order_entity.dart';
-import 'package:e_commerce/features/order/presenation/view/widgets/order_detail_view.dart';
-import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
+
 
 class AdminOrdersView extends StatelessWidget {
   const AdminOrdersView({super.key});
@@ -19,220 +18,300 @@ class AdminOrdersView extends StatelessWidget {
   }
 }
 
-class _AdminOrdersBody extends StatelessWidget {
+class _AdminOrdersBody extends StatefulWidget {
   const _AdminOrdersBody();
 
   @override
+  State<_AdminOrdersBody> createState() => _AdminOrdersBodyState();
+}
+
+class _AdminOrdersBodyState extends State<_AdminOrdersBody> {
+  final TextEditingController _searchController = TextEditingController();
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return RefreshIndicator(
-      onRefresh: () {
-        return context.read<AdminOrdersCubit>().loadOrders();
+    return BlocListener<AdminOrdersCubit, AdminOrdersState>(
+      listener: (context, state) {
+        if (state is AdminOrdersError) {
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(state.message)));
+        }
       },
-      child: SingleChildScrollView(
-        physics: const AlwaysScrollableScrollPhysics(),
+      child: Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              'Orders',
-              style: Theme.of(
-                context,
-              ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'All customer orders',
-              style: Theme.of(
-                context,
-              ).textTheme.bodyLarge?.copyWith(color: Colors.grey.shade600),
-            ),
+            _buildHeader(),
             const SizedBox(height: 24),
-
-            BlocBuilder<AdminOrdersCubit, AdminOrdersState>(
-              builder: (context, state) {
-                if (state is AdminOrdersLoading) {
-                  return const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 80),
-                    child: Center(child: CircularProgressIndicator()),
-                  );
-                }
-
-                if (state is AdminOrdersFailure) {
-                  return _ErrorState(
-                    message: state.message,
-                    onRetry: () {
-                      context.read<AdminOrdersCubit>().loadOrders();
-                    },
-                  );
-                }
-
-                if (state is AdminOrdersLoaded) {
-                  if (state.orders.isEmpty) {
-                    return const _EmptyOrders();
-                  }
-
-                  return _OrdersTable(orders: state.orders);
-                }
-
-                if (state is AdminOrdersUpdating) {
-                  return _OrdersTable(orders: state.orders, isUpdating: true);
-                }
-
-                if (state is AdminOrdersUpdated) {
-                  return _OrdersTable(orders: state.orders);
-                }
-
-                if (state is AdminOrdersDeleting) {
-                  return _OrdersTable(orders: state.orders, isDeleting: true);
-                }
-
-                if (state is AdminOrdersDeleted) {
-                  if (state.orders.isEmpty) {
-                    return const _EmptyOrders();
-                  }
-
-                  return _OrdersTable(orders: state.orders);
-                }
-
-                return const SizedBox.shrink();
-              },
-            ),
+            _buildSearch(),
+            const SizedBox(height: 24),
+            const Expanded(child: _OrdersContent()),
           ],
         ),
       ),
     );
   }
+
+  Widget _buildHeader() {
+    return const Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Orders',
+          style: TextStyle(fontSize: 28, fontWeight: FontWeight.bold),
+        ),
+        SizedBox(height: 6),
+        Text(
+          'Manage customer orders and update their status.',
+          style: TextStyle(color: Colors.grey, fontSize: 14),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSearch() {
+    return TextField(
+      controller: _searchController,
+      onChanged: context.read<AdminOrdersCubit>().searchOrders,
+      decoration: InputDecoration(
+        hintText: 'Search orders...',
+        prefixIcon: const Icon(Icons.search),
+        suffixIcon: _searchController.text.isEmpty
+            ? null
+            : IconButton(
+                icon: const Icon(Icons.clear),
+                onPressed: () {
+                  _searchController.clear();
+                  context.read<AdminOrdersCubit>().clearSearch();
+
+                  setState(() {});
+                },
+              ),
+        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+      ),
+    );
+  }
 }
 
-class _OrdersTable extends StatelessWidget {
-  final List<OrderEntity> orders;
+class _OrdersContent extends StatelessWidget {
+  const _OrdersContent();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<AdminOrdersCubit, AdminOrdersState>(
+      builder: (context, state) {
+        if (state is AdminOrdersLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (state is AdminOrdersError) {
+          return _ErrorView(message: state.message);
+        }
+
+        if (state is AdminOrdersLoaded) {
+          if (state.filteredOrders.isEmpty) {
+            return const _EmptyView();
+          }
+
+          return RefreshIndicator(
+            onRefresh: context.read<AdminOrdersCubit>().loadOrders,
+            child: ListView.separated(
+              physics: const AlwaysScrollableScrollPhysics(),
+              itemCount: state.filteredOrders.length,
+              separatorBuilder: (_, __) => const SizedBox(height: 12),
+              itemBuilder: (context, index) {
+                final order = state.filteredOrders[index];
+
+                return _OrderCard(
+                  order: order,
+                  isUpdating: state.updatingOrderId == order.id,
+                  isDeleting: state.deletingOrderId == order.id,
+                );
+              },
+            ),
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
+    );
+  }
+}
+
+class _OrderCard extends StatelessWidget {
+  final OrderEntity order;
   final bool isUpdating;
   final bool isDeleting;
 
-  const _OrdersTable({
-    required this.orders,
-    this.isUpdating = false,
-    this.isDeleting = false,
+  const _OrderCard({
+    required this.order,
+    required this.isUpdating,
+    required this.isDeleting,
   });
 
   @override
   Widget build(BuildContext context) {
     return Card(
       elevation: 0,
-      clipBehavior: Clip.antiAlias,
-      child: SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: DataTable(
-          columnSpacing: 32,
-          headingRowHeight: 56,
-          dataRowMinHeight: 64,
-          dataRowMaxHeight: 72,
-          columns: const [
-            DataColumn(label: Text('Order')),
-            DataColumn(label: Text('Customer')),
-            DataColumn(label: Text('Total')),
-            DataColumn(label: Text('Payment')),
-            DataColumn(label: Text('Status')),
-            DataColumn(label: Text('Date')),
-            DataColumn(label: Text('')),
-          ],
-          rows: orders.map((order) {
-            return DataRow(
-              cells: [
-                DataCell(
-                  SizedBox(
-                    width: 120,
-                    child: Text(
-                      _shortId(order.id),
-                      overflow: TextOverflow.ellipsis,
-                    ),
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: BorderSide(color: Colors.grey.shade200),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(18),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final isSmall = constraints.maxWidth < 700;
+
+            if (isSmall) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  _OrderInformation(order: order),
+                  const SizedBox(height: 16),
+                  _OrderActions(
+                    order: order,
+                    isUpdating: isUpdating,
+                    isDeleting: isDeleting,
                   ),
-                ),
-                DataCell(
-                  SizedBox(
-                    width: 130,
-                    child: Text(
-                      _shortId(order.user),
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
-                ),
-                DataCell(Text('${order.totalPrice.toStringAsFixed(2)} EGP')),
-                DataCell(_StatusChip(text: order.paymentStatus)),
-                DataCell(_StatusChip(text: order.orderStatus)),
-                DataCell(
-                  Text(
-                    order.createdAt == null
-                        ? '-'
-                        : DateFormat('dd MMM yyyy').format(order.createdAt!),
-                  ),
-                ),
-                DataCell(
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      IconButton(
-                        tooltip: 'View order',
-                        icon: const Icon(Icons.visibility_outlined),
-                        onPressed: isDeleting
-                            ? null
-                            : () {
-                                Navigator.of(context).push(
-                                  MaterialPageRoute(
-                                    builder: (_) =>
-                                        OrderDetailView(order: order),
-                                  ),
-                                );
-                              },
-                      ),
-                      IconButton(
-                        tooltip: 'Delete order',
-                        icon: const Icon(Icons.delete_outline),
-                        onPressed: isUpdating || isDeleting
-                            ? null
-                            : () {
-                                _showDeleteDialog(context, order);
-                              },
-                      ),
-                    ],
-                  ),
+                ],
+              );
+            }
+
+            return Row(
+              children: [
+                Expanded(child: _OrderInformation(order: order)),
+                const SizedBox(width: 24),
+                _OrderActions(
+                  order: order,
+                  isUpdating: isUpdating,
+                  isDeleting: isDeleting,
                 ),
               ],
             );
-          }).toList(),
+          },
         ),
       ),
     );
   }
+}
 
-  String _shortId(String value) {
-    if (value.length <= 10) {
-      return value;
-    }
+class _OrderInformation extends StatelessWidget {
+  final OrderEntity order;
 
-    return '${value.substring(0, 6)}...';
+  const _OrderInformation({required this.order});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Order #${order.id}',
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+        ),
+        const SizedBox(height: 10),
+        Wrap(
+          spacing: 20,
+          runSpacing: 8,
+          children: [
+            _InfoItem(label: 'Total', value: '${order.totalPrice}'),
+            _InfoItem(label: 'Payment', value: order.paymentStatus),
+            _InfoItem(label: 'Status', value: order.orderStatus),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _InfoItem extends StatelessWidget {
+  final String label;
+  final String value;
+
+  const _InfoItem({required this.label, required this.value});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(label, style: const TextStyle(fontSize: 12, color: Colors.grey)),
+        const SizedBox(height: 3),
+        Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
+      ],
+    );
+  }
+}
+
+class _OrderActions extends StatelessWidget {
+  final OrderEntity order;
+  final bool isUpdating;
+  final bool isDeleting;
+
+  const _OrderActions({
+    required this.order,
+    required this.isUpdating,
+    required this.isDeleting,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        if (isUpdating)
+          const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        else
+          _StatusDropdown(order: order),
+        const SizedBox(width: 8),
+        if (isDeleting)
+          const SizedBox(
+            width: 24,
+            height: 24,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
+        else
+          IconButton(
+            tooltip: 'Delete order',
+            icon: const Icon(Icons.delete_outline),
+            onPressed: () => _confirmDelete(context),
+          ),
+      ],
+    );
   }
 
-  void _showDeleteDialog(BuildContext context, OrderEntity order) {
-    showDialog(
+  Future<void> _confirmDelete(BuildContext context) async {
+    final shouldDelete = await showDialog<bool>(
       context: context,
       builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Delete Order'),
-          content: const Text('Are you sure you want to delete this order?'),
+          title: const Text('Delete order?'),
+          content: Text('Are you sure you want to delete order #${order.id}?'),
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(dialogContext);
+                Navigator.pop(dialogContext, false);
               },
               child: const Text('Cancel'),
             ),
-            ElevatedButton(
+            FilledButton(
               onPressed: () {
-                Navigator.pop(dialogContext);
-
-                context.read<AdminOrdersCubit>().deleteOrder(orderId: order.id);
+                Navigator.pop(dialogContext, true);
               },
               child: const Text('Delete'),
             ),
@@ -240,75 +319,115 @@ class _OrdersTable extends StatelessWidget {
         );
       },
     );
+
+    if (shouldDelete != true || !context.mounted) {
+      return;
+    }
+
+    await context.read<AdminOrdersCubit>().deleteOrder(order.id);
   }
 }
 
-class _StatusChip extends StatelessWidget {
-  final String text;
+class _StatusDropdown extends StatelessWidget {
+  final OrderEntity order;
 
-  const _StatusChip({required this.text});
+  const _StatusDropdown({required this.order});
 
   @override
   Widget build(BuildContext context) {
-    final value = text.trim().isEmpty ? '-' : text;
+    const statuses = [
+      'placed',
+      'confirmed',
+      'shipped',
+      'delivered',
+      'cancelled',
+    ];
 
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.grey.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(20),
-      ),
-      child: Text(
-        value.toUpperCase(),
-        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w600),
+    final currentStatus = statuses.contains(order.orderStatus)
+        ? order.orderStatus
+        : null;
+
+    return DropdownButton<String>(
+      value: currentStatus,
+      hint: Text(order.orderStatus),
+      underline: const SizedBox.shrink(),
+      items: statuses.map((status) {
+        return DropdownMenuItem<String>(
+          value: status,
+          child: Text(_formatStatus(status)),
+        );
+      }).toList(),
+      onChanged: (value) async {
+        if (value == null || value == order.orderStatus) {
+          return;
+        }
+
+        await context.read<AdminOrdersCubit>().updateOrderStatus(
+          orderId: order.id,
+          orderStatus: value,
+        );
+      },
+    );
+  }
+
+  String _formatStatus(String value) {
+    return value
+        .split('_')
+        .map(
+          (word) => word.isEmpty
+              ? word
+              : '${word[0].toUpperCase()}${word.substring(1)}',
+        )
+        .join(' ');
+  }
+}
+
+class _EmptyView extends StatelessWidget {
+  const _EmptyView();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.shopping_bag_outlined, size: 60, color: Colors.grey),
+          SizedBox(height: 16),
+          Text(
+            'No orders found',
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+          ),
+          SizedBox(height: 6),
+          Text(
+            'There are no orders matching your search.',
+            style: TextStyle(color: Colors.grey),
+          ),
+        ],
       ),
     );
   }
 }
 
-class _EmptyOrders extends StatelessWidget {
-  const _EmptyOrders();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 80),
-      child: Center(
-        child: Column(
-          children: [
-            Icon(Icons.receipt_long_outlined, size: 60, color: Colors.grey),
-            SizedBox(height: 16),
-            Text(
-              'No orders yet',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _ErrorState extends StatelessWidget {
+class _ErrorView extends StatelessWidget {
   final String message;
-  final VoidCallback onRetry;
 
-  const _ErrorState({required this.message, required this.onRetry});
+  const _ErrorView({required this.message});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 80),
-      child: Center(
-        child: Column(
-          children: [
-            const Icon(Icons.error_outline, size: 56, color: Colors.red),
-            const SizedBox(height: 16),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 20),
-            ElevatedButton(onPressed: onRetry, child: const Text('Try Again')),
-          ],
-        ),
+    return Center(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.error_outline, size: 60),
+          const SizedBox(height: 16),
+          Text(message, textAlign: TextAlign.center),
+          const SizedBox(height: 16),
+          FilledButton(
+            onPressed: context.read<AdminOrdersCubit>().loadOrders,
+            child: const Text('Retry'),
+          ),
+        ],
       ),
     );
   }

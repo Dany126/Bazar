@@ -1,12 +1,10 @@
-import 'package:e_commerce/features/order/data/model/order_model.dart';
+import 'package:e_commerce/features/order/domin/entity/order_entity.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-
 import 'package:e_commerce/features/admin/domain/usecases/delete_admin_order.dart';
 import 'package:e_commerce/features/admin/domain/usecases/get_admin_order.dart';
 import 'package:e_commerce/features/admin/domain/usecases/get_all_admin_orders.dart';
 import 'package:e_commerce/features/admin/domain/usecases/update_admin_order.dart';
-
-import 'admin_orders_state.dart';
+import 'package:e_commerce/features/admin/presentation/cubit/admin_orders_state.dart';
 
 class AdminOrdersCubit extends Cubit<AdminOrdersState> {
   final GetAllAdminOrders getAllAdminOrders;
@@ -22,130 +20,146 @@ class AdminOrdersCubit extends Cubit<AdminOrdersState> {
   }) : super(const AdminOrdersInitial());
 
   Future<void> loadOrders() async {
-    if (isClosed) return;
-
     emit(const AdminOrdersLoading());
 
     final result = await getAllAdminOrders();
 
-    if (isClosed) return;
-
     result.fold(
       (failure) {
-        emit(AdminOrdersFailure(message: failure.message));
+        emit(AdminOrdersError(message: failure.message));
       },
       (orders) {
-        emit(AdminOrdersLoaded(orders: orders));
+        emit(AdminOrdersLoaded(orders: orders, filteredOrders: orders));
       },
     );
   }
 
-  Future<void> getOrder({required String orderId}) async {
-    if (isClosed) return;
+  void searchOrders(String query) {
+    final currentState = state;
 
-    final result = await getAdminOrder(orderId: orderId);
+    if (currentState is! AdminOrdersLoaded) {
+      return;
+    }
 
-    if (isClosed) return;
+    final filtered = _filterOrders(currentState.orders, query);
 
-    result.fold(
-      (failure) {
-        emit(AdminOrdersFailure(message: failure.message));
-      },
-      (order) {
-        final currentOrders = _currentOrders;
+    emit(currentState.copyWith(filteredOrders: filtered, searchQuery: query));
+  }
 
-        final index = currentOrders.indexWhere((item) => item.id == order.id);
+  void clearSearch() {
+    final currentState = state;
 
-        if (index != -1) {
-          currentOrders[index] = order;
-        } else {
-          currentOrders.add(order);
-        }
+    if (currentState is! AdminOrdersLoaded) {
+      return;
+    }
 
-        emit(AdminOrdersLoaded(orders: currentOrders as  List <OrderModel>));
-      },
+    emit(
+      currentState.copyWith(
+        filteredOrders: currentState.orders,
+        searchQuery: '',
+      ),
     );
   }
 
-  Future<void> updateOrder({
+  List<OrderEntity> _filterOrders(List<OrderEntity> orders, String query) {
+    final value = query.trim().toLowerCase();
+
+    if (value.isEmpty) {
+      return orders;
+    }
+
+    return orders.where((order) {
+      final id = order.id.toLowerCase();
+      final orderStatus = order.orderStatus.toLowerCase();
+      final paymentStatus = order.paymentStatus.toLowerCase();
+
+      return id.contains(value) ||
+          orderStatus.contains(value) ||
+          paymentStatus.contains(value);
+    }).toList();
+  }
+
+  Future<void> updateOrderStatus({
     required String orderId,
-    required Map<String, dynamic> data,
+    required String orderStatus,
   }) async {
-    if (isClosed) return;
+    final currentState = state;
 
-    final oldOrders = _currentOrders;
+    if (currentState is! AdminOrdersLoaded) {
+      return;
+    }
 
-    emit(AdminOrdersUpdating(orders: oldOrders as List<OrderModel>));
+    emit(currentState.copyWith(updatingOrderId: orderId));
 
-    final result = await updateAdminOrder(orderId: orderId, data: data);
-
-    if (isClosed) return;
+    final result = await updateAdminOrder(
+      orderId: orderId,
+      data: {'orderStatus': orderStatus},
+    );
 
     result.fold(
       (failure) {
-        emit(AdminOrdersFailure(message: failure.message));
+        emit(currentState.copyWith(clearUpdatingOrderId: true));
       },
       (updatedOrder) {
-        final orders = _currentOrders;
+        final updatedOrders = currentState.orders.map((order) {
+          if (order.id == updatedOrder.id) {
+            return updatedOrder;
+          }
 
-        final index = orders.indexWhere((item) => item.id == updatedOrder.id);
+          return order;
+        }).toList();
 
-        if (index != -1) {
-          orders[index] = updatedOrder;
-        }
-
-        emit(AdminOrdersUpdated(orders: orders as List<OrderModel> ));
+        emit(
+          AdminOrdersLoaded(
+            orders: updatedOrders,
+            filteredOrders: _filterOrders(
+              updatedOrders,
+              currentState.searchQuery,
+            ),
+            searchQuery: currentState.searchQuery,
+          ),
+        );
       },
     );
   }
 
-  Future<void> deleteOrder({required String orderId}) async {
-    if (isClosed) return;
+  Future<void> deleteOrder(String orderId) async {
+    final currentState = state;
 
-    final oldOrders = _currentOrders;
+    if (currentState is! AdminOrdersLoaded) {
+      return;
+    }
 
-    emit(AdminOrdersDeleting(orders: oldOrders as  List <OrderModel>));
+    emit(currentState.copyWith(deletingOrderId: orderId));
 
     final result = await deleteAdminOrder(orderId: orderId);
 
-    if (isClosed) return;
-
     result.fold(
       (failure) {
-        emit(AdminOrdersFailure(message: failure.message));
+        emit(currentState.copyWith(clearDeletingOrderId: true));
       },
       (_) {
-        final orders = _currentOrders
-          ..removeWhere((order) => order.id == orderId);
+        final updatedOrders = currentState.orders
+            .where((order) => order.id != orderId)
+            .toList();
 
-        emit(AdminOrdersDeleted(orders: orders as List<OrderModel>));
+        emit(
+          AdminOrdersLoaded(
+            orders: updatedOrders,
+            filteredOrders: _filterOrders(
+              updatedOrders,
+              currentState.searchQuery,
+            ),
+            searchQuery: currentState.searchQuery,
+          ),
+        );
       },
     );
   }
 
-  List<dynamic> get _currentOrders {
-    final currentState = state;
+  Future<OrderEntity?> getOrder(String orderId) async {
+    final result = await getAdminOrder(orderId: orderId);
 
-    if (currentState is AdminOrdersLoaded) {
-      return List.of(currentState.orders);
-    }
-
-    if (currentState is AdminOrdersUpdating) {
-      return List.of(currentState.orders);
-    }
-
-    if (currentState is AdminOrdersUpdated) {
-      return List.of(currentState.orders);
-    }
-
-    if (currentState is AdminOrdersDeleting) {
-      return List.of(currentState.orders);
-    }
-
-    if (currentState is AdminOrdersDeleted) {
-      return List.of(currentState.orders);
-    }
-
-    return [];
+    return result.fold((_) => null, (order) => order);
   }
 }

@@ -1,4 +1,4 @@
-import 'package:e_commerce/features/order/data/model/order_model.dart';
+import 'package:e_commerce/features/order/domin/entity/order_entity.dart';
 
 abstract class AdminOrdersState {
   const AdminOrdersState();
@@ -13,37 +13,45 @@ class AdminOrdersLoading extends AdminOrdersState {
 }
 
 class AdminOrdersLoaded extends AdminOrdersState {
-  final List<OrderModel> orders;
+  final List<OrderEntity> orders;
+  final List<OrderEntity> filteredOrders;
+  final String searchQuery;
+  final String? updatingOrderId;
+  final String? deletingOrderId;
 
-  const AdminOrdersLoaded({required this.orders});
+  const AdminOrdersLoaded({
+    required this.orders,
+    required this.filteredOrders,
+    this.searchQuery = '',
+    this.updatingOrderId,
+    this.deletingOrderId,
+  });
+
+  AdminOrdersLoaded copyWith({
+    List<OrderEntity>? orders,
+    List<OrderEntity>? filteredOrders,
+    String? searchQuery,
+    String? updatingOrderId,
+    String? deletingOrderId,
+    bool clearUpdatingOrderId = false,
+    bool clearDeletingOrderId = false,
+  }) {
+    return AdminOrdersLoaded(
+      orders: orders ?? this.orders,
+      filteredOrders: filteredOrders ?? this.filteredOrders,
+      searchQuery: searchQuery ?? this.searchQuery,
+      updatingOrderId: clearUpdatingOrderId
+          ? null
+          : updatingOrderId ?? this.updatingOrderId,
+      deletingOrderId: clearDeletingOrderId
+          ? null
+          : deletingOrderId ?? this.deletingOrderId,
+    );
+  }
 }
 
-class AdminOrdersUpdating extends AdminOrdersState {
-  final List<OrderModel> orders;
-
-  const AdminOrdersUpdating({required this.orders});
-}
-
-class AdminOrdersUpdated extends AdminOrdersState {
-  final List<OrderModel> orders;
-
-  const AdminOrdersUpdated({required this.orders});
-}
-
-class AdminOrdersDeleting extends AdminOrdersState {
-  final List<OrderModel> orders;
-
-  const AdminOrdersDeleting({required this.orders});
-}
-
-class AdminOrdersDeleted extends AdminOrdersState {
-  final List<OrderModel> orders;
-
-  const AdminOrdersDeleted({required this.orders});
-}
-
-class AdminOrdersFailure extends AdminOrdersState {
+class AdminOrdersError extends AdminOrdersState {
   final String message;
 
-  const AdminOrdersFailure({required this.message});
+  const AdminOrdersError({required this.message});
 }
