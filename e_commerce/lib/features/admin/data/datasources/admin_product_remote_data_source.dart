@@ -32,37 +32,35 @@ class AdminProductRemoteDataSourceImpl implements AdminProductRemoteDataSource {
   AdminProductRemoteDataSourceImpl({required this.apiService});
 
   @override
-  @override
   Future<Either<Failure, List<ProductModel>>> getAllProducts() async {
-    try {
-      final result = await apiService.get('$kBaseUrl/product');
+    final result = await apiService.get('$kBaseUrl/product');
 
-      return result.fold(
-        (failure) {
-          // Backend returns 404 when there are no products.
-          // For the admin products screen, that means an empty list,
-          // not an actual application error.
-          if (failure is ServerFailure &&
-              failure.message.toLowerCase().contains('no product')) {
-            return const Right(<ProductModel>[]);
-          }
+    return result.fold(
+      (failure) {
+        // The current backend returns:
+        // 404 { status: "Failed", message: "No product found" }
+        //
+        // For the admin product list, this means:
+        // there are currently zero products.
+        if (failure is ServerFailure &&
+            failure.statusCode == 404 &&
+            failure.message.toLowerCase().contains('no product found')) {
+          return const Right(<ProductModel>[]);
+        }
 
-          return Left(failure);
-        },
-        (data) {
-          final productsJson = (data['products'] as List?) ?? [];
+        return Left(failure);
+      },
+      (data) {
+        final productsJson = (data['products'] as List?) ?? [];
 
-          final products = productsJson
-              .whereType<Map<String, dynamic>>()
-              .map(ProductModel.fromJson)
-              .toList();
+        final products = productsJson
+            .whereType<Map<String, dynamic>>()
+            .map(ProductModel.fromJson)
+            .toList();
 
-          return Right(products);
-        },
-      );
-    } catch (e) {
-      return Left(ServerFailure(message: e.toString()));
-    }
+        return Right(products);
+      },
+    );
   }
 
   @override
