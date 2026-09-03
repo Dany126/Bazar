@@ -2,7 +2,7 @@ import 'package:dartz/dartz.dart';
 
 import 'package:e_commerce/core/error/failure.dart';
 
-import '../../data/model/admin_transaction_model.dart';
+import '../../data/models/admin_transaction_model.dart';
 import '../repositories/admin_transaction_repository.dart';
 
 class GetAdminTransaction {

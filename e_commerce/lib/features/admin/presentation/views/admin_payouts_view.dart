@@ -6,7 +6,7 @@ import 'package:e_commerce/core/services/get_it_services.dart';
 
 import '../cubit/admin_transactions_cubit.dart';
 import '../cubit/admin_transactions_state.dart';
-import '../../data/model/admin_transaction_model.dart';
+import '../../data/models/admin_transaction_model.dart';
 
 class AdminPayoutsView extends StatelessWidget {
   const AdminPayoutsView({super.key});

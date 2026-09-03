@@ -32,6 +32,9 @@ class AdminDashboardStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stats = [
+      // ----------------------------------------------------------
+      // PRIMARY CARDS
+      // ----------------------------------------------------------
       _Metric(
         label: 'Revenue',
         value: _money(data.periodRevenue),
@@ -39,23 +42,57 @@ class AdminDashboardStats extends StatelessWidget {
         color: const Color(0xFF8E6CEF),
         primary: true,
       ),
+
       _Metric(
         label: 'Orders',
         value: data.periodOrders.toString(),
         change: _change(data.changes.orders),
         color: const Color(0xFF4EC5A5),
       ),
+
       _Metric(
         label: 'Visitors',
         value: data.totalVisitors.toString(),
         change: _change(data.changes.visitors),
         color: const Color(0xFF1F2937),
       ),
+
       _Metric(
         label: 'Conversion rate',
         value: _conversion(data.conversionRate),
         change: _change(data.changes.conversionRate),
         color: const Color(0xFFDC2626),
+      ),
+
+      // ----------------------------------------------------------
+      // SECONDARY CARDS
+      // ----------------------------------------------------------
+      _Metric(
+        label: 'Products',
+        value: data.totalProducts.toString(),
+        change: 'No data',
+        color: const Color(0xFF2563EB),
+      ),
+
+      _Metric(
+        label: 'Categories',
+        value: data.totalCategories.toString(),
+        change: 'No data',
+        color: const Color(0xFF7C3AED),
+      ),
+
+      _Metric(
+        label: 'Customers',
+        value: data.totalUsers.toString(),
+        change: 'No data',
+        color: const Color(0xFF0891B2),
+      ),
+
+      _Metric(
+        label: 'Low Inventory',
+        value: data.lowStockAlerts.toString(),
+        change: 'No data',
+        color: const Color(0xFFEA580C),
       ),
     ];
 

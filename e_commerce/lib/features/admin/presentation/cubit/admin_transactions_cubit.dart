@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:e_commerce/features/admin/data/model/admin_transaction_model.dart';
+import 'package:e_commerce/features/admin/data/models/admin_transaction_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../domain/usecases/get_admin_transaction.dart';

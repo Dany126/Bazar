@@ -205,6 +205,16 @@ import 'package:e_commerce/features/admin/domain/usecases/get_admin_transactions
 import 'package:e_commerce/features/admin/presentation/cubit/admin_transactions_cubit.dart';
 
 // ==========================================================
+import 'package:e_commerce/features/admin/data/datasources/admin_variant_remote_data_source.dart';
+import 'package:e_commerce/features/admin/data/repositories/admin_variant_repository_impl.dart';
+import 'package:e_commerce/features/admin/domain/repositories/admin_variant_repository.dart';
+import 'package:e_commerce/features/admin/domain/usecases/create_admin_variant.dart';
+import 'package:e_commerce/features/admin/domain/usecases/delete_admin_variant.dart';
+import 'package:e_commerce/features/admin/domain/usecases/get_admin_variants.dart';
+import 'package:e_commerce/features/admin/domain/usecases/update_admin_variant.dart';
+
+// ==========================================================
+// ==========================================================
 final getIt = GetIt.instance;
 
 Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
@@ -813,6 +823,10 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
       createProductUseCase: getIt<CreateAdminProductUseCase>(),
       updateProductUseCase: getIt<UpdateAdminProductUseCase>(),
       deleteProductUseCase: getIt<DeleteAdminProductUseCase>(),
+      createVariantUseCase: getIt<CreateAdminVariantUseCase>(),
+      getVariantsUseCase: getIt<GetAdminVariantsUseCase>(),
+      updateVariantUseCase: getIt<UpdateAdminVariantUseCase>(),
+      deleteVariantUseCase: getIt<DeleteAdminVariantUseCase>(),
     ),
   );
 
@@ -979,4 +993,33 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
       getAdminTransaction: getIt<GetAdminTransaction>(),
     ),
   );
+
+  // =================================================
+  getIt.registerLazySingleton<AdminVariantRemoteDataSource>(
+    () => AdminVariantRemoteDataSourceImpl(apiService: getIt<ApiService>()),
+  );
+
+  getIt.registerLazySingleton<AdminVariantRepository>(
+    () => AdminVariantRepositoryImpl(
+      remoteDataSource: getIt<AdminVariantRemoteDataSource>(),
+    ),
+  );
+
+  getIt.registerLazySingleton<CreateAdminVariantUseCase>(
+    () => CreateAdminVariantUseCase(getIt<AdminVariantRepository>()),
+  );
+
+  getIt.registerLazySingleton<GetAdminVariantsUseCase>(
+    () => GetAdminVariantsUseCase(getIt<AdminVariantRepository>()),
+  );
+
+  getIt.registerLazySingleton<UpdateAdminVariantUseCase>(
+    () => UpdateAdminVariantUseCase(getIt<AdminVariantRepository>()),
+  );
+
+  getIt.registerLazySingleton<DeleteAdminVariantUseCase>(
+    () => DeleteAdminVariantUseCase(getIt<AdminVariantRepository>()),
+  );
+  // =================================================
+  // =================================================
 }

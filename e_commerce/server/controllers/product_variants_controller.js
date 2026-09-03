@@ -4,20 +4,28 @@ import convert from "color-convert";
 
 export const createVariant = async (req, res) => {
   try {
-    const color = `#${convert.keyword.hex(req.body.color)}`;
-    const variant = await Variant.create(req.body, color);
+    let body = { ...req.body };
+
+    if (req.body.color) {
+      body.color = req.body.color;
+    }
+
+    const variant = await Variant.create(body);
+
     if (!variant) {
       return res.status(400).json({
         status: "Failed",
         message: "Failed Creating Variant",
       });
     }
+
     return res.status(201).json({
       status: "Success",
       variant,
     });
   } catch (err) {
     console.log(err);
+
     return res.status(500).json({
       status: "Failed",
       message: "Internal Server Error",

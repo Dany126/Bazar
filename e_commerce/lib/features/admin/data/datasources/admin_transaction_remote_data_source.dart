@@ -4,7 +4,7 @@ import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/core/services/api_services.dart';
 
-import '../model/admin_transaction_model.dart';
+import '../models/admin_transaction_model.dart';
 
 abstract class AdminTransactionRemoteDataSource {
   Future<Either<Failure, AdminTransactionsResponse>> getTransactions({

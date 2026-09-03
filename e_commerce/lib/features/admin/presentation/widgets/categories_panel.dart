@@ -1,3 +1,4 @@
+import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_categories_cubit.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_categories_state.dart';
 import 'package:e_commerce/features/admin/presentation/widgets/add_category_sheet.dart';
@@ -144,6 +145,7 @@ class CategoriesPanel extends StatelessWidget {
       label: const Text('Add Category'),
       style: ElevatedButton.styleFrom(
         elevation: 0,
+        backgroundColor: AppColors.kPrimaryColor,
         padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
       ),

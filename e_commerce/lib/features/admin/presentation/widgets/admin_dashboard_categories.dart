@@ -71,7 +71,7 @@ class _CategoryRow extends StatelessWidget {
         const SizedBox(height: 6),
 
         Text(
-          '${category.quantity} items • ${category.orders} order lines',
+          '${category.count} items',
           style: TextStyle(fontSize: 12, color: Colors.grey.shade600),
         ),
       ],

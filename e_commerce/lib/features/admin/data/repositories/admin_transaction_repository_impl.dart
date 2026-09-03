@@ -3,7 +3,7 @@ import 'package:dartz/dartz.dart';
 import 'package:e_commerce/core/error/failure.dart';
 
 import '../datasources/admin_transaction_remote_data_source.dart';
-import '../model/admin_transaction_model.dart';
+import '../models/admin_transaction_model.dart';
 
 import '../../domain/repositories/admin_transaction_repository.dart';
 

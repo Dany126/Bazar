@@ -1,4 +1,4 @@
-import '../../data/model/admin_transaction_model.dart';
+import '../../data/models/admin_transaction_model.dart';
 
 abstract class AdminTransactionsState {
   const AdminTransactionsState();

@@ -3,6 +3,7 @@ import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/features/admin/data/datasources/admin_product_remote_data_source.dart';
 import 'package:e_commerce/features/admin/domain/repositories/admin_product_repository.dart';
 import 'package:e_commerce/features/home/data/models/product_model.dart';
+import 'package:image_picker/image_picker.dart';
 
 class AdminProductRepositoryImpl implements AdminProductRepository {
   final AdminProductRemoteDataSource remoteDataSource;
@@ -19,17 +20,13 @@ class AdminProductRepositoryImpl implements AdminProductRepository {
     required String name,
     required String categoryId,
     required double price,
-    required int stock,
-    String? description,
-    required List<String> imagePaths,
+    required List<XFile> images,
   }) {
     return remoteDataSource.createProduct(
       name: name,
       categoryId: categoryId,
       price: price,
-      stock: stock,
-      description: description,
-      imagePaths: imagePaths,
+      images: images,
     );
   }
 
@@ -39,18 +36,12 @@ class AdminProductRepositoryImpl implements AdminProductRepository {
     String? name,
     String? categoryId,
     double? price,
-    int? stock,
-    bool? isActive,
-    String? description,
   }) {
     return remoteDataSource.updateProduct(
       id: id,
       name: name,
       categoryId: categoryId,
       price: price,
-      stock: stock,
-      isActive: isActive,
-      description: description,
     );
   }
 

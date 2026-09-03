@@ -49,21 +49,13 @@ class AdminDashboardRemoteDataSourceImpl
 
   AdminDashboardData _parseDashboard(Map<String, dynamic> json) {
     final revenue = _map(json['revenue']);
-
     final orders = _map(json['orders']);
-
     final products = _map(json['products']);
-
     final categories = _map(json['categories']);
-
     final customers = _map(json['customers']);
-
     final visitors = _map(json['visitors']);
-
     final conversion = _map(json['conversionRate']);
-
     final changes = _map(json['changes']);
-
     final store = _map(json['store']);
 
     final period = json['period']?.toString() ?? 'month';
@@ -77,14 +69,23 @@ class AdminDashboardRemoteDataSourceImpl
     return AdminDashboardData(
       period: period,
 
+      // ----------------------------------------------------------
+      // REVENUE
+      // ----------------------------------------------------------
       totalRevenue: _double(revenue['total']),
 
       periodRevenue: _double(revenue['total']),
 
+      // ----------------------------------------------------------
+      // ORDERS
+      // ----------------------------------------------------------
       totalOrders: _int(orders['total']),
 
       periodOrders: _int(orders['total']),
 
+      // ----------------------------------------------------------
+      // SUMMARY
+      // ----------------------------------------------------------
       totalProducts: _int(products['total']),
 
       totalCategories: _int(categories['total']),
@@ -93,13 +94,22 @@ class AdminDashboardRemoteDataSourceImpl
 
       totalVisitors: _int(visitors['total']),
 
+      // ----------------------------------------------------------
+      // CONVERSION
+      // ----------------------------------------------------------
       conversionRate: _nullableDouble(conversion['rate']),
 
+      // ----------------------------------------------------------
+      // INVENTORY
+      // ----------------------------------------------------------
       lowStockAlerts: _int(
         json['lowStockAlerts'],
         fallback: lowInventory.length,
       ),
 
+      // ----------------------------------------------------------
+      // CHANGES
+      // ----------------------------------------------------------
       changes: AdminDashboardChanges(
         revenue: _nullableDouble(changes['revenue'] ?? revenue['change']),
 
@@ -112,6 +122,9 @@ class AdminDashboardRemoteDataSourceImpl
         ),
       ),
 
+      // ----------------------------------------------------------
+      // STORE
+      // ----------------------------------------------------------
       store: AdminDashboardStore(
         name: store['name']?.toString() ?? store['storeName']?.toString() ?? '',
 
@@ -126,6 +139,9 @@ class AdminDashboardRemoteDataSourceImpl
         ),
       ),
 
+      // ----------------------------------------------------------
+      // OTHER DASHBOARD SECTIONS
+      // ----------------------------------------------------------
       categoryBreakdown: categoryBreakdown,
 
       revenueChart: revenueChart,
@@ -133,6 +149,10 @@ class AdminDashboardRemoteDataSourceImpl
       lowInventory: lowInventory,
     );
   }
+
+  // ============================================================
+  // CATEGORIES
+  // ============================================================
 
   List<AdminCategoryBreakdown> _parseCategories(dynamic value) {
     if (value is! List) {
@@ -143,23 +163,21 @@ class AdminDashboardRemoteDataSourceImpl
       final map = Map<String, dynamic>.from(item);
 
       return AdminCategoryBreakdown(
-        id: map['categoryId']?.toString() ?? '',
-
         name:
             map['categoryName']?.toString() ??
             map['name']?.toString() ??
             'Uncategorized',
 
-        orders: _int(map['orders']),
-
-        quantity: _int(map['quantity']),
-
-        revenue: _double(map['revenue']),
+        count: _int(map['count']),
 
         percent: _double(map['percent']),
       );
     }).toList();
   }
+
+  // ============================================================
+  // REVENUE CHART
+  // ============================================================
 
   List<AdminRevenuePoint> _parseRevenueChart(dynamic value) {
     if (value is! List) {
@@ -170,12 +188,20 @@ class AdminDashboardRemoteDataSourceImpl
       final map = Map<String, dynamic>.from(item);
 
       return AdminRevenuePoint(
-        date: map['date']?.toString() ?? map['label']?.toString() ?? '',
+        label:
+            map['label']?.toString() ??
+            map['date']?.toString() ??
+            map['period']?.toString() ??
+            '',
 
         revenue: _double(map['revenue']),
       );
     }).toList();
   }
+
+  // ============================================================
+  // INVENTORY
+  // ============================================================
 
   List<AdminInventoryItem> _parseInventory(dynamic value) {
     if (value is! List) {
@@ -186,10 +212,6 @@ class AdminDashboardRemoteDataSourceImpl
       final map = Map<String, dynamic>.from(item);
 
       return AdminInventoryItem(
-        id: map['_id']?.toString() ?? map['id']?.toString() ?? '',
-
-        productId: map['productId']?.toString() ?? '',
-
         name: map['name']?.toString() ?? '',
 
         size: map['size']?.toString(),
@@ -197,15 +219,13 @@ class AdminDashboardRemoteDataSourceImpl
         color: map['color']?.toString(),
 
         count: _int(map['stock']),
-
-        price: _double(map['price']),
-
-        soldCount: _int(map['soldCount']),
-
-        thumbnailUrl: map['thumbnailUrl']?.toString(),
       );
     }).toList();
   }
+
+  // ============================================================
+  // HELPERS
+  // ============================================================
 
   Map<String, dynamic> _map(dynamic value) {
     if (value is Map) {
