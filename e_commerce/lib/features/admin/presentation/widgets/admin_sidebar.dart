@@ -187,109 +187,39 @@ class _LogoutButton extends StatelessWidget {
     return BlocConsumer<SignOutCubit, SignOutState>(
       listener: (context, state) {
         if (state is SignOutSuccess) {
-          Navigator.of(
+          Navigator.pushNamedAndRemoveUntil(
             context,
-          ).pushNamedAndRemoveUntil(SignInView.routeName, (route) => false);
+            SignInView.routeName,
+            (route) => false,
+          );
         }
 
         if (state is SignOutFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.failure.message),
-              backgroundColor: Colors.red,
-            ),
-          );
+          ScaffoldMessenger.of(context)
+            ..hideCurrentSnackBar()
+            ..showSnackBar(SnackBar(content: Text(state.failure.message)));
         }
       },
       builder: (context, state) {
-        final isLoading = state is SignOutInitial;
+        final isLoading = state is SignOutLoading;
 
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(12),
-              onTap: isLoading
-                  ? null
-                  : () {
-                      _showLogoutConfirmation(context);
-                    },
-              child: Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 16,
-                  vertical: 12,
-                ),
-                decoration: BoxDecoration(
-                  color: const Color(0xfffff1f1),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: Row(
-                  children: [
-                    if (isLoading)
-                      const SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.red,
-                        ),
-                      )
-                    else
-                      const Icon(
-                        Icons.logout_rounded,
-                        color: Colors.red,
-                        size: 20,
-                      ),
-
-                    const SizedBox(width: 16),
-
-                    Expanded(
-                      child: Text(
-                        isLoading ? 'Signing out...' : 'Logout',
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          color: Colors.red,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
+        return SizedBox(
+          width: double.infinity,
+          child: ElevatedButton.icon(
+            onPressed: isLoading
+                ? null
+                : () {
+                    context.read<SignOutCubit>().signOut();
+                  },
+            icon: isLoading
+                ? const SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.logout),
+            label: Text(isLoading ? 'Signing out...' : 'Sign Out'),
           ),
-        );
-      },
-    );
-  }
-
-  void _showLogoutConfirmation(BuildContext context) {
-    showDialog<void>(
-      context: context,
-      builder: (dialogContext) {
-        return AlertDialog(
-          title: const Text('Logout'),
-          content: const Text('Are you sure you want to logout?'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-              },
-              child: const Text('Cancel'),
-            ),
-            ElevatedButton(
-              onPressed: () {
-                Navigator.of(dialogContext).pop();
-
-                context.read<SignOutCubit>().signOut();
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red,
-                foregroundColor: Colors.white,
-              ),
-              child: const Text('Logout'),
-            ),
-          ],
         );
       },
     );

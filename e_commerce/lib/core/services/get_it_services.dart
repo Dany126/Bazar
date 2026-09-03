@@ -315,9 +315,11 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
   );
 
   getIt.registerFactory<SignOutCubit>(
-    () => SignOutCubit(getIt<LogOutUseCase>()),
+    () => SignOutCubit(
+      logOutUseCase: getIt<LogOutUseCase>(),
+      apiService: getIt<ApiService>(),
+    ),
   );
-
   // ==========================================================
   // HOME DATA SOURCE
   // ==========================================================

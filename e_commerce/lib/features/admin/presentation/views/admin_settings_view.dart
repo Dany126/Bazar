@@ -3,62 +3,52 @@ import 'package:e_commerce/features/admin/domain/entity/admin_store_settings.dar
 import 'package:e_commerce/features/admin/presentation/cubit/admin_store_settings_cubit.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_store_settings_state.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class AdminSettingsView extends StatelessWidget {
+class AdminSettingsView extends StatefulWidget {
   const AdminSettingsView({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (_) => getIt<AdminStoreSettingsCubit>()..loadSettings(),
-      child: const _AdminSettingsBody(),
-    );
-  }
+  State<AdminSettingsView> createState() => _AdminSettingsViewState();
 }
 
-class _AdminSettingsBody extends StatefulWidget {
-  const _AdminSettingsBody();
-
-  @override
-  State<_AdminSettingsBody> createState() => _AdminSettingsBodyState();
-}
-
-class _AdminSettingsBodyState extends State<_AdminSettingsBody> {
+class _AdminSettingsViewState extends State<AdminSettingsView> {
   final _formKey = GlobalKey<FormState>();
 
+  // Store information
   final _storeNameController = TextEditingController();
-
   final _descriptionController = TextEditingController();
-
   final _emailController = TextEditingController();
-
   final _phoneController = TextEditingController();
-
   final _addressController = TextEditingController();
-
   final _cityController = TextEditingController();
-
   final _countryController = TextEditingController();
-
   final _postalCodeController = TextEditingController();
 
-  final _taxController = TextEditingController();
+  // Commerce
+  final _taxRateController = TextEditingController();
+  final _shippingFeeController = TextEditingController();
+  final _freeShippingThresholdController = TextEditingController();
+  final _minimumOrderAmountController = TextEditingController();
 
-  final _shippingController = TextEditingController();
-
-  final _freeShippingController = TextEditingController();
-
-  final _minimumOrderController = TextEditingController();
-
-  final _lowStockController = TextEditingController();
+  // Inventory
+  final _lowStockThresholdController = TextEditingController();
 
   String _currency = 'EGP';
 
   bool _storeEnabled = true;
   bool _acceptOrders = true;
 
-  bool _initialized = false;
+  bool _formInitialized = false;
+
+  static const List<String> _currencies = [
+    'EGP',
+    'USD',
+    'EUR',
+    'SAR',
+    'AED',
+  ];
 
   @override
   void dispose() {
@@ -70,52 +60,50 @@ class _AdminSettingsBodyState extends State<_AdminSettingsBody> {
     _cityController.dispose();
     _countryController.dispose();
     _postalCodeController.dispose();
-    _taxController.dispose();
-    _shippingController.dispose();
-    _freeShippingController.dispose();
-    _minimumOrderController.dispose();
-    _lowStockController.dispose();
+
+    _taxRateController.dispose();
+    _shippingFeeController.dispose();
+    _freeShippingThresholdController.dispose();
+    _minimumOrderAmountController.dispose();
+
+    _lowStockThresholdController.dispose();
 
     super.dispose();
   }
 
   void _fillForm(AdminStoreSettings settings) {
-    if (_initialized) return;
+    if (_formInitialized) return;
 
-    _initialized = true;
+    _formInitialized = true;
 
     _storeNameController.text = settings.storeName;
-
     _descriptionController.text = settings.description;
-
     _emailController.text = settings.email;
-
     _phoneController.text = settings.phone;
-
     _addressController.text = settings.address;
-
     _cityController.text = settings.city;
-
     _countryController.text = settings.country;
-
     _postalCodeController.text = settings.postalCode;
 
-    _taxController.text = _numberText(settings.taxRate);
+    _taxRateController.text = _formatNumber(settings.taxRate);
+    _shippingFeeController.text = _formatNumber(settings.shippingFee);
+    _freeShippingThresholdController.text =
+        _formatNumber(settings.freeShippingThreshold);
+    _minimumOrderAmountController.text =
+        _formatNumber(settings.minimumOrderAmount);
 
-    _shippingController.text = _numberText(settings.shippingFee);
+    _lowStockThresholdController.text =
+        settings.lowStockThreshold.toString();
 
-    _freeShippingController.text = _numberText(settings.freeShippingThreshold);
+    _currency = _currencies.contains(settings.currency)
+        ? settings.currency
+        : 'EGP';
 
-    _minimumOrderController.text = _numberText(settings.minimumOrderAmount);
-
-    _lowStockController.text = settings.lowStockThreshold.toString();
-
-    _currency = settings.currency;
     _storeEnabled = settings.storeEnabled;
-    _acceptOrders = settings.acceptOrders;
+    _acceptOrders = settings.storeEnabled && settings.acceptOrders;
   }
 
-  String _numberText(double value) {
+  String _formatNumber(double value) {
     if (value == value.roundToDouble()) {
       return value.toInt().toString();
     }
@@ -123,16 +111,204 @@ class _AdminSettingsBodyState extends State<_AdminSettingsBody> {
     return value.toString();
   }
 
-  double _doubleValue(TextEditingController controller) {
-    return double.tryParse(controller.text.trim()) ?? 0;
+  String? _requiredTextValidator(
+    String? value, {
+    required String fieldName,
+    int minLength = 1,
+    int? maxLength,
+  }) {
+    final text = value?.trim() ?? '';
+
+    if (text.isEmpty) {
+      return '$fieldName is required';
+    }
+
+    if (text.length < minLength) {
+      return '$fieldName must be at least $minLength characters';
+    }
+
+    if (maxLength != null && text.length > maxLength) {
+      return '$fieldName must not exceed $maxLength characters';
+    }
+
+    return null;
   }
 
-  int _intValue(TextEditingController controller) {
-    return int.tryParse(controller.text.trim()) ?? 0;
+  String? _optionalTextValidator(
+    String? value, {
+    required String fieldName,
+    int? maxLength,
+  }) {
+    final text = value?.trim() ?? '';
+
+    if (text.isEmpty) {
+      return null;
+    }
+
+    if (maxLength != null && text.length > maxLength) {
+      return '$fieldName must not exceed $maxLength characters';
+    }
+
+    return null;
   }
 
-  void _save(BuildContext context, AdminStoreSettings current) {
-    if (!_formKey.currentState!.validate()) {
+  String? _emailValidator(String? value) {
+    final email = value?.trim() ?? '';
+
+    if (email.isEmpty) {
+      return null;
+    }
+
+    final emailRegex = RegExp(
+      r'^[^@\s]+@[^@\s]+\.[^@\s]+$',
+    );
+
+    if (!emailRegex.hasMatch(email)) {
+      return 'Enter a valid email address';
+    }
+
+    if (email.length > 254) {
+      return 'Email is too long';
+    }
+
+    return null;
+  }
+
+  String? _phoneValidator(String? value) {
+    final phone = value?.trim() ?? '';
+
+    if (phone.isEmpty) {
+      return null;
+    }
+
+    if (phone.length < 7) {
+      return 'Phone number is too short';
+    }
+
+    if (phone.length > 20) {
+      return 'Phone number is too long';
+    }
+
+    final phoneRegex = RegExp(r'^[0-9+\-\s()]+$');
+
+    if (!phoneRegex.hasMatch(phone)) {
+      return 'Enter a valid phone number';
+    }
+
+    return null;
+  }
+
+  String? _postalCodeValidator(String? value) {
+    final postalCode = value?.trim() ?? '';
+
+    if (postalCode.isEmpty) {
+      return null;
+    }
+
+    if (postalCode.length > 20) {
+      return 'Postal code is too long';
+    }
+
+    final postalCodeRegex = RegExp(r'^[a-zA-Z0-9\-\s]+$');
+
+    if (!postalCodeRegex.hasMatch(postalCode)) {
+      return 'Enter a valid postal code';
+    }
+
+    return null;
+  }
+
+  String? _decimalValidator(
+    String? value, {
+    required String fieldName,
+    double minimum = 0,
+    double? maximum,
+  }) {
+    final text = value?.trim() ?? '';
+
+    if (text.isEmpty) {
+      return '$fieldName is required';
+    }
+
+    final number = double.tryParse(text);
+
+    if (number == null || !number.isFinite) {
+      return 'Enter a valid number';
+    }
+
+    if (number < minimum) {
+      if (minimum == 0) {
+        return '$fieldName cannot be negative';
+      }
+
+      return '$fieldName must be at least $minimum';
+    }
+
+    if (maximum != null && number > maximum) {
+      return '$fieldName must be between $minimum and $maximum';
+    }
+
+    return null;
+  }
+
+  String? _integerValidator(
+    String? value, {
+    required String fieldName,
+    int minimum = 0,
+  }) {
+    final text = value?.trim() ?? '';
+
+    if (text.isEmpty) {
+      return '$fieldName is required';
+    }
+
+    final number = int.tryParse(text);
+
+    if (number == null) {
+      return '$fieldName must be a whole number';
+    }
+
+    if (number < minimum) {
+      return '$fieldName cannot be negative';
+    }
+
+    return null;
+  }
+
+  void _saveSettings() {
+    FocusScope.of(context).unfocus();
+
+    final isValid = _formKey.currentState?.validate() ?? false;
+
+    if (!isValid) {
+      return;
+    }
+
+    final taxRate = double.tryParse(
+      _taxRateController.text.trim(),
+    );
+
+    final shippingFee = double.tryParse(
+      _shippingFeeController.text.trim(),
+    );
+
+    final freeShippingThreshold = double.tryParse(
+      _freeShippingThresholdController.text.trim(),
+    );
+
+    final minimumOrderAmount = double.tryParse(
+      _minimumOrderAmountController.text.trim(),
+    );
+
+    final lowStockThreshold = int.tryParse(
+      _lowStockThresholdController.text.trim(),
+    );
+
+    if (taxRate == null ||
+        shippingFee == null ||
+        freeShippingThreshold == null ||
+        minimumOrderAmount == null ||
+        lowStockThreshold == null) {
       return;
     }
 
@@ -146,13 +322,13 @@ class _AdminSettingsBodyState extends State<_AdminSettingsBody> {
       country: _countryController.text.trim(),
       postalCode: _postalCodeController.text.trim(),
       currency: _currency,
-      taxRate: _doubleValue(_taxController),
-      shippingFee: _doubleValue(_shippingController),
-      freeShippingThreshold: _doubleValue(_freeShippingController),
-      minimumOrderAmount: _doubleValue(_minimumOrderController),
-      lowStockThreshold: _intValue(_lowStockController),
+      taxRate: taxRate,
+      shippingFee: shippingFee,
+      freeShippingThreshold: freeShippingThreshold,
+      minimumOrderAmount: minimumOrderAmount,
+      lowStockThreshold: lowStockThreshold,
       storeEnabled: _storeEnabled,
-      acceptOrders: _acceptOrders,
+      acceptOrders: _storeEnabled && _acceptOrders,
     );
 
     context.read<AdminStoreSettingsCubit>().updateSettings(settings);
@@ -160,303 +336,256 @@ class _AdminSettingsBodyState extends State<_AdminSettingsBody> {
 
   @override
   Widget build(BuildContext context) {
-    return BlocConsumer<AdminStoreSettingsCubit, AdminStoreSettingsState>(
-      listener: (context, state) {
-        if (state is AdminStoreSettingsSaved) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Store settings saved successfully')),
-          );
-        }
+    return BlocProvider(
+      create: (_) => getIt<AdminStoreSettingsCubit>()..loadSettings(),
+      child: BlocConsumer<AdminStoreSettingsCubit, AdminStoreSettingsState>(
+        listener: (context, state) {
+          if (state is AdminStoreSettingsLoaded) {
+            _fillForm(state.settings);
+          }
 
-        if (state is AdminStoreSettingsFailure) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.message), backgroundColor: Colors.red),
-          );
-        }
-      },
-      builder: (context, state) {
-        if (state is AdminStoreSettingsLoading) {
-          return const Center(child: CircularProgressIndicator());
-        }
+          if (state is AdminStoreSettingsSaved) {
+            _fillForm(state.settings);
 
-        if (state is AdminStoreSettingsFailure) {
-          return _ErrorView(
-            message: state.message,
-            onRetry: () {
-              context.read<AdminStoreSettingsCubit>().loadSettings();
-            },
-          );
-        }
-
-        AdminStoreSettings? settings;
-
-        if (state is AdminStoreSettingsLoaded) {
-          settings = state.settings;
-        }
-
-        if (state is AdminStoreSettingsSaved) {
-          settings = state.settings;
-        }
-
-        if (settings == null) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        _fillForm(settings);
-
-        final saving = state is AdminStoreSettingsLoaded && state.saving;
-
-        return _buildContent(context, settings, saving);
-      },
-    );
-  }
-
-  Widget _buildContent(
-    BuildContext context,
-    AdminStoreSettings settings,
-    bool saving,
-  ) {
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(28),
-      child: Center(
-        child: ConstrainedBox(
-          constraints: const BoxConstraints(maxWidth: 1050),
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(context),
-
-                const SizedBox(height: 28),
-
-                _buildSection(
-                  title: 'Store Information',
-                  icon: Icons.store_outlined,
-                  child: _buildStoreInformation(),
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                const SnackBar(
+                  content: Text(
+                    'Store settings updated successfully',
+                  ),
                 ),
+              );
+          }
 
-                const SizedBox(height: 24),
-
-                _buildSection(
-                  title: 'Commerce',
-                  icon: Icons.payments_outlined,
-                  child: _buildCommerceSection(),
+          if (state is AdminStoreSettingsFailure) {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(
+                  content: Text(state.message),
                 ),
+              );
+          }
+        },
+        builder: (context, state) {
+          if (state is AdminStoreSettingsLoading ||
+              state is AdminStoreSettingsInitial) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
 
-                const SizedBox(height: 24),
+          if (state is AdminStoreSettingsFailure &&
+              !_formInitialized) {
+            return _ErrorView(
+              message: state.message,
+              onRetry: () {
+                context
+                    .read<AdminStoreSettingsCubit>()
+                    .loadSettings();
+              },
+            );
+          }
 
-                _buildSection(
-                  title: 'Store Status',
-                  icon: Icons.storefront_outlined,
-                  child: _buildStatusSection(),
+          final bool saving =
+              state is AdminStoreSettingsLoaded && state.saving;
+
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              final isDesktop = constraints.maxWidth >= 900;
+
+              return SingleChildScrollView(
+                padding: EdgeInsets.all(
+                  isDesktop ? 32 : 16,
                 ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(
+                      maxWidth: 1100,
+                    ),
+                    child: Form(
+                      key: _formKey,
+                      autovalidateMode:
+                          AutovalidateMode.onUserInteraction,
+                      child: Column(
+                        crossAxisAlignment:
+                            CrossAxisAlignment.start,
+                        children: [
+                          _buildHeader(context),
+                          const SizedBox(height: 24),
 
-                const SizedBox(height: 24),
+                          _buildStoreInformationSection(
+                            context,
+                            isDesktop,
+                          ),
 
-                _buildSection(
-                  title: 'Inventory',
-                  icon: Icons.inventory_2_outlined,
-                  child: _buildInventorySection(),
-                ),
+                          const SizedBox(height: 24),
 
-                const SizedBox(height: 28),
+                          _buildCommerceSection(
+                            context,
+                            isDesktop,
+                          ),
 
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: SizedBox(
-                    height: 50,
-                    child: ElevatedButton.icon(
-                      onPressed: saving ? null : () => _save(context, settings),
-                      icon: saving
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(Icons.save_outlined),
-                      label: Text(saving ? 'Saving...' : 'Save Changes'),
+                          const SizedBox(height: 24),
+
+                          _buildStoreStatusSection(
+                            context,
+                          ),
+
+                          const SizedBox(height: 24),
+
+                          _buildInventorySection(
+                            context,
+                            isDesktop,
+                          ),
+
+                          const SizedBox(height: 32),
+
+                          _buildSaveButton(
+                            context,
+                            saving,
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 30),
-              ],
-            ),
-          ),
-        ),
+              );
+            },
+          );
+        },
       ),
     );
   }
 
   Widget _buildHeader(BuildContext context) {
+    final theme = Theme.of(context);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           'Store Settings',
-          style: Theme.of(
-            context,
-          ).textTheme.headlineMedium?.copyWith(fontWeight: FontWeight.w700),
+          style: theme.textTheme.headlineSmall?.copyWith(
+            fontWeight: FontWeight.bold,
+          ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Text(
-          'Manage your store information, commerce rules, and availability.',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          'Manage your store information, commerce settings, '
+          'availability, and inventory preferences.',
+          style: theme.textTheme.bodyMedium?.copyWith(
+            color: theme.colorScheme.onSurfaceVariant,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildSection({
-    required String title,
-    required IconData icon,
-    required Widget child,
-  }) {
-    return Card(
-      elevation: 0,
-      child: Padding(
-        padding: const EdgeInsets.all(22),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _buildStoreInformationSection(
+    BuildContext context,
+    bool isDesktop,
+  ) {
+    return _SettingsSection(
+      title: 'Store Information',
+      icon: Icons.store_outlined,
+      children: [
+        _responsiveFields(
+          isDesktop: isDesktop,
           children: [
-            Row(
-              children: [
-                Icon(icon),
-                const SizedBox(width: 10),
-                Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
+            _buildTextField(
+              controller: _storeNameController,
+              label: 'Store Name',
+              hint: 'Enter your store name',
+              icon: Icons.store_outlined,
+              validator: (value) {
+                return _requiredTextValidator(
+                  value,
+                  fieldName: 'Store name',
+                  minLength: 2,
+                  maxLength: 100,
+                );
+              },
             ),
-            const SizedBox(height: 22),
-            child,
+            _buildTextField(
+              controller: _emailController,
+              label: 'Email',
+              hint: 'store@example.com',
+              icon: Icons.email_outlined,
+              keyboardType: TextInputType.emailAddress,
+              validator: _emailValidator,
+            ),
+            _buildTextField(
+              controller: _phoneController,
+              label: 'Phone',
+              hint: '+20 100 000 0000',
+              icon: Icons.phone_outlined,
+              keyboardType: TextInputType.phone,
+              validator: _phoneValidator,
+            ),
+            _buildTextField(
+              controller: _addressController,
+              label: 'Address',
+              hint: 'Store address',
+              icon: Icons.location_on_outlined,
+              validator: (value) {
+                return _optionalTextValidator(
+                  value,
+                  fieldName: 'Address',
+                  maxLength: 300,
+                );
+              },
+            ),
+            _buildTextField(
+              controller: _cityController,
+              label: 'City',
+              hint: 'Cairo',
+              icon: Icons.location_city_outlined,
+              validator: (value) {
+                return _optionalTextValidator(
+                  value,
+                  fieldName: 'City',
+                  maxLength: 100,
+                );
+              },
+            ),
+            _buildTextField(
+              controller: _countryController,
+              label: 'Country',
+              hint: 'Egypt',
+              icon: Icons.public_outlined,
+              validator: (value) {
+                return _optionalTextValidator(
+                  value,
+                  fieldName: 'Country',
+                  maxLength: 100,
+                );
+              },
+            ),
+            _buildTextField(
+              controller: _postalCodeController,
+              label: 'Postal Code',
+              hint: '11511',
+              icon: Icons.markunread_mailbox_outlined,
+              keyboardType: TextInputType.text,
+              validator: _postalCodeValidator,
+            ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildStoreInformation() {
-    return Column(
-      children: [
-        _textField(
-          controller: _storeNameController,
-          label: 'Store Name',
-          icon: Icons.store_outlined,
-          requiredField: true,
-        ),
-
         const SizedBox(height: 16),
-
-        _textField(
+        _buildTextField(
           controller: _descriptionController,
           label: 'Description',
+          hint: 'Describe your store',
           icon: Icons.description_outlined,
-          maxLines: 3,
-        ),
-
-        const SizedBox(height: 16),
-
-        LayoutBuilder(
-          builder: (context, constraints) {
-            if (constraints.maxWidth < 650) {
-              return Column(
-                children: [
-                  _textField(
-                    controller: _emailController,
-                    label: 'Email',
-                    icon: Icons.email_outlined,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                  const SizedBox(height: 16),
-                  _textField(
-                    controller: _phoneController,
-                    label: 'Phone',
-                    icon: Icons.phone_outlined,
-                    keyboardType: TextInputType.phone,
-                  ),
-                ],
-              );
-            }
-
-            return Row(
-              children: [
-                Expanded(
-                  child: _textField(
-                    controller: _emailController,
-                    label: 'Email',
-                    icon: Icons.email_outlined,
-                    keyboardType: TextInputType.emailAddress,
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _textField(
-                    controller: _phoneController,
-                    label: 'Phone',
-                    icon: Icons.phone_outlined,
-                    keyboardType: TextInputType.phone,
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-
-        const SizedBox(height: 16),
-
-        _textField(
-          controller: _addressController,
-          label: 'Address',
-          icon: Icons.location_on_outlined,
-        ),
-
-        const SizedBox(height: 16),
-
-        LayoutBuilder(
-          builder: (context, constraints) {
-            if (constraints.maxWidth < 650) {
-              return Column(
-                children: [
-                  _textField(controller: _cityController, label: 'City'),
-                  const SizedBox(height: 16),
-                  _textField(controller: _countryController, label: 'Country'),
-                  const SizedBox(height: 16),
-                  _textField(
-                    controller: _postalCodeController,
-                    label: 'Postal Code',
-                  ),
-                ],
-              );
-            }
-
-            return Row(
-              children: [
-                Expanded(
-                  child: _textField(controller: _cityController, label: 'City'),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _textField(
-                    controller: _countryController,
-                    label: 'Country',
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _textField(
-                    controller: _postalCodeController,
-                    label: 'Postal Code',
-                  ),
-                ),
-              ],
+          maxLines: 4,
+          maxLength: 1000,
+          validator: (value) {
+            return _optionalTextValidator(
+              value,
+              fieldName: 'Description',
+              maxLength: 1000,
             );
           },
         ),
@@ -464,95 +593,86 @@ class _AdminSettingsBodyState extends State<_AdminSettingsBody> {
     );
   }
 
-  Widget _buildCommerceSection() {
-    return Column(
+  Widget _buildCommerceSection(
+    BuildContext context,
+    bool isDesktop,
+  ) {
+    return _SettingsSection(
+      title: 'Commerce',
+      icon: Icons.shopping_cart_outlined,
       children: [
-        LayoutBuilder(
-          builder: (context, constraints) {
-            if (constraints.maxWidth < 650) {
-              return Column(
-                children: [
-                  _currencyDropdown(),
-                  const SizedBox(height: 16),
-                  _numberField(
-                    controller: _taxController,
-                    label: 'Tax Rate (%)',
-                  ),
-                ],
-              );
-            }
-
-            return Row(
-              children: [
-                Expanded(child: _currencyDropdown()),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _numberField(
-                    controller: _taxController,
-                    label: 'Tax Rate (%)',
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-
-        const SizedBox(height: 16),
-
-        LayoutBuilder(
-          builder: (context, constraints) {
-            if (constraints.maxWidth < 650) {
-              return Column(
-                children: [
-                  _numberField(
-                    controller: _shippingController,
-                    label: 'Shipping Fee',
-                  ),
-                  const SizedBox(height: 16),
-                  _numberField(
-                    controller: _freeShippingController,
-                    label: 'Free Shipping Above',
-                  ),
-                ],
-              );
-            }
-
-            return Row(
-              children: [
-                Expanded(
-                  child: _numberField(
-                    controller: _shippingController,
-                    label: 'Shipping Fee',
-                  ),
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: _numberField(
-                    controller: _freeShippingController,
-                    label: 'Free Shipping Above',
-                  ),
-                ),
-              ],
-            );
-          },
-        ),
-
-        const SizedBox(height: 16),
-
-        _numberField(
-          controller: _minimumOrderController,
-          label: 'Minimum Order Amount',
+        _responsiveFields(
+          isDesktop: isDesktop,
+          children: [
+            _buildCurrencyField(),
+            _buildDecimalField(
+              controller: _taxRateController,
+              label: 'Tax Rate (%)',
+              hint: '0',
+              icon: Icons.percent_outlined,
+              validator: (value) {
+                return _decimalValidator(
+                  value,
+                  fieldName: 'Tax rate',
+                  minimum: 0,
+                  maximum: 100,
+                );
+              },
+            ),
+            _buildDecimalField(
+              controller: _shippingFeeController,
+              label: 'Shipping Fee',
+              hint: '0',
+              icon: Icons.local_shipping_outlined,
+              validator: (value) {
+                return _decimalValidator(
+                  value,
+                  fieldName: 'Shipping fee',
+                );
+              },
+            ),
+            _buildDecimalField(
+              controller: _freeShippingThresholdController,
+              label: 'Free Shipping Threshold',
+              hint: '0',
+              icon: Icons.local_shipping_outlined,
+              validator: (value) {
+                return _decimalValidator(
+                  value,
+                  fieldName: 'Free shipping threshold',
+                );
+              },
+            ),
+            _buildDecimalField(
+              controller: _minimumOrderAmountController,
+              label: 'Minimum Order Amount',
+              hint: '0',
+              icon: Icons.shopping_bag_outlined,
+              validator: (value) {
+                return _decimalValidator(
+                  value,
+                  fieldName: 'Minimum order amount',
+                );
+              },
+            ),
+          ],
         ),
       ],
     );
   }
 
-  Widget _buildStatusSection() {
-    return Column(
+  Widget _buildStoreStatusSection(
+    BuildContext context,
+  ) {
+    return _SettingsSection(
+      title: 'Store Status',
+      icon: Icons.power_settings_new_outlined,
       children: [
-        _switchTile(
+        _buildSwitchTile(
           title: 'Store Enabled',
-          subtitle: 'Customers can access the store.',
+          subtitle: _storeEnabled
+              ? 'Customers can access the store.'
+              : 'The store is currently unavailable.',
           value: _storeEnabled,
           onChanged: (value) {
             setState(() {
@@ -564,47 +684,80 @@ class _AdminSettingsBodyState extends State<_AdminSettingsBody> {
             });
           },
         ),
-
-        const Divider(),
-
-        _switchTile(
+        const Divider(height: 1),
+        _buildSwitchTile(
           title: 'Accept Orders',
-          subtitle: 'Allow customers to place new orders.',
+          subtitle: !_storeEnabled
+              ? 'Enable the store before accepting orders.'
+              : _acceptOrders
+                  ? 'Customers can place new orders.'
+                  : 'New orders are currently disabled.',
           value: _acceptOrders,
-          onChanged: !_storeEnabled
-              ? null
-              : (value) {
-                  setState(() {
-                    _acceptOrders = value;
-                  });
-                },
+          enabled: _storeEnabled,
+          onChanged: (value) {
+            setState(() {
+              _acceptOrders = value;
+            });
+          },
         ),
       ],
     );
   }
 
-  Widget _buildInventorySection() {
-    return _numberField(
-      controller: _lowStockController,
-      label: 'Low Stock Threshold',
-      integerOnly: true,
+  Widget _buildInventorySection(
+    BuildContext context,
+    bool isDesktop,
+  ) {
+    return _SettingsSection(
+      title: 'Inventory',
+      icon: Icons.inventory_2_outlined,
+      children: [
+        _responsiveFields(
+          isDesktop: isDesktop,
+          children: [
+            _buildIntegerField(
+              controller: _lowStockThresholdController,
+              label: 'Low Stock Threshold',
+              hint: '15',
+              icon: Icons.warning_amber_outlined,
+              validator: (value) {
+                return _integerValidator(
+                  value,
+                  fieldName: 'Low stock threshold',
+                  minimum: 0,
+                );
+              },
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Text(
+          'Products with stock at or below this value will appear '
+          'in the dashboard low-inventory alerts.',
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color:
+                    Theme.of(context).colorScheme.onSurfaceVariant,
+              ),
+        ),
+      ],
     );
   }
 
-  Widget _currencyDropdown() {
+  Widget _buildCurrencyField() {
     return DropdownButtonFormField<String>(
-      value: _currency,
+      initialValue: _currency,
       decoration: const InputDecoration(
         labelText: 'Currency',
-        prefixIcon: Icon(Icons.currency_exchange),
+        hintText: 'Select currency',
+        prefixIcon: Icon(Icons.currency_exchange_outlined),
+        border: OutlineInputBorder(),
       ),
-      items: const [
-        DropdownMenuItem(value: 'EGP', child: Text('EGP - Egyptian Pound')),
-        DropdownMenuItem(value: 'USD', child: Text('USD - US Dollar')),
-        DropdownMenuItem(value: 'EUR', child: Text('EUR - Euro')),
-        DropdownMenuItem(value: 'SAR', child: Text('SAR - Saudi Riyal')),
-        DropdownMenuItem(value: 'AED', child: Text('AED - UAE Dirham')),
-      ],
+      items: _currencies.map((currency) {
+        return DropdownMenuItem<String>(
+          value: currency,
+          child: Text(currency),
+        );
+      }).toList(),
       onChanged: (value) {
         if (value == null) return;
 
@@ -612,68 +765,13 @@ class _AdminSettingsBodyState extends State<_AdminSettingsBody> {
           _currency = value;
         });
       },
-    );
-  }
-
-  Widget _textField({
-    required TextEditingController controller,
-    required String label,
-    IconData? icon,
-    TextInputType? keyboardType,
-    int maxLines = 1,
-    bool requiredField = false,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: icon == null ? null : Icon(icon),
-      ),
-      validator: requiredField
-          ? (value) {
-              if (value == null || value.trim().isEmpty) {
-                return '$label is required';
-              }
-
-              return null;
-            }
-          : null,
-    );
-  }
-
-  Widget _numberField({
-    required TextEditingController controller,
-    required String label,
-    bool integerOnly = false,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: TextInputType.numberWithOptions(decimal: !integerOnly),
-      decoration: InputDecoration(
-        labelText: label,
-        prefixIcon: const Icon(Icons.numbers_outlined),
-      ),
       validator: (value) {
-        if (value == null || value.trim().isEmpty) {
-          return 'Enter $label';
+        if (value == null || value.isEmpty) {
+          return 'Currency is required';
         }
 
-        final number = integerOnly
-            ? int.tryParse(value.trim())
-            : double.tryParse(value.trim());
-
-        if (number == null) {
-          return 'Enter a valid number';
-        }
-
-        if (number < 0) {
-          return 'Value cannot be negative';
-        }
-
-        if (!integerOnly && label == 'Tax Rate (%)' && number > 100) {
-          return 'Tax rate cannot exceed 100%';
+        if (!_currencies.contains(value)) {
+          return 'Select a valid currency';
         }
 
         return null;
@@ -681,18 +779,226 @@ class _AdminSettingsBodyState extends State<_AdminSettingsBody> {
     );
   }
 
-  Widget _switchTile({
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    String? Function(String?)? validator,
+    TextInputType? keyboardType,
+    int maxLines = 1,
+    int? maxLength,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: keyboardType,
+      maxLines: maxLines,
+      maxLength: maxLength,
+      validator: validator,
+      textInputAction:
+          maxLines > 1 ? TextInputAction.newline : TextInputAction.next,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(icon),
+        border: const OutlineInputBorder(),
+        counterText: maxLength != null ? null : '',
+      ),
+    );
+  }
+
+  Widget _buildDecimalField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    required String? Function(String?) validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: const TextInputType.numberWithOptions(
+        decimal: true,
+        signed: false,
+      ),
+      inputFormatters: [
+        FilteringTextInputFormatter.allow(
+          RegExp(r'^\d*\.?\d*'),
+        ),
+      ],
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(icon),
+        border: const OutlineInputBorder(),
+      ),
+    );
+  }
+
+  Widget _buildIntegerField({
+    required TextEditingController controller,
+    required String label,
+    required String hint,
+    required IconData icon,
+    required String? Function(String?) validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      keyboardType: TextInputType.number,
+      inputFormatters: [
+        FilteringTextInputFormatter.digitsOnly,
+      ],
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        hintText: hint,
+        prefixIcon: Icon(icon),
+        border: const OutlineInputBorder(),
+      ),
+    );
+  }
+
+  Widget _responsiveFields({
+    required bool isDesktop,
+    required List<Widget> children,
+  }) {
+    if (!isDesktop) {
+      return Column(
+        children: [
+          for (int i = 0; i < children.length; i++) ...[
+            children[i],
+            if (i != children.length - 1)
+              const SizedBox(height: 16),
+          ],
+        ],
+      );
+    }
+
+    final rows = <Widget>[];
+
+    for (int i = 0; i < children.length; i += 2) {
+      final first = children[i];
+      final second =
+          i + 1 < children.length ? children[i + 1] : null;
+
+      rows.add(
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Expanded(child: first),
+            const SizedBox(width: 16),
+            Expanded(
+              child: second ?? const SizedBox.shrink(),
+            ),
+          ],
+        ),
+      );
+
+      if (i + 2 < children.length) {
+        rows.add(const SizedBox(height: 16));
+      }
+    }
+
+    return Column(
+      children: rows,
+    );
+  }
+
+  Widget _buildSwitchTile({
     required String title,
     required String subtitle,
     required bool value,
-    required ValueChanged<bool>? onChanged,
+    required ValueChanged<bool> onChanged,
+    bool enabled = true,
   }) {
-    return SwitchListTile.adaptive(
+    return SwitchListTile(
       contentPadding: EdgeInsets.zero,
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-      subtitle: Text(subtitle),
+      title: Text(
+        title,
+        style: const TextStyle(
+          fontWeight: FontWeight.w600,
+        ),
+      ),
+      subtitle: Padding(
+        padding: const EdgeInsets.only(top: 4),
+        child: Text(subtitle),
+      ),
       value: value,
-      onChanged: onChanged,
+      onChanged: enabled ? onChanged : null,
+    );
+  }
+
+  Widget _buildSaveButton(
+    BuildContext context,
+    bool saving,
+  ) {
+    return Align(
+      alignment: Alignment.centerRight,
+      child: SizedBox(
+        height: 50,
+        child: ElevatedButton.icon(
+          onPressed: saving ? null : _saveSettings,
+          icon: saving
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                  ),
+                )
+              : const Icon(Icons.save_outlined),
+          label: Text(
+            saving ? 'Saving...' : 'Save Changes',
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SettingsSection extends StatelessWidget {
+  final String title;
+  final IconData icon;
+  final List<Widget> children;
+
+  const _SettingsSection({
+    required this.title,
+    required this.icon,
+    required this.children,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = Theme.of(context);
+
+    return Card(
+      elevation: 0,
+      clipBehavior: Clip.antiAlias,
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Icon(
+                  icon,
+                  color: theme.colorScheme.primary,
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  title,
+                  style: theme.textTheme.titleLarge?.copyWith(
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 24),
+            ...children,
+          ],
+        ),
+      ),
     );
   }
 }
@@ -701,20 +1007,45 @@ class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
 
-  const _ErrorView({required this.message, required this.onRetry});
+  const _ErrorView({
+    required this.message,
+    required this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          const Icon(Icons.error_outline, size: 48),
-          const SizedBox(height: 12),
-          Text(message),
-          const SizedBox(height: 16),
-          ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
-        ],
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Icon(
+              Icons.error_outline,
+              size: 48,
+            ),
+            const SizedBox(height: 16),
+            const Text(
+              'Unable to load store settings',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 20),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(Icons.refresh),
+              label: const Text('Retry'),
+            ),
+          ],
+        ),
       ),
     );
   }
