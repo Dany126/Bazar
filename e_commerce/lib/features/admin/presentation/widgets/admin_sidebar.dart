@@ -1,5 +1,9 @@
+import 'package:e_commerce/core/services/get_it_services.dart';
 import 'package:e_commerce/core/utils/app_colors.dart';
+import 'package:e_commerce/features/auth/presentation/view/sign_in_view.dart';
+import 'package:e_commerce/features/auth/presentation/view_model/sign_out/cubit/sign_out_cubit.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 class AdminSidebar extends StatelessWidget {
   const AdminSidebar({
@@ -11,7 +15,6 @@ class AdminSidebar extends StatelessWidget {
   final int selectedIndex;
   final ValueChanged<int> onItemSelected;
 
-  @override
   @override
   Widget build(BuildContext context) {
     return SizedBox(
@@ -25,7 +28,9 @@ class AdminSidebar extends StatelessWidget {
             children: [
               const SizedBox(height: 32),
 
-              // Branding
+              // ============================================================
+              // BRAND
+              // ============================================================
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Row(
@@ -59,7 +64,9 @@ class AdminSidebar extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // Navigation takes the remaining height
+              // ============================================================
+              // NAVIGATION
+              // ============================================================
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
@@ -146,6 +153,20 @@ class AdminSidebar extends StatelessWidget {
                   ),
                 ),
               ),
+
+              // ============================================================
+              // LOGOUT
+              // ============================================================
+              const Divider(height: 1, color: Color(0xffE8EAF0)),
+
+              const SizedBox(height: 12),
+
+              BlocProvider(
+                create: (_) => getIt<SignOutCubit>(),
+                child: const _LogoutButton(),
+              ),
+
+              const SizedBox(height: 16),
             ],
           ),
         ),
@@ -153,6 +174,131 @@ class AdminSidebar extends StatelessWidget {
     );
   }
 }
+
+// ============================================================================
+// LOGOUT BUTTON
+// ============================================================================
+
+class _LogoutButton extends StatelessWidget {
+  const _LogoutButton();
+
+  @override
+  Widget build(BuildContext context) {
+    return BlocConsumer<SignOutCubit, SignOutState>(
+      listener: (context, state) {
+        if (state is SignOutSuccess) {
+          Navigator.of(
+            context,
+          ).pushNamedAndRemoveUntil(SignInView.routeName, (route) => false);
+        }
+
+        if (state is SignOutFailure) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(state.failure.message),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      },
+      builder: (context, state) {
+        final isLoading = state is SignOutInitial;
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(12),
+              onTap: isLoading
+                  ? null
+                  : () {
+                      _showLogoutConfirmation(context);
+                    },
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 12,
+                ),
+                decoration: BoxDecoration(
+                  color: const Color(0xfffff1f1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Row(
+                  children: [
+                    if (isLoading)
+                      const SizedBox(
+                        width: 20,
+                        height: 20,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                          color: Colors.red,
+                        ),
+                      )
+                    else
+                      const Icon(
+                        Icons.logout_rounded,
+                        color: Colors.red,
+                        size: 20,
+                      ),
+
+                    const SizedBox(width: 16),
+
+                    Expanded(
+                      child: Text(
+                        isLoading ? 'Signing out...' : 'Logout',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: Colors.red,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  void _showLogoutConfirmation(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: const Text('Logout'),
+          content: const Text('Are you sure you want to logout?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+
+                context.read<SignOutCubit>().signOut();
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Logout'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// ============================================================================
+// SECTION TITLE
+// ============================================================================
 
 class _SidebarSection extends StatelessWidget {
   const _SidebarSection({required this.title});
@@ -177,6 +323,10 @@ class _SidebarSection extends StatelessWidget {
     );
   }
 }
+
+// ============================================================================
+// SIDEBAR ITEM
+// ============================================================================
 
 class _SidebarItem extends StatelessWidget {
   const _SidebarItem({
@@ -218,7 +368,9 @@ class _SidebarItem extends StatelessWidget {
                         : AppColors.kSecondaryTextColor,
                     size: 20,
                   ),
+
                   const SizedBox(width: 16),
+
                   Expanded(
                     child: Text(
                       title,
@@ -233,6 +385,7 @@ class _SidebarItem extends StatelessWidget {
                       ),
                     ),
                   ),
+
                   if (isActive)
                     Container(
                       width: 5,

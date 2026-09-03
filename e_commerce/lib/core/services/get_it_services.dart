@@ -189,7 +189,15 @@ import 'package:e_commerce/features/admin/domain/usecases/update_admin_order.dar
 // ==========================================================
 import 'package:dio/browser.dart';
 import 'package:flutter/foundation.dart';
+// ==========================================================
+import 'package:e_commerce/features/admin/data/datasources/admin_store_settings_remote_data_source.dart';
+import 'package:e_commerce/features/admin/data/repositories/admin_store_settings_repository_impl.dart';
+import 'package:e_commerce/features/admin/domain/repositories/admin_store_settings_repository.dart';
+import 'package:e_commerce/features/admin/domain/usecases/get_admin_store_settings.dart';
+import 'package:e_commerce/features/admin/domain/usecases/update_admin_store_settings.dart';
+import 'package:e_commerce/features/admin/presentation/cubit/admin_store_settings_cubit.dart';
 
+// ==========================================================
 final getIt = GetIt.instance;
 
 Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
@@ -898,6 +906,39 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
       getAdminOrder: getIt<GetAdminOrder>(),
       updateAdminOrder: getIt<UpdateAdminOrder>(),
       deleteAdminOrder: getIt<DeleteAdminOrder>(),
+    ),
+  );
+
+  // ==========================================================
+  // Store Settings
+  // ==========================================================
+  getIt.registerLazySingleton<AdminStoreSettingsRemoteDataSource>(
+    () =>
+        AdminStoreSettingsRemoteDataSourceImpl(apiService: getIt<ApiService>()),
+  );
+
+  getIt.registerLazySingleton<AdminStoreSettingsRepository>(
+    () => AdminStoreSettingsRepositoryImpl(
+      remoteDataSource: getIt<AdminStoreSettingsRemoteDataSource>(),
+    ),
+  );
+
+  getIt.registerLazySingleton<GetAdminStoreSettingsUseCase>(
+    () => GetAdminStoreSettingsUseCase(
+      repository: getIt<AdminStoreSettingsRepository>(),
+    ),
+  );
+
+  getIt.registerLazySingleton<UpdateAdminStoreSettingsUseCase>(
+    () => UpdateAdminStoreSettingsUseCase(
+      repository: getIt<AdminStoreSettingsRepository>(),
+    ),
+  );
+
+  getIt.registerFactory<AdminStoreSettingsCubit>(
+    () => AdminStoreSettingsCubit(
+      getStoreSettingsUseCase: getIt<GetAdminStoreSettingsUseCase>(),
+      updateStoreSettingsUseCase: getIt<UpdateAdminStoreSettingsUseCase>(),
     ),
   );
 }

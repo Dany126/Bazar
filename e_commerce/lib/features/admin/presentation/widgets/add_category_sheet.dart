@@ -1,105 +1,92 @@
-import 'dart:typed_data';
-
 import 'package:e_commerce/features/admin/presentation/cubit/admin_categories_cubit.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_categories_state.dart';
+import 'package:e_commerce/features/home/data/models/category_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
 
 class AddCategorySheet extends StatefulWidget {
-  const AddCategorySheet({super.key});
+  const AddCategorySheet({super.key, this.category});
+
+  final CategoryModel? category;
+
+  bool get isEditing => category != null;
 
   @override
   State<AddCategorySheet> createState() => _AddCategorySheetState();
 }
 
 class _AddCategorySheetState extends State<AddCategorySheet> {
-  final TextEditingController nameController = TextEditingController();
+  late final TextEditingController _nameController;
 
-  final ImagePicker imagePicker = ImagePicker();
+  XFile? _selectedImage;
+  bool _isSubmitting = false;
 
-  XFile? selectedImage;
-  Uint8List? imageBytes;
+  @override
+  void initState() {
+    super.initState();
 
-  bool isSubmitting = false;
+    _nameController = TextEditingController(text: widget.category?.name ?? '');
+  }
 
   @override
   void dispose() {
-    nameController.dispose();
+    _nameController.dispose();
     super.dispose();
   }
 
   Future<void> _pickImage() async {
-    try {
-      final XFile? image = await imagePicker.pickImage(
-        source: ImageSource.gallery,
-      );
+    final picker = ImagePicker();
 
-      if (image == null) {
-        return;
-      }
+    final image = await picker.pickImage(source: ImageSource.gallery);
 
-      final Uint8List bytes = await image.readAsBytes();
+    if (image == null) return;
 
-      if (!mounted) {
-        return;
-      }
-
-      setState(() {
-        selectedImage = image;
-        imageBytes = bytes;
-      });
-    } catch (e) {
-      if (!mounted) {
-        return;
-      }
-
-      _showMessage('Failed to select image: $e');
-    }
-  }
-
-  void _removeImage() {
     setState(() {
-      selectedImage = null;
-      imageBytes = null;
+      _selectedImage = image;
     });
   }
 
   Future<void> _submit() async {
-    final name = nameController.text.trim();
+    final name = _nameController.text.trim();
 
     if (name.isEmpty) {
-      _showMessage('Please enter category name');
+      _showMessage('Please enter a category name.');
       return;
     }
 
-    if (selectedImage == null) {
-      _showMessage('Please select category image');
+    // Creating a category requires an image.
+    if (!widget.isEditing && _selectedImage == null) {
+      _showMessage('Please select a category image.');
       return;
     }
 
     setState(() {
-      isSubmitting = true;
+      _isSubmitting = true;
     });
 
-    await context.read<AdminCategoriesCubit>().createCategory(
-      name: name,
-      image: selectedImage!,
-    );
+    final cubit = context.read<AdminCategoriesCubit>();
 
-    if (!mounted) {
-      return;
+    if (widget.isEditing) {
+      await cubit.updateCategory(
+        id: widget.category!.id,
+        name: name,
+        image: _selectedImage,
+      );
+    } else {
+      await cubit.createCategory(name: name, image: _selectedImage!);
     }
 
-    final state = context.read<AdminCategoriesCubit>().state;
+    if (!mounted) return;
+
+    final state = cubit.state;
 
     if (state is AdminCategoriesError) {
       setState(() {
-        isSubmitting = false;
+        _isSubmitting = false;
       });
 
       _showMessage(state.message);
-
       return;
     }
 
@@ -114,267 +101,278 @@ class _AddCategorySheetState extends State<AddCategorySheet> {
 
   @override
   Widget build(BuildContext context) {
-    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+    return BlocListener<AdminCategoriesCubit, AdminCategoriesState>(
+      listener: (context, state) {
+        if (state is AdminCategoriesError && _isSubmitting) {
+          if (mounted) {
+            setState(() {
+              _isSubmitting = false;
+            });
+          }
+        }
+      },
+      child: SafeArea(
+        child: Container(
+          constraints: const BoxConstraints(maxHeight: 650),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: SingleChildScrollView(
+            padding: EdgeInsets.only(
+              left: 24,
+              right: 24,
+              top: 24,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildHeader(),
 
-    return Padding(
-      padding: EdgeInsets.only(bottom: keyboardHeight),
-      child: Container(
-        constraints: const BoxConstraints(maxWidth: 520),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-        ),
-        padding: const EdgeInsets.fromLTRB(24, 14, 24, 24),
-        child: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 42,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: const Color(0xffDDDEE5),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
+                const SizedBox(height: 24),
 
-              const SizedBox(height: 22),
+                _buildNameField(),
 
-              const Text(
-                'Add Category',
-                style: TextStyle(
-                  fontSize: 21,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xff20222F),
-                ),
-              ),
+                const SizedBox(height: 20),
 
-              const SizedBox(height: 6),
+                _buildImagePicker(),
 
-              const Text(
-                'Create a new product category',
-                style: TextStyle(fontSize: 13, color: Color(0xff858897)),
-              ),
+                const SizedBox(height: 28),
 
-              const SizedBox(height: 24),
-
-              const Text(
-                'Category Image',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xff252735),
-                ),
-              ),
-
-              const SizedBox(height: 10),
-
-              _CategoryImagePicker(
-                imageBytes: imageBytes,
-                onPick: _pickImage,
-                onRemove: selectedImage == null ? null : _removeImage,
-              ),
-
-              const SizedBox(height: 20),
-
-              const Text(
-                'Category Name',
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: Color(0xff252735),
-                ),
-              ),
-
-              const SizedBox(height: 8),
-
-              TextField(
-                controller: nameController,
-                textInputAction: TextInputAction.done,
-                decoration: InputDecoration(
-                  hintText: 'Enter category name',
-                  filled: true,
-                  fillColor: const Color(0xffF8F9FC),
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: BorderSide.none,
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xffE8EAF0)),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                    borderSide: const BorderSide(color: Color(0xff6C63FF)),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: isSubmitting
-                          ? null
-                          : () {
-                              Navigator.of(context).pop();
-                            },
-                      style: OutlinedButton.styleFrom(
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        side: const BorderSide(color: Color(0xffE1E2E8)),
-                      ),
-                      child: const Text('Cancel'),
-                    ),
-                  ),
-
-                  const SizedBox(width: 12),
-
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: isSubmitting ? null : _submit,
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: const Color(0xff6C63FF),
-                        foregroundColor: Colors.white,
-                        elevation: 0,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                      ),
-                      child: isSubmitting
-                          ? const SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                color: Colors.white,
-                              ),
-                            )
-                          : const Text('Add Category'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+                _buildSubmitButton(),
+              ],
+            ),
           ),
         ),
       ),
     );
   }
-}
 
-class _CategoryImagePicker extends StatelessWidget {
-  final Uint8List? imageBytes;
-  final VoidCallback onPick;
-  final VoidCallback? onRemove;
-
-  const _CategoryImagePicker({
-    required this.imageBytes,
-    required this.onPick,
-    required this.onRemove,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final hasImage = imageBytes != null;
-
-    return GestureDetector(
-      onTap: onPick,
-      child: Container(
-        width: double.infinity,
-        height: 180,
-        decoration: BoxDecoration(
-          color: const Color(0xffF8F9FC),
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xffE1E2E8)),
+  Widget _buildHeader() {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            widget.isEditing ? 'Edit Category' : 'Add Category',
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.w700,
+              color: Color(0xff20222F),
+            ),
+          ),
         ),
-        clipBehavior: Clip.antiAlias,
-        child: hasImage
-            ? Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.memory(imageBytes!, fit: BoxFit.cover),
 
-                  Positioned(
-                    top: 10,
-                    right: 10,
-                    child: Material(
-                      color: Colors.black54,
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        onTap: onRemove,
-                        customBorder: const CircleBorder(),
-                        child: const Padding(
-                          padding: EdgeInsets.all(8),
-                          child: Icon(
-                            Icons.close,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+        IconButton(
+          onPressed: _isSubmitting
+              ? null
+              : () {
+                  Navigator.of(context).pop();
+                },
+          icon: const Icon(Icons.close),
+        ),
+      ],
+    );
+  }
 
-                  Positioned(
-                    bottom: 12,
-                    left: 12,
-                    right: 12,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 9,
-                      ),
-                      decoration: BoxDecoration(
-                        color: Colors.black54,
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: const Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Icon(Icons.edit, color: Colors.white, size: 17),
-                          SizedBox(width: 7),
-                          Text(
-                            'Change image',
-                            style: TextStyle(
-                              color: Colors.white,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
+  Widget _buildNameField() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Category Name',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xff20222F),
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        TextField(
+          controller: _nameController,
+          textInputAction: TextInputAction.done,
+          enabled: !_isSubmitting,
+          decoration: InputDecoration(
+            hintText: 'Enter category name',
+            filled: true,
+            fillColor: const Color(0xffF8F8FA),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xffE8EAF0)),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(color: Color(0xffE8EAF0)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: const BorderSide(
+                color: Color(0xff6C63FF),
+                width: 1.5,
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildImagePicker() {
+    final image = _selectedImage;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Category Image',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Color(0xff20222F),
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        GestureDetector(
+          onTap: _isSubmitting ? null : _pickImage,
+          child: Container(
+            width: double.infinity,
+            height: 180,
+            decoration: BoxDecoration(
+              color: const Color(0xffF8F8FA),
+              borderRadius: BorderRadius.circular(14),
+              border: Border.all(color: const Color(0xffE8EAF0)),
+            ),
+            child: image != null
+                ? _buildSelectedImage(image)
+                : _buildExistingOrEmptyImage(),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSelectedImage(XFile image) {
+    return FutureBuilder<List<int>>(
+      future: image.readAsBytes(),
+      builder: (context, snapshot) {
+        if (!snapshot.hasData) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        return ClipRRect(
+          borderRadius: BorderRadius.circular(14),
+          child: Image.memory(
+            snapshot.data! as dynamic,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: double.infinity,
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildExistingOrEmptyImage() {
+    final existingImage = widget.category?.imageUrl;
+
+    if (existingImage != null && existingImage.isNotEmpty) {
+      return Stack(
+        children: [
+          ClipRRect(
+            borderRadius: BorderRadius.circular(14),
+            child: Image.network(
+              existingImage,
+              width: double.infinity,
+              height: double.infinity,
+              fit: BoxFit.cover,
+              errorBuilder: (_, __, ___) {
+                return _buildImagePlaceholder();
+              },
+            ),
+          ),
+
+          Positioned(
+            right: 12,
+            bottom: 12,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: Colors.black.withValues(alpha: 0.65),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: const Text(
+                'Change image',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 12,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return _buildImagePlaceholder();
+  }
+
+  Widget _buildImagePlaceholder() {
+    return const Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(Icons.cloud_upload_outlined, size: 42, color: Color(0xff777B8C)),
+        SizedBox(height: 10),
+        Text(
+          'Select image',
+          style: TextStyle(
+            color: Color(0xff555A6F),
+            fontWeight: FontWeight.w600,
+          ),
+        ),
+        SizedBox(height: 4),
+        Text(
+          'PNG, JPG or JPEG',
+          style: TextStyle(color: Color(0xff999CAA), fontSize: 12),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 52,
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : _submit,
+        style: ElevatedButton.styleFrom(
+          elevation: 0,
+          backgroundColor: const Color(0xff6C63FF),
+          disabledBackgroundColor: const Color(0xffB8B5D8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+        ),
+        child: _isSubmitting
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  color: Colors.white,
+                ),
               )
-            : const Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.cloud_upload_outlined,
-                    size: 42,
-                    color: Color(0xff6C63FF),
-                  ),
-                  SizedBox(height: 12),
-                  Text(
-                    'Upload category image',
-                    style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600),
-                  ),
-                  SizedBox(height: 5),
-                  Text(
-                    'Click to choose an image',
-                    style: TextStyle(fontSize: 12, color: Color(0xff858897)),
-                  ),
-                ],
+            : Text(
+                widget.isEditing ? 'Update Category' : 'Create Category',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                ),
               ),
       ),
     );
