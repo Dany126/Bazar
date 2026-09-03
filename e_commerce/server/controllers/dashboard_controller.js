@@ -22,8 +22,10 @@ function getDateRange(period = "month") {
 
     start.setHours(0, 0, 0, 0);
 
+    const day = start.getDay();
+
     start.setDate(
-      start.getDate() - start.getDay(),
+      start.getDate() - day,
     );
 
     previousStart = new Date(
@@ -86,7 +88,8 @@ function percentageChange(
   }
 
   return (
-    ((current - previous) / previous) *
+    ((current - previous) /
+      previous) *
     100
   );
 }
@@ -100,708 +103,700 @@ function round(value, digits = 2) {
   );
 }
 
-export const getAdminDashboard = async (
-  req,
-  res,
-) => {
-  try {
-    const period = [
-      "week",
-      "month",
-      "year",
-    ].includes(req.query.period)
-      ? req.query.period
-      : "month";
+function isRevenueOrder(order) {
+  return (
+    order.paymentStatus === "paid" &&
+    order.orderStatus !== "cancelled"
+  );
+}
 
-    const {
-      start,
-      end,
-      previousStart,
-      previousEnd,
-    } = getDateRange(period);
+function revenueFromOrders(orders) {
+  return orders
+    .filter(isRevenueOrder)
+    .reduce(
+      (sum, order) =>
+        sum + Number(order.totalPrice || 0),
+      0,
+    );
+}
 
-    /*
-    |--------------------------------------------------------------------------
-    | STORE SETTINGS
-    |--------------------------------------------------------------------------
-    */
-
-    let storeSettings =
-      await StoreSettings.findOne();
-
-    /*
-    |--------------------------------------------------------------------------
-    | Create the default settings document
-    | if it doesn't exist yet.
-    |--------------------------------------------------------------------------
-    */
-
-    if (!storeSettings) {
-      storeSettings =
-        await StoreSettings.create({
-          storeName: "Bazar",
-          description: "",
-          email: "",
-          phone: "",
-          address: "",
-          city: "",
-          country: "",
-          postalCode: "",
-          currency: "EGP",
-          taxRate: 0,
-          shippingFee: 0,
-          freeShippingThreshold: 0,
-          minimumOrderAmount: 0,
-          lowStockThreshold:
-            DEFAULT_LOW_STOCK_THRESHOLD,
-          storeEnabled: true,
-          acceptOrders: true,
-        });
-    }
-
-    const lowStockThreshold =
-      storeSettings.lowStockThreshold ??
-      DEFAULT_LOW_STOCK_THRESHOLD;
-
-    /*
-    |--------------------------------------------------------------------------
-    | MAIN DASHBOARD DATA
-    |--------------------------------------------------------------------------
-    */
-
-    const [
-      totalProducts,
-      totalCategories,
-      totalUsers,
-      currentOrders,
-      previousOrders,
-      currentVisitors,
-      previousVisitors,
-    ] = await Promise.all([
-      Product.countDocuments(),
-
-      Category.countDocuments(),
-
-      User.countDocuments({
-        role: {
-          $not: {
-            $regex: "^admin$",
-            $options: "i",
+async function getRevenue(
+  start,
+  end,
+) {
+  const result =
+    await Order.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: start,
+            $lt: end,
+          },
+          paymentStatus: "paid",
+          orderStatus: {
+            $ne: "cancelled",
           },
         },
-      }),
-
-      Order.find({
-        createdAt: {
-          $gte: start,
-          $lte: end,
+      },
+      {
+        $group: {
+          _id: null,
+          total: {
+            $sum: "$totalPrice",
+          },
         },
-      })
-        .populate(
-          "user",
-          "name email",
-        )
-        .populate(
-          "products.product",
-          "name image",
-        )
-        .sort({
-          createdAt: -1,
-        }),
-
-      Order.find({
-        createdAt: {
-          $gte: previousStart,
-          $lt: previousEnd,
-        },
-      }).select(
-        "totalPrice user visitorId createdAt orderStatus paymentStatus",
-      ),
-
-      Visitor.countDocuments({
-        createdAt: {
-          $gte: start,
-          $lte: end,
-        },
-      }),
-
-      Visitor.countDocuments({
-        createdAt: {
-          $gte: previousStart,
-          $lt: previousEnd,
-        },
-      }),
+      },
     ]);
 
-    /*
-    |--------------------------------------------------------------------------
-    | ALL TIME REVENUE
-    |--------------------------------------------------------------------------
-    */
+  return Number(
+    result[0]?.total ?? 0,
+  );
+}
 
-    const allTimeRevenue =
-      await Order.aggregate([
-        {
-          $match: {
-            paymentStatus: "paid",
-            orderStatus: {
-              $ne: "cancelled",
-            },
-          },
-        },
+export const getAdminDashboard =
+  async (req, res) => {
+    try {
+      const period = [
+        "week",
+        "month",
+        "year",
+      ].includes(req.query.period)
+        ? req.query.period
+        : "month";
 
-        {
-          $group: {
-            _id: null,
-            total: {
-              $sum: "$totalPrice",
-            },
-          },
-        },
-      ]);
-
-    /*
-    |--------------------------------------------------------------------------
-    | CURRENT PERIOD REVENUE
-    |--------------------------------------------------------------------------
-    */
-
-    const currentRevenue =
-      currentOrders
-        .filter(
-          (order) =>
-            order.paymentStatus ===
-              "paid" &&
-            order.orderStatus !==
-              "cancelled",
-        )
-        .reduce(
-          (sum, order) =>
-            sum + order.totalPrice,
-          0,
-        );
-
-    /*
-    |--------------------------------------------------------------------------
-    | PREVIOUS PERIOD REVENUE
-    |--------------------------------------------------------------------------
-    */
-
-    const previousRevenue =
-      previousOrders
-        .filter(
-          (order) =>
-            order.paymentStatus ===
-              "paid" &&
-            order.orderStatus !==
-              "cancelled",
-        )
-        .reduce(
-          (sum, order) =>
-            sum + order.totalPrice,
-          0,
-        );
-
-    /*
-    |--------------------------------------------------------------------------
-    | CONVERSION RATE
-    |--------------------------------------------------------------------------
-    */
-
-    const conversionVisitors =
-      await Visitor.countDocuments({
-        createdAt: {
-          $gte: start,
-          $lte: end,
-        },
-        converted: true,
-      });
-
-    const conversionRate =
-      currentVisitors === 0
-        ? null
-        : round(
-            (conversionVisitors /
-              currentVisitors) *
-              100,
-          );
-
-    const previousConversionVisitors =
-      await Visitor.countDocuments({
-        createdAt: {
-          $gte: previousStart,
-          $lt: previousEnd,
-        },
-        converted: true,
-      });
-
-    const previousConversionRate =
-      previousVisitors === 0
-        ? null
-        : (previousConversionVisitors /
-            previousVisitors) *
-          100;
-
-    /*
-    |--------------------------------------------------------------------------
-    | CATEGORY BREAKDOWN
-    |--------------------------------------------------------------------------
-    */
-
-    const categoryBreakdown =
-      await Product.aggregate([
-        {
-          $group: {
-            _id: "$category",
-            count: {
-              $sum: 1,
-            },
-          },
-        },
-
-        {
-          $lookup: {
-            from: "categories",
-            localField: "_id",
-            foreignField: "_id",
-            as: "category",
-          },
-        },
-
-        {
-          $unwind: "$category",
-        },
-
-        {
-          $sort: {
-            count: -1,
-          },
-        },
-
-        {
-          $project: {
-            _id: 0,
-            name: "$category.name",
-            count: 1,
-          },
-        },
-      ]);
-
-    const categoryTotal =
-      categoryBreakdown.reduce(
-        (sum, item) =>
-          sum + item.count,
-        0,
-      );
-
-    const categoryData =
-      categoryBreakdown.map(
-        (item) => ({
-          name: item.name,
-          count: item.count,
-          percent:
-            categoryTotal === 0
-              ? 0
-              : round(
-                  (item.count /
-                    categoryTotal) *
-                    100,
-                ),
-        }),
-      );
-
-    /*
-    |--------------------------------------------------------------------------
-    | LOW INVENTORY
-    |
-    | IMPORTANT:
-    | No more hardcoded "15".
-    |
-    | It now comes from:
-    |
-    | StoreSettings.lowStockThreshold
-    |--------------------------------------------------------------------------
-    */
-
-    const lowInventory =
-      await Variant.aggregate([
-        {
-          $match: {
-            stock: {
-              $lte:
-                lowStockThreshold,
-            },
-          },
-        },
-
-        {
-          $lookup: {
-            from: "products",
-            localField: "product",
-            foreignField: "_id",
-            as: "product",
-          },
-        },
-
-        {
-          $unwind: "$product",
-        },
-
-        {
-          $sort: {
-            stock: 1,
-          },
-        },
-
-        {
-          $limit: 10,
-        },
-
-        {
-          $project: {
-            _id: 1,
-            productId:
-              "$product._id",
-            name: "$product.name",
-            size: 1,
-            color: 1,
-            stock: 1,
-          },
-        },
-      ]);
-
-    /*
-    |--------------------------------------------------------------------------
-    | REVENUE CHART
-    |--------------------------------------------------------------------------
-    */
-
-    const chartStart =
-      new Date(start);
-
-    const chartEnd =
-      new Date(end);
-
-    const chartGroup =
-      period === "year"
-        ? {
-            $month:
-              "$createdAt",
-          }
-        : period === "week"
-          ? {
-              $dayOfWeek:
-                "$createdAt",
-            }
-          : {
-              $dayOfMonth:
-                "$createdAt",
-            };
-
-    const chartRows =
-      await Order.aggregate([
-        {
-          $match: {
-            createdAt: {
-              $gte: chartStart,
-              $lte: chartEnd,
-            },
-
-            paymentStatus: "paid",
-
-            orderStatus: {
-              $ne: "cancelled",
-            },
-          },
-        },
-
-        {
-          $group: {
-            _id: chartGroup,
-            revenue: {
-              $sum: "$totalPrice",
-            },
-          },
-        },
-
-        {
-          $sort: {
-            _id: 1,
-          },
-        },
-      ]);
-
-    /*
-    |--------------------------------------------------------------------------
-    | RECENT ORDERS
-    |--------------------------------------------------------------------------
-    */
-
-    const recentOrders =
-      currentOrders
-        .slice(0, 6)
-        .map((order) => ({
-          id: order._id,
-
-          customer:
-            order.user?.name ??
-            "Guest",
-
-          total:
-            order.totalPrice,
-
-          status:
-            order.orderStatus,
-
-          paymentStatus:
-            order.paymentStatus,
-
-          createdAt:
-            order.createdAt,
-        }));
-
-    /*
-    |--------------------------------------------------------------------------
-    | DASHBOARD RESPONSE
-    |--------------------------------------------------------------------------
-    */
-
-    const dashboard = {
-      period,
-
-      range: {
+      const {
         start,
         end,
-      },
+        previousStart,
+        previousEnd,
+      } = getDateRange(period);
 
-      /*
-      |--------------------------------------------------------------------------
-      | STORE INFORMATION
-      |--------------------------------------------------------------------------
-      |
-      | This makes the dashboard aware of the
-      | current store configuration.
-      |
-      */
+      let storeSettings =
+        await StoreSettings.findOne();
 
-      store: {
-        name:
-          storeSettings.storeName,
+      if (!storeSettings) {
+        storeSettings =
+          await StoreSettings.create({
+            storeName: "Bazar",
+            description: "",
+            email: "",
+            phone: "",
+            address: "",
+            city: "",
+            country: "",
+            postalCode: "",
+            currency: "EGP",
+            taxRate: 0,
+            shippingFee: 0,
+            freeShippingThreshold: 0,
+            minimumOrderAmount: 0,
+            lowStockThreshold:
+              DEFAULT_LOW_STOCK_THRESHOLD,
+            storeEnabled: true,
+            acceptOrders: true,
+          });
+      }
 
-        currency:
-          storeSettings.currency,
+      const lowStockThreshold =
+        Number(
+          storeSettings.lowStockThreshold ??
+            DEFAULT_LOW_STOCK_THRESHOLD,
+        );
 
-        storeEnabled:
-          storeSettings.storeEnabled,
-
-        acceptOrders:
-          storeSettings.acceptOrders,
-
-        lowStockThreshold,
-      },
-
-      stats: {
-        totalRevenue:
-          round(
-            Number(
-              allTimeRevenue[0]
-                ?.total ?? 0,
-            ),
-          ),
-
-        periodRevenue:
-          round(currentRevenue),
-
-        totalOrders:
-          await Order.countDocuments(),
-
-        periodOrders:
-          currentOrders.length,
-
+      const [
         totalProducts,
-
         totalCategories,
-
         totalUsers,
+        totalOrders,
+        currentOrders,
+        previousOrders,
+        currentVisitors,
+        previousVisitors,
+        currentConversionVisitors,
+        previousConversionVisitors,
+        categoryBreakdown,
+        lowStockCount,
+        lowInventory,
+      ] = await Promise.all([
+        Product.countDocuments(),
 
-        totalVisitors:
-          currentVisitors,
+        Category.countDocuments(),
 
-        conversionRate,
+        User.countDocuments({
+          role: {
+            $not: {
+              $regex: "^admin$",
+              $options: "i",
+            },
+          },
+        }),
 
-        lowStockAlerts:
-          lowInventory.length,
+        Order.countDocuments(),
 
-        changes: {
-          revenue:
-            percentageChange(
-              currentRevenue,
-              previousRevenue,
+        Order.find({
+          createdAt: {
+            $gte: start,
+            $lt: end,
+          },
+        })
+          .populate(
+            "user",
+            "name email",
+          )
+          .sort({
+            createdAt: -1,
+          }),
+
+        Order.find({
+          createdAt: {
+            $gte: previousStart,
+            $lt: previousEnd,
+          },
+        }),
+
+        Visitor.countDocuments({
+          createdAt: {
+            $gte: start,
+            $lt: end,
+          },
+        }),
+
+        Visitor.countDocuments({
+          createdAt: {
+            $gte: previousStart,
+            $lt: previousEnd,
+          },
+        }),
+
+        Visitor.countDocuments({
+          createdAt: {
+            $gte: start,
+            $lt: end,
+          },
+          converted: true,
+        }),
+
+        Visitor.countDocuments({
+          createdAt: {
+            $gte: previousStart,
+            $lt: previousEnd,
+          },
+          converted: true,
+        }),
+
+        Product.aggregate([
+          {
+            $group: {
+              _id: "$category",
+              count: {
+                $sum: 1,
+              },
+            },
+          },
+
+          {
+            $lookup: {
+              from: "categories",
+              localField: "_id",
+              foreignField: "_id",
+              as: "category",
+            },
+          },
+
+          {
+            $unwind: "$category",
+          },
+
+          {
+            $sort: {
+              count: -1,
+            },
+          },
+
+          {
+            $project: {
+              _id: 0,
+              name: "$category.name",
+              count: 1,
+            },
+          },
+        ]),
+
+        Variant.countDocuments({
+          stock: {
+            $lte: lowStockThreshold,
+          },
+        }),
+
+        Variant.aggregate([
+          {
+            $match: {
+              stock: {
+                $lte: lowStockThreshold,
+              },
+            },
+          },
+
+          {
+            $lookup: {
+              from: "products",
+              localField: "product",
+              foreignField: "_id",
+              as: "product",
+            },
+          },
+
+          {
+            $unwind: "$product",
+          },
+
+          {
+            $sort: {
+              stock: 1,
+            },
+          },
+
+          {
+            $limit: 10,
+          },
+
+          {
+            $project: {
+              _id: 1,
+              productId:
+                "$product._id",
+              name:
+                "$product.name",
+              size: 1,
+              color: 1,
+              stock: 1,
+            },
+          },
+        ]),
+      ]);
+
+      const currentRevenue =
+        await getRevenue(
+          start,
+          end,
+        );
+
+      const previousRevenue =
+        await getRevenue(
+          previousStart,
+          previousEnd,
+        );
+
+      const conversionRate =
+        currentVisitors === 0
+          ? null
+          : round(
+              (
+                currentConversionVisitors /
+                currentVisitors
+              ) *
+                100,
+            );
+
+      const previousConversionRate =
+        previousVisitors === 0
+          ? null
+          : round(
+              (
+                previousConversionVisitors /
+                previousVisitors
+              ) *
+                100,
+            );
+
+      const categoryTotal =
+        categoryBreakdown.reduce(
+          (sum, item) =>
+            sum + Number(item.count || 0),
+          0,
+        );
+
+      const categoryData =
+        categoryBreakdown.map(
+          (item) => ({
+            name: item.name,
+            count: Number(
+              item.count || 0,
             ),
-
-          orders:
-            percentageChange(
-              currentOrders.length,
-              previousOrders.length,
-            ),
-
-          visitors:
-            percentageChange(
-              currentVisitors,
-              previousVisitors,
-            ),
-
-          conversionRate:
-            percentageChange(
-              conversionRate ?? 0,
-              previousConversionRate ??
-                0,
-            ),
-        },
-      },
-
-      categoryBreakdown:
-        categoryData,
-
-      revenueChart:
-        chartRows.map((row) => ({
-          period: row._id,
-
-          label:
-            period === "year"
-              ? new Date(
-                  2000,
-                  Number(row._id) -
-                    1,
-                  1,
-                ).toLocaleString(
-                  "en-US",
-                  {
-                    month:
-                      "short",
-                  },
-                )
-              : period === "week"
-                ? [
-                    "Sun",
-                    "Mon",
-                    "Tue",
-                    "Wed",
-                    "Thu",
-                    "Fri",
-                    "Sat",
-                  ][
-                    Number(
-                      row._id,
-                    ) - 1
-                  ]
-                : String(
-                    row._id,
+            percent:
+              categoryTotal === 0
+                ? 0
+                : round(
+                    (
+                      Number(
+                        item.count || 0,
+                      ) /
+                        categoryTotal
+                    ) *
+                      100,
                   ),
+          }),
+        );
 
-          revenue:
-            round(row.revenue),
-        })),
+      const recentOrders =
+        currentOrders
+          .slice(0, 6)
+          .map((order) => ({
+            id: String(order._id),
 
-      recentOrders,
+            customer:
+              order.user?.name ??
+              "Guest",
 
-      lowInventory,
-    };
+            total:
+              Number(
+                order.totalPrice || 0,
+              ),
 
-    return res.status(200).json({
-      status: "Success",
-      dashboard,
-    });
-  } catch (err) {
-    console.error(
-      "Admin dashboard error:",
-      err,
-    );
+            status:
+              order.orderStatus,
 
-    return res.status(500).json({
-      status: "Failed",
-      message:
-        "Internal Server Error",
-    });
-  }
-};
+            paymentStatus:
+              order.paymentStatus,
 
-export const trackVisitor = async (
-  req,
-  res,
-) => {
-  try {
-    const {
-      visitorId,
-      path = null,
-    } = req.body;
+            createdAt:
+              order.createdAt,
+          }));
 
-    if (
-      !visitorId ||
-      typeof visitorId !== "string"
-    ) {
-      return res.status(400).json({
-        status: "Failed",
-        message:
-          "visitorId is required",
+      const revenueChart =
+        await buildRevenueChart(
+          period,
+          start,
+          end,
+        );
+
+      const dashboard = {
+        period,
+
+        range: {
+          start,
+          end,
+        },
+
+        store: {
+          name:
+            storeSettings.storeName,
+
+          currency:
+            storeSettings.currency,
+
+          storeEnabled:
+            storeSettings.storeEnabled,
+
+          acceptOrders:
+            storeSettings.acceptOrders,
+
+          lowStockThreshold,
+        },
+
+        stats: {
+          totalRevenue:
+            round(currentRevenue),
+
+          periodRevenue:
+            round(currentRevenue),
+
+          totalOrders,
+
+          periodOrders:
+            currentOrders.length,
+
+          totalProducts,
+
+          totalCategories,
+
+          totalUsers,
+
+          totalVisitors:
+            currentVisitors,
+
+          conversionRate,
+
+          lowStockAlerts:
+            lowStockCount,
+
+          changes: {
+            revenue:
+              percentageChange(
+                currentRevenue,
+                previousRevenue,
+              ),
+
+            orders:
+              percentageChange(
+                currentOrders.length,
+                previousOrders.length,
+              ),
+
+            visitors:
+              percentageChange(
+                currentVisitors,
+                previousVisitors,
+              ),
+
+            conversionRate:
+              conversionRate === null ||
+              previousConversionRate ===
+                null
+                ? null
+                : round(
+                    conversionRate -
+                      previousConversionRate,
+                    2,
+                  ),
+          },
+        },
+
+        categoryBreakdown:
+          categoryData,
+
+        revenueChart,
+
+        recentOrders,
+
+        lowInventory,
+      };
+
+      return res.status(200).json({
+        status: "Success",
+        dashboard,
       });
-    }
-
-    const now = new Date();
-
-    const monthKey =
-      `${now.getUTCFullYear()}-${String(
-        now.getUTCMonth() + 1,
-      ).padStart(2, "0")}`;
-
-    const visitor =
-      await Visitor.findOneAndUpdate(
-        {
-          visitorId,
-          monthKey,
-        },
-
-        {
-          $set: {
-            lastSeenAt: now,
-
-            ...(path
-              ? {
-                  lastPath: path,
-                }
-              : {}),
-          },
-
-          $setOnInsert: {
-            visitorId,
-            monthKey,
-            createdAt: now,
-            converted: false,
-          },
-        },
-
-        {
-          upsert: true,
-          new: true,
-          setDefaultsOnInsert: true,
-        },
+    } catch (err) {
+      console.error(
+        "Admin dashboard error:",
+        err,
       );
 
-    return res.status(200).json({
-      status: "Success",
-      visitorId:
-        visitor.visitorId,
-    });
-  } catch (err) {
-    console.error(
-      "Track visitor error:",
-      err,
-    );
+      return res.status(500).json({
+        status: "Failed",
+        message:
+          "Internal Server Error",
+      });
+    }
+  };
 
-    return res.status(500).json({
-      status: "Failed",
-      message:
-        "Internal Server Error",
-    });
+async function buildRevenueChart(
+  period,
+  start,
+  end,
+) {
+  const rows =
+    await Order.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: start,
+            $lt: end,
+          },
+
+          paymentStatus: "paid",
+
+          orderStatus: {
+            $ne: "cancelled",
+          },
+        },
+      },
+
+      {
+        $group: {
+          _id:
+            period === "year"
+              ? {
+                  $month:
+                    "$createdAt",
+                }
+              : period === "month"
+                ? {
+                    $dayOfMonth:
+                      "$createdAt",
+                  }
+                : {
+                    $dayOfWeek:
+                      "$createdAt",
+                  },
+
+          revenue: {
+            $sum: "$totalPrice",
+          },
+        },
+      },
+    ]);
+
+  const map = new Map();
+
+  for (const row of rows) {
+    map.set(
+      Number(row._id),
+      round(
+        Number(row.revenue || 0),
+      ),
+    );
   }
-};
+
+  if (period === "year") {
+    return Array.from(
+      { length: 12 },
+      (_, index) => {
+        const month = index + 1;
+
+        return {
+          period: month,
+          label: new Date(
+            2000,
+            index,
+            1,
+          ).toLocaleString(
+            "en-US",
+            {
+              month: "short",
+            },
+          ),
+          revenue:
+            map.get(month) ?? 0,
+        };
+      },
+    );
+  }
+
+  if (period === "month") {
+    const days =
+      new Date(
+        start.getFullYear(),
+        start.getMonth() + 1,
+        0,
+      ).getDate();
+
+    return Array.from(
+      { length: days },
+      (_, index) => {
+        const day = index + 1;
+
+        return {
+          period: day,
+          label: String(day),
+          revenue:
+            map.get(day) ?? 0,
+        };
+      },
+    );
+  }
+
+  return [
+    {
+      period: 1,
+      label: "Sun",
+      revenue: map.get(1) ?? 0,
+    },
+    {
+      period: 2,
+      label: "Mon",
+      revenue: map.get(2) ?? 0,
+    },
+    {
+      period: 3,
+      label: "Tue",
+      revenue: map.get(3) ?? 0,
+    },
+    {
+      period: 4,
+      label: "Wed",
+      revenue: map.get(4) ?? 0,
+    },
+    {
+      period: 5,
+      label: "Thu",
+      revenue: map.get(5) ?? 0,
+    },
+    {
+      period: 6,
+      label: "Fri",
+      revenue: map.get(6) ?? 0,
+    },
+    {
+      period: 7,
+      label: "Sat",
+      revenue: map.get(7) ?? 0,
+    },
+  ];
+}
+
+export const trackVisitor =
+  async (req, res) => {
+    try {
+      const {
+        visitorId,
+        path = null,
+      } = req.body;
+
+      if (
+        !visitorId ||
+        typeof visitorId !== "string"
+      ) {
+        return res.status(400).json({
+          status: "Failed",
+          message:
+            "visitorId is required",
+        });
+      }
+
+      const now = new Date();
+
+      const monthKey =
+        `${now.getUTCFullYear()}-${String(
+          now.getUTCMonth() + 1,
+        ).padStart(2, "0")}`;
+
+      const visitor =
+        await Visitor.findOneAndUpdate(
+          {
+            visitorId,
+            monthKey,
+          },
+
+          {
+            $set: {
+              lastSeenAt: now,
+
+              ...(path
+                ? {
+                    lastPath: path,
+                  }
+                : {}),
+            },
+
+            $setOnInsert: {
+              visitorId,
+              monthKey,
+              createdAt: now,
+              converted: false,
+            },
+          },
+
+          {
+            new: true,
+            upsert: true,
+          },
+        );
+
+      return res.status(200).json({
+        status: "Success",
+        visitor,
+      });
+    } catch (err) {
+      console.error(
+        "Track visitor error:",
+        err,
+      );
+
+      return res.status(500).json({
+        status: "Failed",
+        message:
+          "Internal Server Error",
+      });
+    }
+  };

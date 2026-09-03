@@ -1,19 +1,32 @@
 class AdminDashboardData {
   final String period;
+
   final double totalRevenue;
   final double periodRevenue;
+
   final int totalOrders;
   final int periodOrders;
+
   final int totalProducts;
   final int totalCategories;
   final int totalUsers;
+
   final int totalVisitors;
+
   final double? conversionRate;
+
   final int lowStockAlerts;
+
   final AdminDashboardChanges changes;
+
+  final AdminDashboardStore store;
+
   final List<AdminCategoryBreakdown> categoryBreakdown;
+
   final List<AdminRevenuePoint> revenueChart;
+
   final List<AdminRecentOrder> recentOrders;
+
   final List<AdminInventoryItem> lowInventory;
 
   const AdminDashboardData({
@@ -29,10 +42,27 @@ class AdminDashboardData {
     required this.conversionRate,
     required this.lowStockAlerts,
     required this.changes,
+    required this.store,
     required this.categoryBreakdown,
     required this.revenueChart,
     required this.recentOrders,
     required this.lowInventory,
+  });
+}
+
+class AdminDashboardStore {
+  final String name;
+  final String currency;
+  final bool storeEnabled;
+  final bool acceptOrders;
+  final int lowStockThreshold;
+
+  const AdminDashboardStore({
+    required this.name,
+    required this.currency,
+    required this.storeEnabled,
+    required this.acceptOrders,
+    required this.lowStockThreshold,
   });
 }
 

@@ -62,13 +62,13 @@ class AdminDashboardStatCard extends StatelessWidget {
                     child: Text(
                       label.toUpperCase(),
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                            color: isPrimary
-                                ? Colors.white70
-                                : AppColors.kSecondaryTextColor,
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
-                            letterSpacing: 0.5,
-                          ),
+                        color: isPrimary
+                            ? Colors.white70
+                            : AppColors.kSecondaryTextColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -84,7 +84,7 @@ class AdminDashboardStatCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
-                      change == 'No data' ? Icons.remove_rounded : Icons.trending_up_rounded,
+                      _changeIcon(),
                       color: isPrimary ? Colors.white : color,
                       size: 18,
                     ),
@@ -98,11 +98,11 @@ class AdminDashboardStatCard extends StatelessWidget {
                 child: Text(
                   value,
                   style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 24,
-                        color: isPrimary ? Colors.white : AppColors.kTextColor,
-                        height: 1.2,
-                      ),
+                    fontWeight: FontWeight.w700,
+                    fontSize: 24,
+                    color: isPrimary ? Colors.white : AppColors.kTextColor,
+                    height: 1.2,
+                  ),
                 ),
               ),
               const SizedBox(height: 8),
@@ -110,26 +110,40 @@ class AdminDashboardStatCard extends StatelessWidget {
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
                   Icon(
-                    change == 'No data' ? Icons.remove_rounded : Icons.trending_up_rounded,
-                    color: change == 'No data' ? (isPrimary ? Colors.white54 : AppColors.kSecondaryTextColor) : (isPrimary ? Colors.greenAccent : const Color(0xFF1DAF73)),
+                    change == 'No data'
+                        ? Icons.remove_rounded
+                        : Icons.trending_up_rounded,
+                    color: change == 'No data'
+                        ? (isPrimary
+                              ? Colors.white54
+                              : AppColors.kSecondaryTextColor)
+                        : (isPrimary
+                              ? Colors.greenAccent
+                              : const Color(0xFF1DAF73)),
                     size: 14,
                   ),
                   const SizedBox(width: 4),
                   Text(
                     change,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: change == 'No data' ? (isPrimary ? Colors.white54 : AppColors.kSecondaryTextColor) : (isPrimary ? Colors.greenAccent : const Color(0xFF1DAF73)),
-                          fontWeight: FontWeight.w600,
-                        ),
+                      color: change == 'No data'
+                          ? (isPrimary
+                                ? Colors.white54
+                                : AppColors.kSecondaryTextColor)
+                          : (isPrimary
+                                ? Colors.greenAccent
+                                : const Color(0xFF1DAF73)),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                   const SizedBox(width: 6),
                   Text(
                     comparisonLabel,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: isPrimary
-                              ? Colors.white54
-                              : AppColors.kSecondaryTextColor,
-                        ),
+                      color: isPrimary
+                          ? Colors.white54
+                          : AppColors.kSecondaryTextColor,
+                    ),
                   ),
                 ],
               ),
@@ -138,5 +152,29 @@ class AdminDashboardStatCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  IconData _changeIcon() {
+    if (change == 'No data') {
+      return Icons.remove_rounded;
+    }
+
+    final numericChange = double.tryParse(
+      change.replaceAll('%', '').replaceAll('+', ''),
+    );
+
+    if (numericChange == null) {
+      return Icons.remove_rounded;
+    }
+
+    if (numericChange > 0) {
+      return Icons.trending_up_rounded;
+    }
+
+    if (numericChange < 0) {
+      return Icons.trending_down_rounded;
+    }
+
+    return Icons.remove_rounded;
   }
 }

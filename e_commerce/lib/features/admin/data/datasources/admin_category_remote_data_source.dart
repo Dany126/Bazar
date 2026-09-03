@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/features/home/data/models/category_model.dart';
 import 'package:e_commerce/features/home/data/models/product_model.dart';
 import 'package:image_picker/image_picker.dart';
@@ -37,7 +38,7 @@ class AdminCategoriesRemoteDataSourceImpl
 
   @override
   Future<List<CategoryModel>> getAllCategories() async {
-    final response = await dio.get('/category');
+    final response = await dio.get('$kBaseUrl/category');
 
     final data = response.data;
 
@@ -82,7 +83,7 @@ class AdminCategoriesRemoteDataSourceImpl
   Future<List<ProductModel>> getProductsByCategory({
     required String categoryId,
   }) async {
-    final response = await dio.get('/category/$categoryId/product');
+    final response = await dio.get('$kBaseUrl/category/$categoryId/product');
 
     final data = response.data;
 
@@ -133,7 +134,7 @@ class AdminCategoriesRemoteDataSourceImpl
 
     final formData = FormData.fromMap({'name': name, 'image': multipartImage});
 
-    final response = await dio.post('/category', data: formData);
+    final response = await dio.post('$kBaseUrl/category', data: formData);
 
     return _parseCategoryResponse(response.data);
   }
@@ -161,7 +162,7 @@ class AdminCategoriesRemoteDataSourceImpl
 
     final formData = FormData.fromMap(fields);
 
-    final response = await dio.patch('/category/$id', data: formData);
+    final response = await dio.patch('$kBaseUrl/category/$id', data: formData);
 
     return _parseCategoryResponse(response.data);
   }
@@ -172,7 +173,7 @@ class AdminCategoriesRemoteDataSourceImpl
 
   @override
   Future<void> deleteCategory({required String id}) async {
-    await dio.delete('/category/$id');
+    await dio.delete('$kBaseUrl/category/$id');
   }
 
   // ============================================================

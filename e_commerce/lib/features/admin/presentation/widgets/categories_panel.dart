@@ -12,6 +12,7 @@ class CategoriesPanel extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       padding: const EdgeInsets.all(18),
       decoration: BoxDecoration(
         color: Colors.white,
@@ -21,7 +22,10 @@ class CategoriesPanel extends StatelessWidget {
       child: BlocBuilder<AdminCategoriesCubit, AdminCategoriesState>(
         builder: (context, state) {
           if (state is AdminCategoriesLoading) {
-            return const Center(child: CircularProgressIndicator());
+            return const SizedBox(
+              height: 180,
+              child: Center(child: CircularProgressIndicator()),
+            );
           }
 
           if (state is AdminCategoriesError) {
@@ -38,34 +42,38 @@ class CategoriesPanel extends StatelessWidget {
           }
 
           return Column(
+            mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               _buildHeader(context),
+
               const SizedBox(height: 16),
 
-              Expanded(
-                child: state.categories.isEmpty
-                    ? const _EmptyView(message: 'No categories found')
-                    : ListView.separated(
-                        padding: EdgeInsets.zero,
-                        primary: false,
-                        itemCount: state.categories.length,
-                        separatorBuilder: (_, __) {
-                          return const SizedBox(height: 10);
-                        },
-                        itemBuilder: (context, index) {
-                          final category = state.categories[index];
+              if (state.categories.isEmpty)
+                const SizedBox(
+                  height: 120,
+                  child: _EmptyView(message: 'No categories found'),
+                )
+              else
+                ListView.separated(
+                  shrinkWrap: true,
+                  physics: const NeverScrollableScrollPhysics(),
+                  padding: EdgeInsets.zero,
+                  itemCount: state.categories.length,
+                  separatorBuilder: (_, __) {
+                    return const SizedBox(height: 10);
+                  },
+                  itemBuilder: (context, index) {
+                    final category = state.categories[index];
 
-                          final isSelected =
-                              state.selectedCategoryId == category.id;
+                    final isSelected = state.selectedCategoryId == category.id;
 
-                          return _CategoryItem(
-                            category: category,
-                            selected: isSelected,
-                          );
-                        },
-                      ),
-              ),
+                    return _CategoryItem(
+                      category: category,
+                      selected: isSelected,
+                    );
+                  },
+                ),
             ],
           );
         },
@@ -74,34 +82,71 @@ class CategoriesPanel extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context) {
-    return Row(
-      children: [
-        const Expanded(
-          child: Text(
-            'Categories',
-            style: TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.w700,
-              color: Color(0xff20222F),
-            ),
-          ),
-        ),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
 
-        ElevatedButton.icon(
-          onPressed: () {
-            _showAddCategorySheet(context);
-          },
-          icon: const Icon(Icons.add, size: 18),
-          label: const Text('Add Category'),
-          style: ElevatedButton.styleFrom(
-            elevation: 0,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+        // Small screens:
+        // Put the button below the title.
+        if (width < 450) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                'Categories',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xff20222F),
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              SizedBox(
+                width: double.infinity,
+                child: _addCategoryButton(context),
+              ),
+            ],
+          );
+        }
+
+        // Normal / desktop layout.
+        return Row(
+          mainAxisSize: MainAxisSize.max,
+          children: [
+            const Expanded(
+              child: Text(
+                'Categories',
+                style: TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xff20222F),
+                ),
+              ),
             ),
-          ),
-        ),
-      ],
+
+            const SizedBox(width: 12),
+
+            _addCategoryButton(context),
+          ],
+        );
+      },
+    );
+  }
+
+  Widget _addCategoryButton(BuildContext context) {
+    return ElevatedButton.icon(
+      onPressed: () {
+        _showAddCategorySheet(context);
+      },
+      icon: const Icon(Icons.add, size: 18),
+      label: const Text('Add Category'),
+      style: ElevatedButton.styleFrom(
+        elevation: 0,
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+      ),
     );
   }
 

@@ -28,9 +28,6 @@ class AdminSidebar extends StatelessWidget {
             children: [
               const SizedBox(height: 32),
 
-              // ============================================================
-              // BRAND
-              // ============================================================
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Row(
@@ -64,9 +61,6 @@ class AdminSidebar extends StatelessWidget {
 
               const SizedBox(height: 32),
 
-              // ============================================================
-              // NAVIGATION
-              // ============================================================
               Expanded(
                 child: SingleChildScrollView(
                   child: Column(
@@ -82,52 +76,45 @@ class AdminSidebar extends StatelessWidget {
                       ),
 
                       _SidebarItem(
-                        icon: Icons.pie_chart_rounded,
-                        title: 'Overview',
+                        icon: Icons.people_alt_rounded,
+                        title: 'Customers',
                         isActive: selectedIndex == 1,
                         onTap: () => onItemSelected(1),
                       ),
 
                       _SidebarItem(
-                        icon: Icons.people_alt_rounded,
-                        title: 'Customers',
+                        icon: Icons.inventory_2_rounded,
+                        title: 'Products',
                         isActive: selectedIndex == 2,
                         onTap: () => onItemSelected(2),
                       ),
 
                       _SidebarItem(
-                        icon: Icons.inventory_2_rounded,
-                        title: 'Products',
+                        icon: Icons.category_rounded,
+                        title: 'Categories',
                         isActive: selectedIndex == 3,
                         onTap: () => onItemSelected(3),
                       ),
 
                       _SidebarItem(
-                        icon: Icons.category_rounded,
-                        title: 'Categories',
+                        icon: Icons.shopping_bag_rounded,
+                        title: 'Orders',
                         isActive: selectedIndex == 4,
                         onTap: () => onItemSelected(4),
                       ),
 
                       _SidebarItem(
-                        icon: Icons.shopping_bag_rounded,
-                        title: 'Orders',
+                        icon: Icons.work_rounded,
+                        title: 'Workspace',
                         isActive: selectedIndex == 5,
                         onTap: () => onItemSelected(5),
                       ),
 
                       _SidebarItem(
-                        icon: Icons.work_rounded,
-                        title: 'Workspace',
-                        isActive: selectedIndex == 6,
-                        onTap: () => onItemSelected(6),
-                      ),
-
-                      _SidebarItem(
                         icon: Icons.settings_rounded,
                         title: 'Settings',
-                        isActive: selectedIndex == 7,
-                        onTap: () => onItemSelected(7),
+                        isActive: selectedIndex == 6,
+                        onTap: () => onItemSelected(6),
                       ),
 
                       const SizedBox(height: 16),
@@ -137,15 +124,15 @@ class AdminSidebar extends StatelessWidget {
                       _SidebarItem(
                         icon: Icons.account_balance_wallet_rounded,
                         title: 'Earnings',
-                        isActive: selectedIndex == 8,
-                        onTap: () => onItemSelected(8),
+                        isActive: selectedIndex == 7,
+                        onTap: () => onItemSelected(7),
                       ),
 
                       _SidebarItem(
                         icon: Icons.payments_rounded,
                         title: 'Payouts',
-                        isActive: selectedIndex == 9,
-                        onTap: () => onItemSelected(9),
+                        isActive: selectedIndex == 8,
+                        onTap: () => onItemSelected(8),
                       ),
 
                       const SizedBox(height: 24),
@@ -154,9 +141,6 @@ class AdminSidebar extends StatelessWidget {
                 ),
               ),
 
-              // ============================================================
-              // LOGOUT
-              // ============================================================
               const Divider(height: 1, color: Color(0xffE8EAF0)),
 
               const SizedBox(height: 12),
@@ -174,10 +158,6 @@ class AdminSidebar extends StatelessWidget {
     );
   }
 }
-
-// ============================================================================
-// LOGOUT BUTTON
-// ============================================================================
 
 class _LogoutButton extends StatelessWidget {
   const _LogoutButton();
@@ -203,32 +183,31 @@ class _LogoutButton extends StatelessWidget {
       builder: (context, state) {
         final isLoading = state is SignOutLoading;
 
-        return SizedBox(
-          width: double.infinity,
-          child: ElevatedButton.icon(
-            onPressed: isLoading
-                ? null
-                : () {
-                    context.read<SignOutCubit>().signOut();
-                  },
-            icon: isLoading
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(strokeWidth: 2),
-                  )
-                : const Icon(Icons.logout),
-            label: Text(isLoading ? 'Signing out...' : 'Sign Out'),
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: SizedBox(
+            width: double.infinity,
+            child: ElevatedButton.icon(
+              onPressed: isLoading
+                  ? null
+                  : () {
+                      context.read<SignOutCubit>().signOut();
+                    },
+              icon: isLoading
+                  ? const SizedBox(
+                      width: 18,
+                      height: 18,
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    )
+                  : const Icon(Icons.logout),
+              label: Text(isLoading ? 'Signing out...' : 'Sign Out'),
+            ),
           ),
         );
       },
     );
   }
 }
-
-// ============================================================================
-// SECTION TITLE
-// ============================================================================
 
 class _SidebarSection extends StatelessWidget {
   const _SidebarSection({required this.title});
@@ -253,10 +232,6 @@ class _SidebarSection extends StatelessWidget {
     );
   }
 }
-
-// ============================================================================
-// SIDEBAR ITEM
-// ============================================================================
 
 class _SidebarItem extends StatelessWidget {
   const _SidebarItem({
@@ -298,9 +273,7 @@ class _SidebarItem extends StatelessWidget {
                         : AppColors.kSecondaryTextColor,
                     size: 20,
                   ),
-
                   const SizedBox(width: 16),
-
                   Expanded(
                     child: Text(
                       title,
@@ -315,7 +288,6 @@ class _SidebarItem extends StatelessWidget {
                       ),
                     ),
                   ),
-
                   if (isActive)
                     Container(
                       width: 5,

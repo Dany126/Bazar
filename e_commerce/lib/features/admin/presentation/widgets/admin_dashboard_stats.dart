@@ -4,41 +4,119 @@ import 'package:flutter/material.dart';
 
 class AdminDashboardStats extends StatelessWidget {
   const AdminDashboardStats({super.key, required this.data});
-  factory AdminDashboardStats.fromData({required AdminDashboardData data}) => AdminDashboardStats(data: data);
+
   final AdminDashboardData data;
 
-  String money(double value) => '\$ ${value.toStringAsFixed(2)}';
-  String change(double? value) => value == null ? 'No data' : '${value >= 0 ? '+' : ''}${value.toStringAsFixed(1)}%';
-  String conversion(double? value) => value == null ? 'No data' : '${value.toStringAsFixed(2)}%';
+  String money(double value) {
+    if (value == 0) {
+      return '0 ${data.store.currency}';
+    }
+
+    return '${value.toStringAsFixed(2)} ${data.store.currency}';
+  }
+
+  String change(double? value) {
+    if (value == null) {
+      return 'No data';
+    }
+
+    final prefix = value >= 0 ? '+' : '';
+
+    return '$prefix${value.toStringAsFixed(1)}%';
+  }
+
+  String conversion(double? value) {
+    if (value == null) {
+      return 'No data';
+    }
+
+    return '${value.toStringAsFixed(2)}%';
+  }
 
   @override
   Widget build(BuildContext context) {
     final stats = [
-      _MetricStat('Total revenue', money(data.totalRevenue), change(data.changes.revenue), const Color(0xFF8E6CEF)),
-      _MetricStat('Orders', data.totalOrders.toString(), change(data.changes.orders), const Color(0xFF4EC5A5)),
-      _MetricStat('Visitors', data.totalVisitors.toString(), change(data.changes.visitors), const Color(0xFF1F2937)),
-      _MetricStat('Conversion rate', conversion(data.conversionRate), change(data.changes.conversionRate), const Color(0xFFDC2626)),
+      _MetricStat(
+        label: 'Revenue',
+        value: money(data.periodRevenue),
+        change: change(data.changes.revenue),
+        color: const Color(0xFF8E6CEF),
+        isPrimary: true,
+      ),
+      _MetricStat(
+        label: 'Orders',
+        value: data.periodOrders.toString(),
+        change: change(data.changes.orders),
+        color: const Color(0xFF4EC5A5),
+      ),
+      _MetricStat(
+        label: 'Visitors',
+        value: data.totalVisitors.toString(),
+        change: change(data.changes.visitors),
+        color: const Color(0xFF1F2937),
+      ),
+      _MetricStat(
+        label: 'Conversion rate',
+        value: conversion(data.conversionRate),
+        change: change(data.changes.conversionRate),
+        color: const Color(0xFFDC2626),
+      ),
     ];
-    return LayoutBuilder(builder: (context, constraints) {
-      final width = constraints.maxWidth;
-      final count = width >= 1100 ? 4 : width >= 600 ? 2 : 1;
-      return GridView.count(
-        crossAxisCount: count,
-        shrinkWrap: true,
-        physics: const NeverScrollableScrollPhysics(),
-        mainAxisSpacing: 16,
-        crossAxisSpacing: 16,
-        childAspectRatio: width >= 1100 ? 1.45 : width >= 600 ? 1.6 : 2.4,
-        children: [for (final s in stats) AdminDashboardStatCard(label: s.label, value: s.value, change: s.change, color: s.color, comparisonLabel: 'vs previous ${data.period}')],
-      );
-    });
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+
+        final crossAxisCount = width >= 1100
+            ? 4
+            : width >= 600
+            ? 2
+            : 1;
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: stats.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: width >= 1100
+                ? 1.65
+                : width >= 600
+                ? 1.8
+                : 2.5,
+          ),
+          itemBuilder: (context, index) {
+            final stat = stats[index];
+
+            return AdminDashboardStatCard(
+              label: stat.label,
+              value: stat.value,
+              change: stat.change,
+              color: stat.color,
+              isPrimary: stat.isPrimary,
+              comparisonLabel: 'vs previous ${data.period}',
+            );
+          },
+        );
+      },
+    );
   }
 }
 
 class _MetricStat {
-  const _MetricStat(this.label, this.value, this.change, this.color);
+  const _MetricStat({
+    required this.label,
+    required this.value,
+    required this.change,
+    required this.color,
+    this.isPrimary = false,
+  });
+
   final String label;
   final String value;
   final String change;
   final Color color;
+  final bool isPrimary;
 }
