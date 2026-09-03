@@ -1,3 +1,4 @@
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -12,7 +13,7 @@ class AdminPayoutsView extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
+    return BlocProvider<AdminTransactionsCubit>(
       create: (_) => getIt<AdminTransactionsCubit>()..loadTransactions(),
       child: const _AdminTransactionsBody(),
     );
@@ -23,7 +24,8 @@ class _AdminTransactionsBody extends StatefulWidget {
   const _AdminTransactionsBody();
 
   @override
-  State<_AdminTransactionsBody> createState() => _AdminTransactionsBodyState();
+  State<_AdminTransactionsBody> createState() =>
+      _AdminTransactionsBodyState();
 }
 
 class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
@@ -40,14 +42,18 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
     return BlocBuilder<AdminTransactionsCubit, AdminTransactionsState>(
       builder: (context, state) {
         if (state is AdminTransactionsLoading) {
-          return const Center(child: CircularProgressIndicator());
+          return const Center(
+            child: CircularProgressIndicator(),
+          );
         }
 
         if (state is AdminTransactionsError) {
           return _ErrorView(
             message: state.message,
             onRetry: () {
-              context.read<AdminTransactionsCubit>().loadTransactions();
+              context
+                  .read<AdminTransactionsCubit>()
+                  .loadTransactions();
             },
           );
         }
@@ -58,7 +64,9 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
 
         return RefreshIndicator(
           onRefresh: () {
-            return context.read<AdminTransactionsCubit>().refresh();
+            return context
+                .read<AdminTransactionsCubit>()
+                .refresh();
           },
           child: LayoutBuilder(
             builder: (context, constraints) {
@@ -66,27 +74,39 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
 
               return SingleChildScrollView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.all(isMobile ? 16 : 24),
+                padding: EdgeInsets.all(
+                  isMobile ? 16 : 24,
+                ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    _buildHeader(context, state, isMobile),
-
+                    _buildHeader(
+                      context,
+                      state,
+                      isMobile,
+                    ),
                     const SizedBox(height: 24),
-
-                    _buildSummaryCards(state, isMobile),
-
+                    _buildSummaryCards(
+                      state,
+                      isMobile,
+                    ),
                     const SizedBox(height: 24),
-
-                    _buildFilters(context, state, isMobile),
-
+                    _buildFilters(
+                      context,
+                      state,
+                      isMobile,
+                    ),
                     const SizedBox(height: 16),
-
-                    _buildTransactionsTable(context, state, isMobile),
-
+                    _buildTransactionsTable(
+                      context,
+                      state,
+                      isMobile,
+                    ),
                     const SizedBox(height: 16),
-
-                    _buildPagination(context, state),
+                    _buildPagination(
+                      context,
+                      state,
+                    ),
                   ],
                 ),
               );
@@ -111,9 +131,12 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
             children: [
               Text(
                 'Transactions',
-                style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.w700,
-                ),
+                style: Theme.of(context)
+                    .textTheme
+                    .headlineSmall
+                    ?.copyWith(
+                      fontWeight: FontWeight.w700,
+                    ),
               ),
               const SizedBox(height: 6),
               Text(
@@ -127,7 +150,9 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
           IconButton(
             tooltip: 'Refresh',
             onPressed: () {
-              context.read<AdminTransactionsCubit>().refresh();
+              context
+                  .read<AdminTransactionsCubit>()
+                  .refresh();
             },
             icon: const Icon(Icons.refresh),
           ),
@@ -135,28 +160,43 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
     );
   }
 
-  Widget _buildSummaryCards(AdminTransactionsLoaded state, bool isMobile) {
+  Widget _buildSummaryCards(
+    AdminTransactionsLoaded state,
+    bool isMobile,
+  ) {
     final summary = state.summary;
 
     final cards = [
       _SummaryCardData(
         title: 'Total',
-        value: _money(summary.totalAmount, state.currency),
+        value: _money(
+          summary.totalAmount,
+          state.currency,
+        ),
         icon: Icons.account_balance_wallet_outlined,
       ),
       _SummaryCardData(
         title: 'Completed',
-        value: _money(summary.paidAmount, state.currency),
+        value: _money(
+          summary.paidAmount,
+          state.currency,
+        ),
         icon: Icons.check_circle_outline,
       ),
       _SummaryCardData(
         title: 'Pending',
-        value: _money(summary.pendingAmount, state.currency),
+        value: _money(
+          summary.pendingAmount,
+          state.currency,
+        ),
         icon: Icons.schedule_outlined,
       ),
       _SummaryCardData(
         title: 'Failed',
-        value: _money(summary.failedAmount, state.currency),
+        value: _money(
+          summary.failedAmount,
+          state.currency,
+        ),
         icon: Icons.error_outline,
       ),
     ];
@@ -166,8 +206,12 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
         children: cards
             .map(
               (card) => Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: _SummaryCard(data: card),
+                padding: const EdgeInsets.only(
+                  bottom: 12,
+                ),
+                child: _SummaryCard(
+                  data: card,
+                ),
               ),
             )
             .toList(),
@@ -178,14 +222,17 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       itemCount: cards.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+      gridDelegate:
+          const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 4,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
         childAspectRatio: 1.9,
       ),
       itemBuilder: (_, index) {
-        return _SummaryCard(data: cards[index]);
+        return _SummaryCard(
+          data: cards[index],
+        );
       },
     );
   }
@@ -199,7 +246,10 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
 
     final searchField = TextField(
       controller: _searchController,
-      onChanged: cubit.search,
+      onChanged: (value) {
+        cubit.search(value);
+        setState(() {});
+      },
       decoration: InputDecoration(
         hintText: 'Search transactions...',
         prefixIcon: const Icon(Icons.search),
@@ -217,17 +267,30 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
       ),
     );
 
-    final statusDropdown = DropdownButtonFormField<String>(
-      value: state.status,
+    final statusDropdown =
+        DropdownButtonFormField<String>(
+      initialValue: state.status,
       decoration: const InputDecoration(
         labelText: 'Status',
         border: OutlineInputBorder(),
       ),
       items: const [
-        DropdownMenuItem(value: 'all', child: Text('All')),
-        DropdownMenuItem(value: 'pending', child: Text('Pending')),
-        DropdownMenuItem(value: 'completed', child: Text('Completed')),
-        DropdownMenuItem(value: 'failed', child: Text('Failed')),
+        DropdownMenuItem(
+          value: 'all',
+          child: Text('All'),
+        ),
+        DropdownMenuItem(
+          value: 'pending',
+          child: Text('Pending'),
+        ),
+        DropdownMenuItem(
+          value: 'completed',
+          child: Text('Completed'),
+        ),
+        DropdownMenuItem(
+          value: 'failed',
+          child: Text('Failed'),
+        ),
       ],
       onChanged: (value) {
         if (value != null) {
@@ -236,16 +299,26 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
       },
     );
 
-    final paymentDropdown = DropdownButtonFormField<String>(
-      value: state.paymentMethod,
+    final paymentDropdown =
+        DropdownButtonFormField<String>(
+      initialValue: state.paymentMethod,
       decoration: const InputDecoration(
         labelText: 'Payment',
         border: OutlineInputBorder(),
       ),
       items: const [
-        DropdownMenuItem(value: 'all', child: Text('All')),
-        DropdownMenuItem(value: 'card', child: Text('Card')),
-        DropdownMenuItem(value: 'cash', child: Text('Cash')),
+        DropdownMenuItem(
+          value: 'all',
+          child: Text('All'),
+        ),
+        DropdownMenuItem(
+          value: 'card',
+          child: Text('Card'),
+        ),
+        DropdownMenuItem(
+          value: 'cash',
+          child: Text('Cash'),
+        ),
       ],
       onChanged: (value) {
         if (value != null) {
@@ -268,11 +341,18 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
 
     return Row(
       children: [
-        Expanded(flex: 2, child: searchField),
+        Expanded(
+          flex: 2,
+          child: searchField,
+        ),
         const SizedBox(width: 12),
-        Expanded(child: statusDropdown),
+        Expanded(
+          child: statusDropdown,
+        ),
         const SizedBox(width: 12),
-        Expanded(child: paymentDropdown),
+        Expanded(
+          child: paymentDropdown,
+        ),
       ],
     );
   }
@@ -293,7 +373,12 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
               (transaction) => _TransactionCard(
                 transaction: transaction,
                 currency: state.currency,
-                onTap: () => _showTransactionDetails(context, transaction),
+                onTap: () {
+                  _showTransactionDetails(
+                    context,
+                    transaction,
+                  );
+                },
               ),
             )
             .toList(),
@@ -303,49 +388,100 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        border: Border.all(color: Theme.of(context).dividerColor),
+        border: Border.all(
+          color: Theme.of(context).dividerColor,
+        ),
         borderRadius: BorderRadius.circular(12),
       ),
       child: SingleChildScrollView(
         scrollDirection: Axis.horizontal,
         child: DataTable(
           columns: const [
-            DataColumn(label: Text('Transaction')),
-            DataColumn(label: Text('Customer')),
-            DataColumn(label: Text('Amount')),
-            DataColumn(label: Text('Payment')),
-            DataColumn(label: Text('Status')),
-            DataColumn(label: Text('Date')),
-            DataColumn(label: Text('Action')),
+            DataColumn(
+              label: Text('Transaction'),
+            ),
+            DataColumn(
+              label: Text('Customer'),
+            ),
+            DataColumn(
+              label: Text('Amount'),
+            ),
+            DataColumn(
+              label: Text('Payment'),
+            ),
+            DataColumn(
+              label: Text('Status'),
+            ),
+            DataColumn(
+              label: Text('Date'),
+            ),
+            DataColumn(
+              label: Text('Action'),
+            ),
           ],
           rows: state.transactions
               .map(
                 (transaction) => DataRow(
                   cells: [
-                    DataCell(Text(_shortId(transaction.id))),
+                    DataCell(
+                      Text(
+                        _shortId(transaction.id),
+                      ),
+                    ),
                     DataCell(
                       SizedBox(
                         width: 180,
                         child: Text(
-                          transaction.customer?.name.isNotEmpty == true
+                          transaction.customer?.name
+                                      .isNotEmpty ==
+                                  true
                               ? transaction.customer!.name
                               : 'Unknown',
-                          overflow: TextOverflow.ellipsis,
+                          overflow:
+                              TextOverflow.ellipsis,
                         ),
                       ),
                     ),
-                    DataCell(Text(_money(transaction.amount, state.currency))),
-                    DataCell(Text(_capitalize(transaction.paymentMethod))),
                     DataCell(
-                      _StatusChip(status: transaction.transactionStatus),
+                      Text(
+                        _money(
+                          transaction.amount,
+                          state.currency,
+                        ),
+                      ),
                     ),
-                    DataCell(Text(_formatDate(transaction.createdAt))),
+                    DataCell(
+                      Text(
+                        _capitalize(
+                          transaction.paymentMethod,
+                        ),
+                      ),
+                    ),
+                    DataCell(
+                      _StatusChip(
+                        status:
+                            transaction.transactionStatus,
+                      ),
+                    ),
+                    DataCell(
+                      Text(
+                        _formatDate(
+                          transaction.createdAt,
+                        ),
+                      ),
+                    ),
                     DataCell(
                       IconButton(
                         tooltip: 'View',
-                        onPressed: () =>
-                            _showTransactionDetails(context, transaction),
-                        icon: const Icon(Icons.visibility_outlined),
+                        onPressed: () {
+                          _showTransactionDetails(
+                            context,
+                            transaction,
+                          );
+                        },
+                        icon: const Icon(
+                          Icons.visibility_outlined,
+                        ),
                       ),
                     ),
                   ],
@@ -357,9 +493,13 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
     );
   }
 
-  Widget _buildPagination(BuildContext context, AdminTransactionsLoaded state) {
+  Widget _buildPagination(
+    BuildContext context,
+    AdminTransactionsLoaded state,
+  ) {
     final pagination = state.pagination;
-    final cubit = context.read<AdminTransactionsCubit>();
+    final cubit =
+        context.read<AdminTransactionsCubit>();
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.end,
@@ -371,12 +511,20 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
         ),
         const SizedBox(width: 8),
         IconButton(
-          onPressed: pagination.hasPreviousPage ? cubit.previousPage : null,
-          icon: const Icon(Icons.chevron_left),
+          onPressed: pagination.hasPreviousPage
+              ? cubit.previousPage
+              : null,
+          icon: const Icon(
+            Icons.chevron_left,
+          ),
         ),
         IconButton(
-          onPressed: pagination.hasNextPage ? cubit.nextPage : null,
-          icon: const Icon(Icons.chevron_right),
+          onPressed: pagination.hasNextPage
+              ? cubit.nextPage
+              : null,
+          icon: const Icon(
+            Icons.chevron_right,
+          ),
         ),
       ],
     );
@@ -386,9 +534,11 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
     BuildContext context,
     AdminTransactionModel transaction,
   ) async {
-    final cubit = context.read<AdminTransactionsCubit>();
+    final cubit =
+        context.read<AdminTransactionsCubit>();
 
-    final details = await cubit.getTransaction(transaction.id);
+    final details =
+        await cubit.getTransaction(transaction.id);
 
     if (!context.mounted) {
       return;
@@ -396,68 +546,115 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
 
     if (details == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Could not load transaction details')),
+        const SnackBar(
+          content: Text(
+            'Could not load transaction details',
+          ),
+        ),
       );
+      return;
+    }
+
+    /*
+     * IMPORTANT:
+     *
+     * Do NOT do:
+     *
+     * context.read<AdminTransactionsState>()
+     *
+     * AdminTransactionsState is not a provider.
+     *
+     * The provider is AdminTransactionsCubit.
+     *
+     * Get the current state from the cubit itself.
+     */
+    final currentState = cubit.state;
+
+    final currency =
+        currentState is AdminTransactionsLoaded
+            ? currentState.currency
+            : '';
+
+    if (!context.mounted) {
       return;
     }
 
     showDialog<void>(
       context: context,
-      builder: (_) {
+      builder: (dialogContext) {
         return AlertDialog(
-          title: const Text('Transaction details'),
+          title: const Text(
+            'Transaction details',
+          ),
           content: SizedBox(
             width: 500,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _DetailRow(label: 'Transaction ID', value: details.id),
-                _DetailRow(label: 'Order ID', value: details.orderId),
-                _DetailRow(
-                  label: 'Customer',
-                  value: details.customer?.name.isNotEmpty == true
-                      ? details.customer!.name
-                      : 'Unknown',
-                ),
-                _DetailRow(
-                  label: 'Email',
-                  value: details.customer?.email ?? '',
-                ),
-                _DetailRow(
-                  label: 'Amount',
-                  value: _money(
-                    details.amount,
-                    context.read<AdminTransactionsState>()
-                            is AdminTransactionsLoaded
-                        ? (context.read<AdminTransactionsState>()
-                                  as AdminTransactionsLoaded)
-                              .currency
-                        : '',
+            child: SingleChildScrollView(
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
+                children: [
+                  _DetailRow(
+                    label: 'Transaction ID',
+                    value: details.id,
                   ),
-                ),
-                _DetailRow(
-                  label: 'Payment',
-                  value: _capitalize(details.paymentMethod),
-                ),
-                _DetailRow(
-                  label: 'Status',
-                  value: _capitalize(details.transactionStatus),
-                ),
-                _DetailRow(
-                  label: 'Order status',
-                  value: _capitalize(details.orderStatus),
-                ),
-                _DetailRow(
-                  label: 'Created',
-                  value: _formatDate(details.createdAt),
-                ),
-              ],
+                  _DetailRow(
+                    label: 'Order ID',
+                    value: details.orderId,
+                  ),
+                  _DetailRow(
+                    label: 'Customer',
+                    value: details.customer?.name
+                                .isNotEmpty ==
+                            true
+                        ? details.customer!.name
+                        : 'Unknown',
+                  ),
+                  _DetailRow(
+                    label: 'Email',
+                    value:
+                        details.customer?.email ?? '',
+                  ),
+                  _DetailRow(
+                    label: 'Amount',
+                    value: _money(
+                      details.amount,
+                      currency,
+                    ),
+                  ),
+                  _DetailRow(
+                    label: 'Payment',
+                    value: _capitalize(
+                      details.paymentMethod,
+                    ),
+                  ),
+                  _DetailRow(
+                    label: 'Status',
+                    value: _capitalize(
+                      details.transactionStatus,
+                    ),
+                  ),
+                  _DetailRow(
+                    label: 'Order status',
+                    value: _capitalize(
+                      details.orderStatus,
+                    ),
+                  ),
+                  _DetailRow(
+                    label: 'Created',
+                    value: _formatDate(
+                      details.createdAt,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           actions: [
             TextButton(
-              onPressed: () => Navigator.pop(context),
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+              },
               child: const Text('Close'),
             ),
           ],
@@ -466,8 +663,12 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
     );
   }
 
-  String _money(double value, String currency) {
-    final formatted = value.toStringAsFixed(2);
+  String _money(
+    double value,
+    String currency,
+  ) {
+    final formatted =
+        value.toStringAsFixed(2);
 
     if (currency.trim().isEmpty) {
       return formatted;
@@ -490,7 +691,8 @@ class _AdminTransactionsBodyState extends State<_AdminTransactionsBody> {
       return '';
     }
 
-    return value[0].toUpperCase() + value.substring(1);
+    return value[0].toUpperCase() +
+        value.substring(1);
   }
 
   String _formatDate(DateTime? date) {
@@ -521,7 +723,9 @@ class _SummaryCardData {
 class _SummaryCard extends StatelessWidget {
   final _SummaryCardData data;
 
-  const _SummaryCard({required this.data});
+  const _SummaryCard({
+    required this.data,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -530,22 +734,32 @@ class _SummaryCard extends StatelessWidget {
         padding: const EdgeInsets.all(18),
         child: Row(
           children: [
-            Icon(data.icon, size: 30),
+            Icon(
+              data.icon,
+              size: 30,
+            ),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                crossAxisAlignment:
+                    CrossAxisAlignment.start,
                 children: [
                   Text(
                     data.title,
-                    style: Theme.of(context).textTheme.bodyMedium,
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodyMedium,
                   ),
                   const SizedBox(height: 6),
                   Text(
                     data.value,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.w700,
-                    ),
+                    style: Theme.of(context)
+                        .textTheme
+                        .titleLarge
+                        ?.copyWith(
+                          fontWeight:
+                              FontWeight.w700,
+                        ),
                   ),
                 ],
               ),
@@ -571,37 +785,76 @@ class _TransactionCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Card(
-      margin: const EdgeInsets.only(bottom: 12),
+      margin: const EdgeInsets.only(
+        bottom: 12,
+      ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius:
+            BorderRadius.circular(12),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
             children: [
               Row(
                 children: [
                   Expanded(
                     child: Text(
-                      transaction.customer?.name ?? 'Unknown',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
+                      transaction.customer?.name ??
+                          'Unknown',
+                      style: const TextStyle(
+                        fontWeight:
+                            FontWeight.w600,
+                      ),
                     ),
                   ),
-                  _StatusChip(status: transaction.transactionStatus),
+                  _StatusChip(
+                    status:
+                        transaction.transactionStatus,
+                  ),
                 ],
               ),
               const SizedBox(height: 10),
-              Text(
-                _money(transaction.amount, currency),
-                style: Theme.of(
-                  context,
-                ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w700),
+              _MobileDetailRow(
+                label: 'Transaction',
+                value: _shortId(
+                  transaction.id,
+                ),
               ),
-              const SizedBox(height: 6),
-              Text(
-                '${transaction.paymentMethod} • '
-                '${_formatDate(transaction.createdAt)}',
+              _MobileDetailRow(
+                label: 'Amount',
+                value: _money(
+                  transaction.amount,
+                  currency,
+                ),
+              ),
+              _MobileDetailRow(
+                label: 'Payment',
+                value: _capitalize(
+                  transaction.paymentMethod,
+                ),
+              ),
+              _MobileDetailRow(
+                label: 'Date',
+                value: _formatDate(
+                  transaction.createdAt,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Align(
+                alignment:
+                    Alignment.centerRight,
+                child: TextButton.icon(
+                  onPressed: onTap,
+                  icon: const Icon(
+                    Icons.visibility_outlined,
+                  ),
+                  label: const Text(
+                    'View details',
+                  ),
+                ),
               ),
             ],
           ),
@@ -610,12 +863,36 @@ class _TransactionCard extends StatelessWidget {
     );
   }
 
-  String _money(double value, String currency) {
-    final formatted = value.toStringAsFixed(2);
+  String _money(
+    double value,
+    String currency,
+  ) {
+    final formatted =
+        value.toStringAsFixed(2);
 
-    return currency.isEmpty
-        ? formatted
-        : '$formatted ${currency.toUpperCase()}';
+    if (currency.trim().isEmpty) {
+      return formatted;
+    }
+
+    return '$formatted ${currency.toUpperCase()}';
+  }
+
+  String _shortId(String value) {
+    if (value.length <= 10) {
+      return value;
+    }
+
+    return '${value.substring(0, 6)}...'
+        '${value.substring(value.length - 4)}';
+  }
+
+  String _capitalize(String value) {
+    if (value.isEmpty) {
+      return '';
+    }
+
+    return value[0].toUpperCase() +
+        value.substring(1);
   }
 
   String _formatDate(DateTime? date) {
@@ -631,18 +908,44 @@ class _TransactionCard extends StatelessWidget {
   }
 }
 
-class _StatusChip extends StatelessWidget {
-  final String status;
+class _MobileDetailRow extends StatelessWidget {
+  final String label;
+  final String value;
 
-  const _StatusChip({required this.status});
+  const _MobileDetailRow({
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
-    final label = status.isEmpty
-        ? 'Unknown'
-        : status[0].toUpperCase() + status.substring(1);
-
-    return Chip(label: Text(label), visualDensity: VisualDensity.compact);
+    return Padding(
+      padding: const EdgeInsets.only(
+        bottom: 6,
+      ),
+      child: Row(
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 100,
+            child: Text(
+              label,
+              style: Theme.of(context)
+                  .textTheme
+                  .bodySmall
+                  ?.copyWith(
+                    fontWeight:
+                        FontWeight.w600,
+                  ),
+            ),
+          ),
+          Expanded(
+            child: Text(value),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -650,26 +953,117 @@ class _DetailRow extends StatelessWidget {
   final String label;
   final String value;
 
-  const _DetailRow({required this.label, required this.value});
+  const _DetailRow({
+    required this.label,
+    required this.value,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 10),
+      padding: const EdgeInsets.only(
+        bottom: 12,
+      ),
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment:
+            CrossAxisAlignment.start,
         children: [
           SizedBox(
             width: 120,
             child: Text(
               label,
-              style: const TextStyle(fontWeight: FontWeight.w600),
+              style: Theme.of(context)
+                  .textTheme
+                  .bodyMedium
+                  ?.copyWith(
+                    fontWeight:
+                        FontWeight.w600,
+                  ),
             ),
           ),
-          Expanded(child: SelectableText(value)),
+          Expanded(
+            child: SelectableText(value),
+          ),
         ],
       ),
     );
+  }
+}
+
+class _StatusChip extends StatelessWidget {
+  final String status;
+
+  const _StatusChip({
+    required this.status,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final normalized =
+        status.toLowerCase();
+
+    IconData icon;
+
+    switch (normalized) {
+      case 'completed':
+      case 'paid':
+      case 'success':
+        icon = Icons.check_circle_outline;
+        break;
+
+      case 'pending':
+        icon = Icons.schedule_outlined;
+        break;
+
+      case 'failed':
+      case 'cancelled':
+      case 'canceled':
+        icon = Icons.error_outline;
+        break;
+
+      default:
+        icon = Icons.info_outline;
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+        horizontal: 10,
+        vertical: 6,
+      ),
+      decoration: BoxDecoration(
+        borderRadius:
+            BorderRadius.circular(20),
+        color: Theme.of(context)
+            .colorScheme
+            .surfaceContainerHighest,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            icon,
+            size: 16,
+          ),
+          const SizedBox(width: 5),
+          Text(
+            _capitalize(status),
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _capitalize(String value) {
+    if (value.isEmpty) {
+      return '';
+    }
+
+    return value[0].toUpperCase() +
+        value.substring(1);
   }
 }
 
@@ -680,17 +1074,46 @@ class _EmptyView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(48),
-      alignment: Alignment.center,
+      padding: const EdgeInsets.symmetric(
+        vertical: 60,
+        horizontal: 24,
+      ),
+      decoration: BoxDecoration(
+        border: Border.all(
+          color:
+              Theme.of(context).dividerColor,
+        ),
+        borderRadius:
+            BorderRadius.circular(12),
+      ),
       child: Column(
         children: [
           Icon(
             Icons.receipt_long_outlined,
-            size: 52,
-            color: Theme.of(context).colorScheme.outline,
+            size: 48,
+            color: Theme.of(context)
+                .colorScheme
+                .onSurfaceVariant,
           ),
-          const SizedBox(height: 14),
-          const Text('No transactions found'),
+          const SizedBox(height: 16),
+          Text(
+            'No transactions found',
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(
+                  fontWeight:
+                      FontWeight.w600,
+                ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            'There are no transactions matching your filters.',
+            textAlign: TextAlign.center,
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium,
+          ),
         ],
       ),
     );
@@ -701,7 +1124,10 @@ class _ErrorView extends StatelessWidget {
   final String message;
   final VoidCallback onRetry;
 
-  const _ErrorView({required this.message, required this.onRetry});
+  const _ErrorView({
+    required this.message,
+    required this.onRetry,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -711,11 +1137,36 @@ class _ErrorView extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 48),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
+            const Icon(
+              Icons.error_outline,
+              size: 48,
+            ),
             const SizedBox(height: 16),
-            ElevatedButton(onPressed: onRetry, child: const Text('Retry')),
+            Text(
+              'Something went wrong',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(
+                    fontWeight:
+                        FontWeight.w600,
+                  ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 16),
+            ElevatedButton.icon(
+              onPressed: onRetry,
+              icon: const Icon(
+                Icons.refresh,
+              ),
+              label: const Text(
+                'Retry',
+              ),
+            ),
           ],
         ),
       ),

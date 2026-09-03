@@ -25,14 +25,47 @@ class AdminDashboardRemoteDataSourceImpl
     );
 
     return result.fold((failure) => Left(failure), (json) {
-      final raw = json['dashboard'];
-
-      if (raw is! Map) {
-        return Left(ServerFailure(message: 'Invalid dashboard response'));
-      }
-
       try {
-        return Right(_fromJson(Map<String, dynamic>.from(raw)));
+        if (json is! Map) {
+          return Left(ServerFailure(message: 'Invalid dashboard response'));
+        }
+
+        final response = Map<String, dynamic>.from(json);
+
+        /*
+          |--------------------------------------------------------------------------
+          | Support both backend response formats
+          |--------------------------------------------------------------------------
+          |
+          | Old:
+          | {
+          |   "status": "Success",
+          |   "dashboard": {...}
+          | }
+          |
+          | Current:
+          | {
+          |   "status": "Success",
+          |   "data": {...}
+          | }
+          |
+          */
+
+        dynamic raw;
+
+        if (response['dashboard'] is Map) {
+          raw = response['dashboard'];
+        } else if (response['data'] is Map) {
+          raw = response['data'];
+        }
+
+        if (raw is! Map) {
+          return Left(ServerFailure(message: 'Invalid dashboard response'));
+        }
+
+        final dashboard = Map<String, dynamic>.from(raw);
+
+        return Right(_fromJson(dashboard));
       } catch (e) {
         return Left(ServerFailure(message: 'Invalid dashboard data: $e'));
       }
@@ -40,26 +73,40 @@ class AdminDashboardRemoteDataSourceImpl
   }
 
   AdminDashboardData _fromJson(Map<String, dynamic> json) {
-    final stats = Map<String, dynamic>.from(json['stats'] as Map? ?? {});
+    final stats = _map(json['stats']);
 
-    final changes = Map<String, dynamic>.from(stats['changes'] as Map? ?? {});
+    final store = _map(json['store']);
 
-    final store = Map<String, dynamic>.from(json['store'] as Map? ?? {});
+    final changes = _map(stats['changes']);
 
-    double numValue(dynamic value) {
+    /*
+    |--------------------------------------------------------------------------
+    | Helpers
+    |--------------------------------------------------------------------------
+    */
+
+    double numValue(dynamic value, {double fallback = 0}) {
       if (value is num) {
         return value.toDouble();
       }
 
-      return double.tryParse('$value') ?? 0;
+      if (value == null) {
+        return fallback;
+      }
+
+      return double.tryParse(value.toString()) ?? fallback;
     }
 
-    int intValue(dynamic value) {
+    int intValue(dynamic value, {int fallback = 0}) {
       if (value is num) {
         return value.toInt();
       }
 
-      return int.tryParse('$value') ?? 0;
+      if (value == null) {
+        return fallback;
+      }
+
+      return int.tryParse(value.toString()) ?? fallback;
     }
 
     double? nullableNum(dynamic value) {
@@ -67,7 +114,11 @@ class AdminDashboardRemoteDataSourceImpl
         return null;
       }
 
-      return numValue(value);
+      if (value is num) {
+        return value.toDouble();
+      }
+
+      return double.tryParse(value.toString());
     }
 
     DateTime? date(dynamic value) {
@@ -75,93 +126,346 @@ class AdminDashboardRemoteDataSourceImpl
         return null;
       }
 
-      return DateTime.tryParse('$value');
+      return DateTime.tryParse(value.toString());
     }
+
+    /*
+    |--------------------------------------------------------------------------
+    | Revenue
+    |--------------------------------------------------------------------------
+    |
+    | Supports:
+    |
+    | Old:
+    | stats.totalRevenue
+    | stats.periodRevenue
+    |
+    | New:
+    | data.revenue.total
+    | data.revenue.previous
+    |
+    */
+
+    final revenueObject = _map(json['revenue']);
+
+    final totalRevenue = stats.containsKey('totalRevenue')
+        ? numValue(stats['totalRevenue'])
+        : numValue(revenueObject['total']);
+
+    final periodRevenue = stats.containsKey('periodRevenue')
+        ? numValue(stats['periodRevenue'])
+        : numValue(revenueObject['total']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Orders
+    |--------------------------------------------------------------------------
+    */
+
+    final ordersObject = _map(json['orders']);
+
+    final totalOrders = stats.containsKey('totalOrders')
+        ? intValue(stats['totalOrders'])
+        : intValue(ordersObject['total']);
+
+    final periodOrders = stats.containsKey('periodOrders')
+        ? intValue(stats['periodOrders'])
+        : intValue(ordersObject['total']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Products
+    |--------------------------------------------------------------------------
+    */
+
+    final productsObject = _map(json['products']);
+
+    final totalProducts = stats.containsKey('totalProducts')
+        ? intValue(stats['totalProducts'])
+        : intValue(productsObject['total']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Categories
+    |--------------------------------------------------------------------------
+    */
+
+    final categoriesObject = _map(json['categories']);
+
+    final totalCategories = stats.containsKey('totalCategories')
+        ? intValue(stats['totalCategories'])
+        : intValue(categoriesObject['total']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Customers / Users
+    |--------------------------------------------------------------------------
+    */
+
+    final customersObject = _map(json['customers']);
+
+    final totalUsers = stats.containsKey('totalUsers')
+        ? intValue(stats['totalUsers'])
+        : intValue(customersObject['total']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Visitors
+    |--------------------------------------------------------------------------
+    */
+
+    final visitorsObject = _map(json['visitors']);
+
+    final totalVisitors = stats.containsKey('totalVisitors')
+        ? intValue(stats['totalVisitors'])
+        : intValue(visitorsObject['total']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Conversion rate
+    |--------------------------------------------------------------------------
+    */
+
+    final conversionObject = _map(json['conversionRate']);
+
+    final conversionRate = stats.containsKey('conversionRate')
+        ? nullableNum(stats['conversionRate'])
+        : nullableNum(conversionObject['rate']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Low stock
+    |--------------------------------------------------------------------------
+    */
+
+    final lowInventoryRaw = (json['lowInventory'] as List?) ?? const [];
+
+    /*
+    |--------------------------------------------------------------------------
+    | Category breakdown
+    |--------------------------------------------------------------------------
+    */
+
+    final categoryRaw = (json['categoryBreakdown'] as List?) ?? const [];
+
+    final categoryBreakdown = categoryRaw.whereType<Map>().map((item) {
+      final map = Map<String, dynamic>.from(item);
+
+      /*
+                | Old backend:
+                | name
+                | count
+                | percent
+                |
+                | New backend:
+                | categoryName
+                | orders
+                */
+
+      final name = map['name'] ?? map['categoryName'] ?? 'Uncategorized';
+
+      final count = map.containsKey('count')
+          ? intValue(map['count'])
+          : intValue(map['orders']);
+
+      final percent = map.containsKey('percent') ? numValue(map['percent']) : 0;
+
+      return AdminCategoryBreakdown(
+        name: name.toString(),
+        count: count,
+        percent: percent,
+      );
+    }).toList();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Revenue chart
+    |--------------------------------------------------------------------------
+    */
+
+    final revenueChartRaw = (json['revenueChart'] as List?) ?? const [];
+
+    final revenueChart = revenueChartRaw.whereType<Map>().map((item) {
+      final map = Map<String, dynamic>.from(item);
+
+      return AdminRevenuePoint(
+        label: '${map['label'] ?? map['period'] ?? ''}',
+        revenue: numValue(map['revenue']),
+      );
+    }).toList();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Recent orders
+    |--------------------------------------------------------------------------
+    |
+    | Kept for compatibility with the entity.
+    | Your dashboard UI can simply not display them.
+    |
+    */
+
+    final recentOrdersRaw = (json['recentOrders'] as List?) ?? const [];
+
+    final recentOrders = recentOrdersRaw.whereType<Map>().map((item) {
+      final map = Map<String, dynamic>.from(item);
+
+      return AdminRecentOrder(
+        id: '${map['id'] ?? ''}',
+
+        customer: '${map['customer'] ?? 'Guest'}',
+
+        total: numValue(map['total']),
+
+        status: '${map['status'] ?? ''}',
+
+        paymentStatus: '${map['paymentStatus'] ?? ''}',
+
+        createdAt: date(map['createdAt']),
+      );
+    }).toList();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Low inventory
+    |--------------------------------------------------------------------------
+    */
+
+    final lowInventory = lowInventoryRaw.whereType<Map>().map((item) {
+      final map = Map<String, dynamic>.from(item);
+
+      return AdminInventoryItem(
+        name: '${map['name'] ?? ''}',
+
+        size: map['size']?.toString(),
+
+        color: map['color']?.toString(),
+
+        count: intValue(map['stock']),
+      );
+    }).toList();
+
+    /*
+    |--------------------------------------------------------------------------
+    | Store
+    |--------------------------------------------------------------------------
+    */
+
+    final storeName = store['name'] ?? store['storeName'] ?? 'Bazar';
+
+    final currency = store['currency'] ?? 'EGP';
+
+    final storeEnabled = store['storeEnabled'] == true;
+
+    final acceptOrders = store['acceptOrders'] == true;
+
+    final lowStockThreshold = intValue(store['lowStockThreshold']);
+
+    /*
+    |--------------------------------------------------------------------------
+    | Return dashboard entity
+    |--------------------------------------------------------------------------
+    */
 
     return AdminDashboardData(
       period: '${json['period'] ?? 'month'}',
 
-      totalRevenue: numValue(stats['totalRevenue']),
+      totalRevenue: totalRevenue,
 
-      periodRevenue: numValue(stats['periodRevenue']),
+      periodRevenue: periodRevenue,
 
-      totalOrders: intValue(stats['totalOrders']),
+      totalOrders: totalOrders,
 
-      periodOrders: intValue(stats['periodOrders']),
+      periodOrders: periodOrders,
 
-      totalProducts: intValue(stats['totalProducts']),
+      totalProducts: totalProducts,
 
-      totalCategories: intValue(stats['totalCategories']),
+      totalCategories: totalCategories,
 
-      totalUsers: intValue(stats['totalUsers']),
+      totalUsers: totalUsers,
 
-      totalVisitors: intValue(stats['totalVisitors']),
+      totalVisitors: totalVisitors,
 
-      conversionRate: nullableNum(stats['conversionRate']),
+      conversionRate: conversionRate,
 
-      lowStockAlerts: intValue(stats['lowStockAlerts']),
+      lowStockAlerts: stats.containsKey('lowStockAlerts')
+          ? intValue(stats['lowStockAlerts'])
+          : lowInventory.length,
 
       changes: AdminDashboardChanges(
-        revenue: nullableNum(changes['revenue']),
-        orders: nullableNum(changes['orders']),
-        visitors: nullableNum(changes['visitors']),
-        conversionRate: nullableNum(changes['conversionRate']),
+        revenue: _nullableChange(changes['revenue'], revenueObject['change']),
+
+        orders: _nullableChange(changes['orders'], ordersObject['change']),
+
+        visitors: _nullableChange(
+          changes['visitors'],
+          visitorsObject['change'],
+        ),
+
+        conversionRate: _nullableChange(
+          changes['conversionRate'],
+          conversionObject['change'],
+        ),
       ),
 
       store: AdminDashboardStore(
-        name: '${store['name'] ?? 'Bazar'}',
-        currency: '${store['currency'] ?? 'EGP'}',
-        storeEnabled: store['storeEnabled'] == true,
-        acceptOrders: store['acceptOrders'] == true,
-        lowStockThreshold: intValue(store['lowStockThreshold']),
+        name: storeName.toString(),
+
+        currency: currency.toString(),
+
+        storeEnabled: storeEnabled,
+
+        acceptOrders: acceptOrders,
+
+        lowStockThreshold: lowStockThreshold,
       ),
 
-      categoryBreakdown: ((json['categoryBreakdown'] as List?) ?? [])
-          .whereType<Map>()
-          .map(
-            (item) => AdminCategoryBreakdown(
-              name: '${item['name'] ?? ''}',
-              count: intValue(item['count']),
-              percent: numValue(item['percent']),
-            ),
-          )
-          .toList(),
+      categoryBreakdown: categoryBreakdown,
 
-      revenueChart: ((json['revenueChart'] as List?) ?? [])
-          .whereType<Map>()
-          .map(
-            (item) => AdminRevenuePoint(
-              label: '${item['label'] ?? item['period'] ?? ''}',
-              revenue: numValue(item['revenue']),
-            ),
-          )
-          .toList(),
+      revenueChart: revenueChart,
 
-      recentOrders: ((json['recentOrders'] as List?) ?? [])
-          .whereType<Map>()
-          .map(
-            (item) => AdminRecentOrder(
-              id: '${item['id'] ?? ''}',
-              customer: '${item['customer'] ?? 'Guest'}',
-              total: numValue(item['total']),
-              status: '${item['status'] ?? ''}',
-              paymentStatus: '${item['paymentStatus'] ?? ''}',
-              createdAt: date(item['createdAt']),
-            ),
-          )
-          .toList(),
+      recentOrders: recentOrders,
 
-      lowInventory: ((json['lowInventory'] as List?) ?? [])
-          .whereType<Map>()
-          .map(
-            (item) => AdminInventoryItem(
-              name: '${item['name'] ?? ''}',
-              size: item['size']?.toString(),
-              color: item['color']?.toString(),
-              count: intValue(item['stock']),
-            ),
-          )
-          .toList(),
+      lowInventory: lowInventory,
     );
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Map helper
+  |--------------------------------------------------------------------------
+  */
+
+  Map<String, dynamic> _map(dynamic value) {
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+
+    return <String, dynamic>{};
+  }
+
+  /*
+  |--------------------------------------------------------------------------
+  | Nullable change helper
+  |--------------------------------------------------------------------------
+  */
+
+  double? _nullableChange(dynamic primary, dynamic fallback) {
+    if (primary != null) {
+      if (primary is num) {
+        return primary.toDouble();
+      }
+
+      return double.tryParse(primary.toString());
+    }
+
+    if (fallback != null) {
+      if (fallback is num) {
+        return fallback.toDouble();
+      }
+
+      return double.tryParse(fallback.toString());
+    }
+
+    return null;
   }
 }

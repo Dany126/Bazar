@@ -25,8 +25,6 @@ class AdminDashboardData {
 
   final List<AdminRevenuePoint> revenueChart;
 
-  final List<AdminRecentOrder> recentOrders;
-
   final List<AdminInventoryItem> lowInventory;
 
   const AdminDashboardData({
@@ -45,7 +43,6 @@ class AdminDashboardData {
     required this.store,
     required this.categoryBreakdown,
     required this.revenueChart,
-    required this.recentOrders,
     required this.lowInventory,
   });
 }
@@ -97,24 +94,6 @@ class AdminRevenuePoint {
   final double revenue;
 
   const AdminRevenuePoint({required this.label, required this.revenue});
-}
-
-class AdminRecentOrder {
-  final String id;
-  final String customer;
-  final double total;
-  final String status;
-  final String paymentStatus;
-  final DateTime? createdAt;
-
-  const AdminRecentOrder({
-    required this.id,
-    required this.customer,
-    required this.total,
-    required this.status,
-    required this.paymentStatus,
-    required this.createdAt,
-  });
 }
 
 class AdminInventoryItem {

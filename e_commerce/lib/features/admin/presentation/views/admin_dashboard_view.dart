@@ -14,8 +14,8 @@ import 'package:e_commerce/features/admin/presentation/views/admin_workspace_vie
 import 'package:e_commerce/features/admin/presentation/widgets/admin_dashboard_categories.dart';
 import 'package:e_commerce/features/admin/presentation/widgets/admin_dashboard_header.dart';
 import 'package:e_commerce/features/admin/presentation/widgets/admin_dashboard_inventory.dart';
-import 'package:e_commerce/features/admin/presentation/widgets/admin_dashboard_recent_orders.dart';
 import 'package:e_commerce/features/admin/presentation/widgets/admin_dashboard_sales_overview.dart';
+import 'package:e_commerce/features/admin/presentation/widgets/admin_dashboard_stat_card.dart';
 import 'package:e_commerce/features/admin/presentation/widgets/admin_dashboard_stats.dart';
 import 'package:e_commerce/features/admin/presentation/widgets/admin_sidebar.dart';
 import 'package:flutter/material.dart';
@@ -134,10 +134,29 @@ class _AdminDashboardBody extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
+                // =====================================
+                // MAIN STAT CARDS
+                // =====================================
                 AdminDashboardStats(data: data),
+
+                const SizedBox(height: 20),
+
+                // =====================================
+                // SECONDARY STAT CARDS
+                // Same style as main cards
+                // =====================================
+                _DashboardSummary(
+                  totalProducts: data.totalProducts,
+                  totalCategories: data.totalCategories,
+                  totalUsers: data.totalUsers,
+                  lowStockAlerts: data.lowStockAlerts,
+                ),
 
                 const SizedBox(height: 24),
 
+                // =====================================
+                // SALES + CATEGORY
+                // =====================================
                 if (wide)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -173,41 +192,10 @@ class _AdminDashboardBody extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                if (medium)
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: AdminDashboardRecentOrders(
-                          orders: data.recentOrders,
-                        ),
-                      ),
-                      const SizedBox(width: 20),
-                      Expanded(
-                        child: AdminDashboardInventory(
-                          items: data.lowInventory,
-                        ),
-                      ),
-                    ],
-                  )
-                else
-                  Column(
-                    children: [
-                      AdminDashboardRecentOrders(orders: data.recentOrders),
-                      const SizedBox(height: 20),
-                      AdminDashboardInventory(items: data.lowInventory),
-                    ],
-                  ),
-
-                const SizedBox(height: 24),
-
-                _DashboardSummary(
-                  totalProducts: data.totalProducts,
-                  totalCategories: data.totalCategories,
-                  totalUsers: data.totalUsers,
-                  lowStockAlerts: data.lowStockAlerts,
-                ),
+                // =====================================
+                // ALL LOW INVENTORY
+                // =====================================
+                AdminDashboardInventory(items: data.lowInventory),
               ],
             ),
           ),
@@ -221,7 +209,9 @@ class _AdminDashboardBody extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final wide = constraints.maxWidth >= 1100;
+
         final medium = constraints.maxWidth >= 760;
+
         final sidebarVisible = constraints.maxWidth >= 900;
 
         return BlocBuilder<AdminNavigationCubit, int>(
@@ -324,92 +314,86 @@ class _DashboardSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Wrap(
-      spacing: 16,
-      runSpacing: 16,
-      children: [
-        _SummaryCard(
-          icon: Icons.inventory_2_rounded,
-          title: 'Products',
-          value: totalProducts.toString(),
-        ),
-        _SummaryCard(
-          icon: Icons.category_rounded,
-          title: 'Categories',
-          value: totalCategories.toString(),
-        ),
-        _SummaryCard(
-          icon: Icons.people_alt_rounded,
-          title: 'Customers',
-          value: totalUsers.toString(),
-        ),
-        _SummaryCard(
-          icon: Icons.warning_amber_rounded,
-          title: 'Low stock',
-          value: lowStockAlerts.toString(),
-        ),
-      ],
+    final cards = [
+      _SummaryStat(
+        label: 'Products',
+        value: totalProducts.toString(),
+        color: const Color(0xFF6366F1),
+        icon: Icons.inventory_2_rounded,
+      ),
+      _SummaryStat(
+        label: 'Categories',
+        value: totalCategories.toString(),
+        color: const Color(0xFF0EA5E9),
+        icon: Icons.category_rounded,
+      ),
+      _SummaryStat(
+        label: 'Customers',
+        value: totalUsers.toString(),
+        color: const Color(0xFF10B981),
+        icon: Icons.people_alt_rounded,
+      ),
+      _SummaryStat(
+        label: 'Low inventory',
+        value: lowStockAlerts.toString(),
+        color: const Color(0xFFF59E0B),
+        icon: Icons.warning_amber_rounded,
+      ),
+    ];
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final width = constraints.maxWidth;
+
+        final crossAxisCount = width >= 1100
+            ? 4
+            : width >= 600
+            ? 2
+            : 1;
+
+        return GridView.builder(
+          shrinkWrap: true,
+          physics: const NeverScrollableScrollPhysics(),
+          itemCount: cards.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: crossAxisCount,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: width >= 1100
+                ? 1.65
+                : width >= 600
+                ? 1.8
+                : 2.5,
+          ),
+          itemBuilder: (context, index) {
+            final card = cards[index];
+
+            return AdminDashboardStatCard(
+              label: card.label,
+              value: card.value,
+              change: 'No data',
+              color: card.color,
+              comparisonLabel: '',
+            );
+          },
+        );
+      },
     );
   }
 }
 
-class _SummaryCard extends StatelessWidget {
-  const _SummaryCard({
-    required this.icon,
-    required this.title,
+class _SummaryStat {
+  const _SummaryStat({
+    required this.label,
     required this.value,
+    required this.color,
+    required this.icon,
   });
 
-  final IconData icon;
-  final String title;
+  final String label;
   final String value;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 210,
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFE5E7EB)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(10),
-              color: const Color(0xFFF3F4F6),
-            ),
-            child: Icon(icon),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(fontSize: 13),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+  final Color color;
+  final IconData icon;
 }
 
 class _DashboardError extends StatelessWidget {

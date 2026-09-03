@@ -8,19 +8,15 @@ class AdminDashboardStats extends StatelessWidget {
   final AdminDashboardData data;
 
   String money(double value) {
-    if (value == 0) {
-      return '0 ${data.store.currency}';
-    }
-
     return '${value.toStringAsFixed(2)} ${data.store.currency}';
   }
 
-  String change(double? value) {
+  String percentageChange(double? value) {
     if (value == null) {
       return 'No data';
     }
 
-    final prefix = value >= 0 ? '+' : '';
+    final prefix = value > 0 ? '+' : '';
 
     return '$prefix${value.toStringAsFixed(1)}%';
   }
@@ -39,26 +35,26 @@ class AdminDashboardStats extends StatelessWidget {
       _MetricStat(
         label: 'Revenue',
         value: money(data.periodRevenue),
-        change: change(data.changes.revenue),
+        change: percentageChange(data.changes.revenue),
         color: const Color(0xFF8E6CEF),
         isPrimary: true,
       ),
       _MetricStat(
         label: 'Orders',
         value: data.periodOrders.toString(),
-        change: change(data.changes.orders),
+        change: percentageChange(data.changes.orders),
         color: const Color(0xFF4EC5A5),
       ),
       _MetricStat(
         label: 'Visitors',
         value: data.totalVisitors.toString(),
-        change: change(data.changes.visitors),
+        change: percentageChange(data.changes.visitors),
         color: const Color(0xFF1F2937),
       ),
       _MetricStat(
         label: 'Conversion rate',
         value: conversion(data.conversionRate),
-        change: change(data.changes.conversionRate),
+        change: percentageChange(data.changes.conversionRate),
         color: const Color(0xFFDC2626),
       ),
     ];
@@ -73,6 +69,12 @@ class AdminDashboardStats extends StatelessWidget {
             ? 2
             : 1;
 
+        final aspectRatio = width >= 1100
+            ? 1.65
+            : width >= 600
+            ? 1.8
+            : 2.5;
+
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
@@ -81,11 +83,7 @@ class AdminDashboardStats extends StatelessWidget {
             crossAxisCount: crossAxisCount,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
-            childAspectRatio: width >= 1100
-                ? 1.65
-                : width >= 600
-                ? 1.8
-                : 2.5,
+            childAspectRatio: aspectRatio,
           ),
           itemBuilder: (context, index) {
             final stat = stats[index];

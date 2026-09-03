@@ -19,6 +19,50 @@ class AdminDashboardStatCard extends StatelessWidget {
   final bool isPrimary;
   final String comparisonLabel;
 
+  bool get hasChange => change != 'No data';
+
+  double? get numericChange {
+    if (!hasChange) return null;
+
+    return double.tryParse(change.replaceAll('%', '').replaceAll('+', ''));
+  }
+
+  IconData get changeIcon {
+    final value = numericChange;
+
+    if (value == null) {
+      return Icons.remove_rounded;
+    }
+
+    if (value > 0) {
+      return Icons.trending_up_rounded;
+    }
+
+    if (value < 0) {
+      return Icons.trending_down_rounded;
+    }
+
+    return Icons.remove_rounded;
+  }
+
+  Color get changeColor {
+    if (!hasChange) {
+      return isPrimary ? Colors.white54 : AppColors.kSecondaryTextColor;
+    }
+
+    final value = numericChange ?? 0;
+
+    if (value > 0) {
+      return isPrimary ? Colors.greenAccent : const Color(0xFF1DAF73);
+    }
+
+    if (value < 0) {
+      return isPrimary ? Colors.redAccent.shade100 : const Color(0xFFDC2626);
+    }
+
+    return isPrimary ? Colors.white70 : AppColors.kSecondaryTextColor;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -36,7 +80,6 @@ class AdminDashboardStatCard extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Decorative background circle for non-primary
           if (!isPrimary)
             Positioned(
               right: -20,
@@ -50,17 +93,16 @@ class AdminDashboardStatCard extends StatelessWidget {
                 ),
               ),
             ),
-          // Content
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Expanded(
                     child: Text(
                       label.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
                         color: isPrimary
                             ? Colors.white70
@@ -69,8 +111,6 @@ class AdminDashboardStatCard extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                         letterSpacing: 0.5,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 8),
@@ -84,14 +124,16 @@ class AdminDashboardStatCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
-                      _changeIcon(),
+                      changeIcon,
                       color: isPrimary ? Colors.white : color,
                       size: 18,
                     ),
                   ),
                 ],
               ),
-              const SizedBox(height: 8),
+
+              const SizedBox(height: 12),
+
               FittedBox(
                 fit: BoxFit.scaleDown,
                 alignment: Alignment.centerLeft,
@@ -105,34 +147,18 @@ class AdminDashboardStatCard extends StatelessWidget {
                   ),
                 ),
               ),
-              const SizedBox(height: 8),
+
+              const SizedBox(height: 10),
+
               Wrap(
                 crossAxisAlignment: WrapCrossAlignment.center,
                 children: [
-                  Icon(
-                    change == 'No data'
-                        ? Icons.remove_rounded
-                        : Icons.trending_up_rounded,
-                    color: change == 'No data'
-                        ? (isPrimary
-                              ? Colors.white54
-                              : AppColors.kSecondaryTextColor)
-                        : (isPrimary
-                              ? Colors.greenAccent
-                              : const Color(0xFF1DAF73)),
-                    size: 14,
-                  ),
+                  Icon(changeIcon, color: changeColor, size: 14),
                   const SizedBox(width: 4),
                   Text(
                     change,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: change == 'No data'
-                          ? (isPrimary
-                                ? Colors.white54
-                                : AppColors.kSecondaryTextColor)
-                          : (isPrimary
-                                ? Colors.greenAccent
-                                : const Color(0xFF1DAF73)),
+                      color: changeColor,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -152,29 +178,5 @@ class AdminDashboardStatCard extends StatelessWidget {
         ],
       ),
     );
-  }
-
-  IconData _changeIcon() {
-    if (change == 'No data') {
-      return Icons.remove_rounded;
-    }
-
-    final numericChange = double.tryParse(
-      change.replaceAll('%', '').replaceAll('+', ''),
-    );
-
-    if (numericChange == null) {
-      return Icons.remove_rounded;
-    }
-
-    if (numericChange > 0) {
-      return Icons.trending_up_rounded;
-    }
-
-    if (numericChange < 0) {
-      return Icons.trending_down_rounded;
-    }
-
-    return Icons.remove_rounded;
   }
 }

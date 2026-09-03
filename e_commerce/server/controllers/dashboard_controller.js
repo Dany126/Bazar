@@ -14,731 +14,97 @@ function getDateRange(period = "month") {
   const now = new Date();
 
   let start;
-  let previousStart;
-  let previousEnd;
 
-  if (period === "week") {
-    start = new Date(now);
+  switch (period) {
+    case "week":
+      start = new Date(
+        now.getTime() - 7 * DAY_MS,
+      );
+      break;
 
-    start.setHours(0, 0, 0, 0);
+    case "year":
+      start = new Date(
+        now.getTime() - 365 * DAY_MS,
+      );
+      break;
 
-    const day = start.getDay();
-
-    start.setDate(
-      start.getDate() - day,
-    );
-
-    previousStart = new Date(
-      start.getTime() - 7 * DAY_MS,
-    );
-
-    previousEnd = new Date(start);
-  } else if (period === "year") {
-    start = new Date(
-      now.getFullYear(),
-      0,
-      1,
-    );
-
-    previousStart = new Date(
-      now.getFullYear() - 1,
-      0,
-      1,
-    );
-
-    previousEnd = new Date(
-      now.getFullYear(),
-      0,
-      1,
-    );
-  } else {
-    start = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      1,
-    );
-
-    previousStart = new Date(
-      now.getFullYear(),
-      now.getMonth() - 1,
-      1,
-    );
-
-    previousEnd = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      1,
-    );
+    case "month":
+    default:
+      start = new Date(
+        now.getTime() - 30 * DAY_MS,
+      );
+      break;
   }
 
   return {
     start,
     end: now,
-    previousStart,
-    previousEnd,
   };
 }
 
-function percentageChange(
+function getPreviousDateRange(start, end) {
+  const duration =
+    end.getTime() -
+    start.getTime();
+
+  return {
+    start: new Date(
+      start.getTime() - duration,
+    ),
+
+    end: new Date(start),
+  };
+}
+
+function calculatePercentageChange(
   current,
   previous,
 ) {
   if (previous === 0) {
-    return current === 0 ? 0 : null;
+    if (current === 0) {
+      return 0;
+    }
+
+    return null;
   }
 
   return (
     ((current - previous) /
-      previous) *
+      Math.abs(previous)) *
     100
   );
 }
 
 function round(value, digits = 2) {
-  const factor = 10 ** digits;
-
-  return (
-    Math.round(value * factor) /
-    factor
-  );
-}
-
-function isRevenueOrder(order) {
-  return (
-    order.paymentStatus === "paid" &&
-    order.orderStatus !== "cancelled"
-  );
-}
-
-function revenueFromOrders(orders) {
-  return orders
-    .filter(isRevenueOrder)
-    .reduce(
-      (sum, order) =>
-        sum + Number(order.totalPrice || 0),
-      0,
-    );
-}
-
-async function getRevenue(
-  start,
-  end,
-) {
-  const result =
-    await Order.aggregate([
-      {
-        $match: {
-          createdAt: {
-            $gte: start,
-            $lt: end,
-          },
-          paymentStatus: "paid",
-          orderStatus: {
-            $ne: "cancelled",
-          },
-        },
-      },
-      {
-        $group: {
-          _id: null,
-          total: {
-            $sum: "$totalPrice",
-          },
-        },
-      },
-    ]);
+  if (
+    value === null ||
+    value === undefined ||
+    Number.isNaN(value)
+  ) {
+    return null;
+  }
 
   return Number(
-    result[0]?.total ?? 0,
+    Number(value).toFixed(digits),
   );
 }
 
-export const getAdminDashboard =
-  async (req, res) => {
-    try {
-      const period = [
-        "week",
-        "month",
-        "year",
-      ].includes(req.query.period)
-        ? req.query.period
-        : "month";
-
-      const {
-        start,
-        end,
-        previousStart,
-        previousEnd,
-      } = getDateRange(period);
-
-      let storeSettings =
-        await StoreSettings.findOne();
-
-      if (!storeSettings) {
-        storeSettings =
-          await StoreSettings.create({
-            storeName: "Bazar",
-            description: "",
-            email: "",
-            phone: "",
-            address: "",
-            city: "",
-            country: "",
-            postalCode: "",
-            currency: "EGP",
-            taxRate: 0,
-            shippingFee: 0,
-            freeShippingThreshold: 0,
-            minimumOrderAmount: 0,
-            lowStockThreshold:
-              DEFAULT_LOW_STOCK_THRESHOLD,
-            storeEnabled: true,
-            acceptOrders: true,
-          });
-      }
-
-      const lowStockThreshold =
-        Number(
-          storeSettings.lowStockThreshold ??
-            DEFAULT_LOW_STOCK_THRESHOLD,
-        );
-
-      const [
-        totalProducts,
-        totalCategories,
-        totalUsers,
-        totalOrders,
-        currentOrders,
-        previousOrders,
-        currentVisitors,
-        previousVisitors,
-        currentConversionVisitors,
-        previousConversionVisitors,
-        categoryBreakdown,
-        lowStockCount,
-        lowInventory,
-      ] = await Promise.all([
-        Product.countDocuments(),
-
-        Category.countDocuments(),
-
-        User.countDocuments({
-          role: {
-            $not: {
-              $regex: "^admin$",
-              $options: "i",
-            },
-          },
-        }),
-
-        Order.countDocuments(),
-
-        Order.find({
-          createdAt: {
-            $gte: start,
-            $lt: end,
-          },
-        })
-          .populate(
-            "user",
-            "name email",
-          )
-          .sort({
-            createdAt: -1,
-          }),
-
-        Order.find({
-          createdAt: {
-            $gte: previousStart,
-            $lt: previousEnd,
-          },
-        }),
-
-        Visitor.countDocuments({
-          createdAt: {
-            $gte: start,
-            $lt: end,
-          },
-        }),
-
-        Visitor.countDocuments({
-          createdAt: {
-            $gte: previousStart,
-            $lt: previousEnd,
-          },
-        }),
-
-        Visitor.countDocuments({
-          createdAt: {
-            $gte: start,
-            $lt: end,
-          },
-          converted: true,
-        }),
-
-        Visitor.countDocuments({
-          createdAt: {
-            $gte: previousStart,
-            $lt: previousEnd,
-          },
-          converted: true,
-        }),
-
-        Product.aggregate([
-          {
-            $group: {
-              _id: "$category",
-              count: {
-                $sum: 1,
-              },
-            },
-          },
-
-          {
-            $lookup: {
-              from: "categories",
-              localField: "_id",
-              foreignField: "_id",
-              as: "category",
-            },
-          },
-
-          {
-            $unwind: "$category",
-          },
-
-          {
-            $sort: {
-              count: -1,
-            },
-          },
-
-          {
-            $project: {
-              _id: 0,
-              name: "$category.name",
-              count: 1,
-            },
-          },
-        ]),
-
-        Variant.countDocuments({
-          stock: {
-            $lte: lowStockThreshold,
-          },
-        }),
-
-        Variant.aggregate([
-          {
-            $match: {
-              stock: {
-                $lte: lowStockThreshold,
-              },
-            },
-          },
-
-          {
-            $lookup: {
-              from: "products",
-              localField: "product",
-              foreignField: "_id",
-              as: "product",
-            },
-          },
-
-          {
-            $unwind: "$product",
-          },
-
-          {
-            $sort: {
-              stock: 1,
-            },
-          },
-
-          {
-            $limit: 10,
-          },
-
-          {
-            $project: {
-              _id: 1,
-              productId:
-                "$product._id",
-              name:
-                "$product.name",
-              size: 1,
-              color: 1,
-              stock: 1,
-            },
-          },
-        ]),
-      ]);
-
-      const currentRevenue =
-        await getRevenue(
-          start,
-          end,
-        );
-
-      const previousRevenue =
-        await getRevenue(
-          previousStart,
-          previousEnd,
-        );
-
-      const conversionRate =
-        currentVisitors === 0
-          ? null
-          : round(
-              (
-                currentConversionVisitors /
-                currentVisitors
-              ) *
-                100,
-            );
-
-      const previousConversionRate =
-        previousVisitors === 0
-          ? null
-          : round(
-              (
-                previousConversionVisitors /
-                previousVisitors
-              ) *
-                100,
-            );
-
-      const categoryTotal =
-        categoryBreakdown.reduce(
-          (sum, item) =>
-            sum + Number(item.count || 0),
-          0,
-        );
-
-      const categoryData =
-        categoryBreakdown.map(
-          (item) => ({
-            name: item.name,
-            count: Number(
-              item.count || 0,
-            ),
-            percent:
-              categoryTotal === 0
-                ? 0
-                : round(
-                    (
-                      Number(
-                        item.count || 0,
-                      ) /
-                        categoryTotal
-                    ) *
-                      100,
-                  ),
-          }),
-        );
-
-      const recentOrders =
-        currentOrders
-          .slice(0, 6)
-          .map((order) => ({
-            id: String(order._id),
-
-            customer:
-              order.user?.name ??
-              "Guest",
-
-            total:
-              Number(
-                order.totalPrice || 0,
-              ),
-
-            status:
-              order.orderStatus,
-
-            paymentStatus:
-              order.paymentStatus,
-
-            createdAt:
-              order.createdAt,
-          }));
-
-      const revenueChart =
-        await buildRevenueChart(
-          period,
-          start,
-          end,
-        );
-
-      const dashboard = {
-        period,
-
-        range: {
-          start,
-          end,
-        },
-
-        store: {
-          name:
-            storeSettings.storeName,
-
-          currency:
-            storeSettings.currency,
-
-          storeEnabled:
-            storeSettings.storeEnabled,
-
-          acceptOrders:
-            storeSettings.acceptOrders,
-
-          lowStockThreshold,
-        },
-
-        stats: {
-          totalRevenue:
-            round(currentRevenue),
-
-          periodRevenue:
-            round(currentRevenue),
-
-          totalOrders,
-
-          periodOrders:
-            currentOrders.length,
-
-          totalProducts,
-
-          totalCategories,
-
-          totalUsers,
-
-          totalVisitors:
-            currentVisitors,
-
-          conversionRate,
-
-          lowStockAlerts:
-            lowStockCount,
-
-          changes: {
-            revenue:
-              percentageChange(
-                currentRevenue,
-                previousRevenue,
-              ),
-
-            orders:
-              percentageChange(
-                currentOrders.length,
-                previousOrders.length,
-              ),
-
-            visitors:
-              percentageChange(
-                currentVisitors,
-                previousVisitors,
-              ),
-
-            conversionRate:
-              conversionRate === null ||
-              previousConversionRate ===
-                null
-                ? null
-                : round(
-                    conversionRate -
-                      previousConversionRate,
-                    2,
-                  ),
-          },
-        },
-
-        categoryBreakdown:
-          categoryData,
-
-        revenueChart,
-
-        recentOrders,
-
-        lowInventory,
-      };
-
-      return res.status(200).json({
-        status: "Success",
-        dashboard,
-      });
-    } catch (err) {
-      console.error(
-        "Admin dashboard error:",
-        err,
-      );
-
-      return res.status(500).json({
-        status: "Failed",
-        message:
-          "Internal Server Error",
-      });
-    }
-  };
-
-async function buildRevenueChart(
-  period,
-  start,
-  end,
-) {
-  const rows =
-    await Order.aggregate([
-      {
-        $match: {
-          createdAt: {
-            $gte: start,
-            $lt: end,
-          },
-
-          paymentStatus: "paid",
-
-          orderStatus: {
-            $ne: "cancelled",
-          },
-        },
-      },
-
-      {
-        $group: {
-          _id:
-            period === "year"
-              ? {
-                  $month:
-                    "$createdAt",
-                }
-              : period === "month"
-                ? {
-                    $dayOfMonth:
-                      "$createdAt",
-                  }
-                : {
-                    $dayOfWeek:
-                      "$createdAt",
-                  },
-
-          revenue: {
-            $sum: "$totalPrice",
-          },
-        },
-      },
-    ]);
-
-  const map = new Map();
-
-  for (const row of rows) {
-    map.set(
-      Number(row._id),
-      round(
-        Number(row.revenue || 0),
-      ),
-    );
-  }
-
-  if (period === "year") {
-    return Array.from(
-      { length: 12 },
-      (_, index) => {
-        const month = index + 1;
-
-        return {
-          period: month,
-          label: new Date(
-            2000,
-            index,
-            1,
-          ).toLocaleString(
-            "en-US",
-            {
-              month: "short",
-            },
-          ),
-          revenue:
-            map.get(month) ?? 0,
-        };
-      },
-    );
-  }
-
-  if (period === "month") {
-    const days =
-      new Date(
-        start.getFullYear(),
-        start.getMonth() + 1,
-        0,
-      ).getDate();
-
-    return Array.from(
-      { length: days },
-      (_, index) => {
-        const day = index + 1;
-
-        return {
-          period: day,
-          label: String(day),
-          revenue:
-            map.get(day) ?? 0,
-        };
-      },
-    );
-  }
-
-  return [
-    {
-      period: 1,
-      label: "Sun",
-      revenue: map.get(1) ?? 0,
-    },
-    {
-      period: 2,
-      label: "Mon",
-      revenue: map.get(2) ?? 0,
-    },
-    {
-      period: 3,
-      label: "Tue",
-      revenue: map.get(3) ?? 0,
-    },
-    {
-      period: 4,
-      label: "Wed",
-      revenue: map.get(4) ?? 0,
-    },
-    {
-      period: 5,
-      label: "Thu",
-      revenue: map.get(5) ?? 0,
-    },
-    {
-      period: 6,
-      label: "Fri",
-      revenue: map.get(6) ?? 0,
-    },
-    {
-      period: 7,
-      label: "Sat",
-      revenue: map.get(7) ?? 0,
-    },
-  ];
-}
+/*
+|--------------------------------------------------------------------------
+| Track visitor
+|--------------------------------------------------------------------------
+*/
 
 export const trackVisitor =
   async (req, res) => {
     try {
       const {
         visitorId,
-        path = null,
       } = req.body;
 
-      if (
-        !visitorId ||
-        typeof visitorId !== "string"
-      ) {
+      if (!visitorId) {
         return res.status(400).json({
-          status: "Failed",
+          status: "Error",
           message:
             "visitorId is required",
         });
@@ -746,34 +112,20 @@ export const trackVisitor =
 
       const now = new Date();
 
-      const monthKey =
-        `${now.getUTCFullYear()}-${String(
-          now.getUTCMonth() + 1,
-        ).padStart(2, "0")}`;
-
       const visitor =
         await Visitor.findOneAndUpdate(
           {
             visitorId,
-            monthKey,
           },
 
           {
             $set: {
               lastSeenAt: now,
-
-              ...(path
-                ? {
-                    lastPath: path,
-                  }
-                : {}),
             },
 
             $setOnInsert: {
               visitorId,
-              monthKey,
               createdAt: now,
-              converted: false,
             },
           },
 
@@ -787,16 +139,775 @@ export const trackVisitor =
         status: "Success",
         visitor,
       });
-    } catch (err) {
+    } catch (error) {
       console.error(
-        "Track visitor error:",
-        err,
+        "TRACK VISITOR ERROR:",
+        error,
       );
 
       return res.status(500).json({
-        status: "Failed",
+        status: "Error",
         message:
-          "Internal Server Error",
+          "Failed to track visitor",
+      });
+    }
+  };
+
+/*
+|--------------------------------------------------------------------------
+| Admin dashboard
+|--------------------------------------------------------------------------
+*/
+
+export const getAdminDashboard =
+  async (req, res) => {
+    try {
+      const period =
+        req.query.period || "month";
+
+      const {
+        start,
+        end,
+      } = getDateRange(period);
+
+      const {
+        start: previousStart,
+        end: previousEnd,
+      } =
+        getPreviousDateRange(
+          start,
+          end,
+        );
+
+      /*
+      |--------------------------------------------------------------------------
+      | Revenue
+      |--------------------------------------------------------------------------
+      */
+
+      const revenueAggregation =
+        await Order.aggregate([
+          {
+            $match: {
+              createdAt: {
+                $gte: start,
+                $lt: end,
+              },
+
+              orderStatus: {
+                $nin: [
+                  "cancelled",
+                  "canceled",
+                ],
+              },
+            },
+          },
+
+          {
+            $group: {
+              _id: null,
+
+              total: {
+                $sum: {
+                  $ifNull: [
+                    "$totalPrice",
+                    0,
+                  ],
+                },
+              },
+            },
+          },
+        ]);
+
+      const previousRevenueAggregation =
+        await Order.aggregate([
+          {
+            $match: {
+              createdAt: {
+                $gte: previousStart,
+                $lt: previousEnd,
+              },
+
+              orderStatus: {
+                $nin: [
+                  "cancelled",
+                  "canceled",
+                ],
+              },
+            },
+          },
+
+          {
+            $group: {
+              _id: null,
+
+              total: {
+                $sum: {
+                  $ifNull: [
+                    "$totalPrice",
+                    0,
+                  ],
+                },
+              },
+            },
+          },
+        ]);
+
+      const periodRevenue =
+        revenueAggregation[0]?.total || 0;
+
+      const previousRevenue =
+        previousRevenueAggregation[0]?.total ||
+        0;
+
+      /*
+      |--------------------------------------------------------------------------
+      | Orders
+      |--------------------------------------------------------------------------
+      */
+
+      const periodOrders =
+        await Order.countDocuments({
+          createdAt: {
+            $gte: start,
+            $lt: end,
+          },
+
+          orderStatus: {
+            $nin: [
+              "cancelled",
+              "canceled",
+            ],
+          },
+        });
+
+      const previousOrders =
+        await Order.countDocuments({
+          createdAt: {
+            $gte: previousStart,
+            $lt: previousEnd,
+          },
+
+          orderStatus: {
+            $nin: [
+              "cancelled",
+              "canceled",
+            ],
+          },
+        });
+
+      /*
+      |--------------------------------------------------------------------------
+      | Customers
+      |--------------------------------------------------------------------------
+      */
+
+      const totalCustomers =
+        await User.countDocuments({
+          role: {
+            $ne: "admin",
+          },
+        });
+
+      /*
+      |--------------------------------------------------------------------------
+      | Products
+      |--------------------------------------------------------------------------
+      */
+
+      const totalProducts =
+        await Product.countDocuments();
+
+      /*
+      |--------------------------------------------------------------------------
+      | Categories
+      |--------------------------------------------------------------------------
+      */
+
+      const totalCategories =
+        await Category.countDocuments();
+
+      /*
+      |--------------------------------------------------------------------------
+      | Visitors
+      |--------------------------------------------------------------------------
+      */
+
+      const visitorAggregation =
+        await Visitor.aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  createdAt: {
+                    $gte: start,
+                    $lt: end,
+                  },
+                },
+
+                {
+                  lastSeenAt: {
+                    $gte: start,
+                    $lt: end,
+                  },
+                },
+              ],
+            },
+          },
+
+          {
+            $group: {
+              _id: "$visitorId",
+            },
+          },
+
+          {
+            $count: "count",
+          },
+        ]);
+
+      const totalVisitors =
+        visitorAggregation[0]?.count ||
+        0;
+
+      /*
+      |--------------------------------------------------------------------------
+      | Previous visitors
+      |--------------------------------------------------------------------------
+      */
+
+      const previousVisitorAggregation =
+        await Visitor.aggregate([
+          {
+            $match: {
+              $or: [
+                {
+                  createdAt: {
+                    $gte: previousStart,
+                    $lt: previousEnd,
+                  },
+                },
+
+                {
+                  lastSeenAt: {
+                    $gte: previousStart,
+                    $lt: previousEnd,
+                  },
+                },
+              ],
+            },
+          },
+
+          {
+            $group: {
+              _id: "$visitorId",
+            },
+          },
+
+          {
+            $count: "count",
+          },
+        ]);
+
+      const previousVisitors =
+        previousVisitorAggregation[0]?.count ||
+        0;
+
+      /*
+      |--------------------------------------------------------------------------
+      | Conversion
+      |--------------------------------------------------------------------------
+      */
+
+      const convertedVisitors =
+        await Order.aggregate([
+          {
+            $match: {
+              createdAt: {
+                $gte: start,
+                $lt: end,
+              },
+
+              visitorId: {
+                $exists: true,
+                $nin: [
+                  null,
+                  "",
+                ],
+              },
+
+              orderStatus: {
+                $nin: [
+                  "cancelled",
+                  "canceled",
+                ],
+              },
+            },
+          },
+
+          {
+            $group: {
+              _id: "$visitorId",
+            },
+          },
+
+          {
+            $count: "count",
+          },
+        ]);
+
+      const convertedVisitorCount =
+        convertedVisitors[0]?.count ||
+        0;
+
+      const conversionRate =
+        totalVisitors > 0
+          ? (convertedVisitorCount /
+              totalVisitors) *
+            100
+          : null;
+
+      /*
+      |--------------------------------------------------------------------------
+      | Previous conversion
+      |--------------------------------------------------------------------------
+      */
+
+      const previousConvertedVisitors =
+        await Order.aggregate([
+          {
+            $match: {
+              createdAt: {
+                $gte: previousStart,
+                $lt: previousEnd,
+              },
+
+              visitorId: {
+                $exists: true,
+                $nin: [
+                  null,
+                  "",
+                ],
+              },
+
+              orderStatus: {
+                $nin: [
+                  "cancelled",
+                  "canceled",
+                ],
+              },
+            },
+          },
+
+          {
+            $group: {
+              _id: "$visitorId",
+            },
+          },
+
+          {
+            $count: "count",
+          },
+        ]);
+
+      const previousConvertedCount =
+        previousConvertedVisitors[0]?.count ||
+        0;
+
+      const previousConversionRate =
+        previousVisitors > 0
+          ? (previousConvertedCount /
+              previousVisitors) *
+            100
+          : null;
+
+      let conversionChange = null;
+
+      if (
+        conversionRate !== null &&
+        previousConversionRate !== null
+      ) {
+        conversionChange =
+          conversionRate -
+          previousConversionRate;
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | Low inventory threshold
+      |--------------------------------------------------------------------------
+      */
+
+      let lowStockThreshold =
+        DEFAULT_LOW_STOCK_THRESHOLD;
+
+      try {
+        const settings =
+          await StoreSettings.findOne();
+
+        if (
+          settings?.lowStockThreshold !==
+          undefined
+        ) {
+          lowStockThreshold =
+            Number(
+              settings.lowStockThreshold,
+            );
+        }
+      } catch (error) {
+        console.warn(
+          "Could not load store settings:",
+          error.message,
+        );
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | Low inventory
+      |--------------------------------------------------------------------------
+      |
+      | NO LIMIT.
+      | The dashboard receives every low-stock product.
+      |
+      */
+
+      const lowInventory =
+        await Product.aggregate([
+          {
+            $match: {
+              stock: {
+                $lte:
+                  lowStockThreshold,
+              },
+            },
+          },
+
+          {
+            $sort: {
+              stock: 1,
+            },
+          },
+
+          {
+            $project: {
+              _id: 1,
+              name: 1,
+              stock: 1,
+              price: 1,
+              thumbnailUrl: 1,
+              category: 1,
+            },
+          },
+        ]);
+
+      /*
+      |--------------------------------------------------------------------------
+      | Category breakdown
+      |--------------------------------------------------------------------------
+      |
+      | IMPORTANT:
+      | This is based on ORDERS, not product count.
+      |
+      */
+
+      const categoryBreakdown =
+        await Order.aggregate([
+          {
+            $match: {
+              createdAt: {
+                $gte: start,
+                $lt: end,
+              },
+
+              orderStatus: {
+                $nin: [
+                  "cancelled",
+                  "canceled",
+                ],
+              },
+            },
+          },
+
+          {
+            $unwind: {
+              path: "$items",
+              preserveNullAndEmptyArrays:
+                false,
+            },
+          },
+
+          {
+            $lookup: {
+              from: "products",
+
+              localField:
+                "items.product",
+
+              foreignField: "_id",
+
+              as: "product",
+            },
+          },
+
+          {
+            $unwind: {
+              path: "$product",
+              preserveNullAndEmptyArrays:
+                true,
+            },
+          },
+
+          {
+            $lookup: {
+              from: "categories",
+
+              localField:
+                "product.category",
+
+              foreignField: "_id",
+
+              as: "category",
+            },
+          },
+
+          {
+            $unwind: {
+              path: "$category",
+              preserveNullAndEmptyArrays:
+                true,
+            },
+          },
+
+          {
+            $group: {
+              _id:
+                "$category._id",
+
+              categoryName: {
+                $first:
+                  "$category.name",
+              },
+
+              orders: {
+                $sum: 1,
+              },
+            },
+          },
+
+          {
+            $sort: {
+              orders: -1,
+            },
+          },
+
+          {
+            $project: {
+              _id: 0,
+
+              categoryId:
+                "$_id",
+
+              categoryName: {
+                $ifNull: [
+                  "$categoryName",
+                  "Uncategorized",
+                ],
+              },
+
+              orders: 1,
+            },
+          },
+        ]);
+
+      /*
+      |--------------------------------------------------------------------------
+      | Revenue chart
+      |--------------------------------------------------------------------------
+      */
+
+      const revenueChart =
+        await Order.aggregate([
+          {
+            $match: {
+              createdAt: {
+                $gte: start,
+                $lt: end,
+              },
+
+              orderStatus: {
+                $nin: [
+                  "cancelled",
+                  "canceled",
+                ],
+              },
+            },
+          },
+
+          {
+            $group: {
+              _id: {
+                $dateToString: {
+                  format: "%Y-%m-%d",
+                  date: "$createdAt",
+                },
+              },
+
+              revenue: {
+                $sum: {
+                  $ifNull: [
+                    "$totalPrice",
+                    0,
+                  ],
+                },
+              },
+            },
+          },
+
+          {
+            $sort: {
+              _id: 1,
+            },
+          },
+
+          {
+            $project: {
+              _id: 0,
+
+              date: "$_id",
+
+              revenue: 1,
+            },
+          },
+        ]);
+
+      /*
+      |--------------------------------------------------------------------------
+      | Response
+      |--------------------------------------------------------------------------
+      */
+
+      return res.status(200).json({
+        status: "Success",
+
+        data: {
+          period,
+
+          range: {
+            start,
+            end,
+          },
+
+          revenue: {
+            total: round(
+              periodRevenue,
+            ),
+
+            previous: round(
+              previousRevenue,
+            ),
+
+            change: round(
+              calculatePercentageChange(
+                periodRevenue,
+                previousRevenue,
+              ),
+            ),
+          },
+
+          orders: {
+            total:
+              periodOrders,
+
+            previous:
+              previousOrders,
+
+            change: round(
+              calculatePercentageChange(
+                periodOrders,
+                previousOrders,
+              ),
+            ),
+          },
+
+          products: {
+            total:
+              totalProducts,
+          },
+
+          categories: {
+            total:
+              totalCategories,
+          },
+
+          customers: {
+            total:
+              totalCustomers,
+          },
+
+          visitors: {
+            total:
+              totalVisitors,
+
+            previous:
+              previousVisitors,
+
+            change: round(
+              calculatePercentageChange(
+                totalVisitors,
+                previousVisitors,
+              ),
+            ),
+          },
+
+          conversionRate: {
+            rate:
+              conversionRate === null
+                ? null
+                : round(
+                    conversionRate,
+                  ),
+
+            previousRate:
+              previousConversionRate ===
+              null
+                ? null
+                : round(
+                    previousConversionRate,
+                  ),
+
+            change:
+              conversionChange === null
+                ? null
+                : round(
+                    conversionChange,
+                  ),
+
+            visitors:
+              totalVisitors,
+
+            convertedVisitors:
+              convertedVisitorCount,
+          },
+
+          lowStockThreshold,
+
+          lowInventory,
+
+          categoryBreakdown,
+
+          revenueChart,
+        },
+      });
+    } catch (error) {
+      console.error(
+        "GET ADMIN DASHBOARD ERROR:",
+        error,
+      );
+
+      return res.status(500).json({
+        status: "Error",
+        message:
+          "Failed to load admin dashboard",
       });
     }
   };
