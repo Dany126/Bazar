@@ -21,6 +21,8 @@ import { wishlistRouter } from "./routes/wishlist_routes.js";
 import { paymentRouter } from "./routes/payment_routes.js";
 import { paymobWebhookRouter } from "./routes/paymobwebhook_routes.js";
 import { storeSettingsRouter } from "./routes/store_settings_routes.js";
+
+import { adminTransactionRouter } from "./routes/admin_transaction_routes.js";
 const app = express();
 
 connectToDB;
@@ -64,6 +66,8 @@ app.use("/api/wishlist", wishlistRouter);
 app.use("/api/payments", paymentRouter);
 app.use("/api/admin/dashboard", dashboardRouter);
 app.use("/api/admin/settings", storeSettingsRouter);
+
+app.use("/api/admin/transactions", adminTransactionRouter);
 app.all("*not", (req, res) => {
   return res.status(404).json({
     status: "Failed",
