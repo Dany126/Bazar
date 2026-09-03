@@ -196,6 +196,13 @@ import 'package:e_commerce/features/admin/domain/repositories/admin_store_settin
 import 'package:e_commerce/features/admin/domain/usecases/get_admin_store_settings.dart';
 import 'package:e_commerce/features/admin/domain/usecases/update_admin_store_settings.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_store_settings_cubit.dart';
+// ==========================================================
+import 'package:e_commerce/features/admin/data/datasources/admin_transaction_remote_data_source.dart';
+import 'package:e_commerce/features/admin/data/repositories/admin_transaction_repository_impl.dart';
+import 'package:e_commerce/features/admin/domain/repositories/admin_transaction_repository.dart';
+import 'package:e_commerce/features/admin/domain/usecases/get_admin_transaction.dart';
+import 'package:e_commerce/features/admin/domain/usecases/get_admin_transactions.dart';
+import 'package:e_commerce/features/admin/presentation/cubit/admin_transactions_cubit.dart';
 
 // ==========================================================
 final getIt = GetIt.instance;
@@ -941,6 +948,35 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
     () => AdminStoreSettingsCubit(
       getStoreSettingsUseCase: getIt<GetAdminStoreSettingsUseCase>(),
       updateStoreSettingsUseCase: getIt<UpdateAdminStoreSettingsUseCase>(),
+    ),
+  );
+
+  // ==========================================================
+  // ADMIN TRANSACTIONS
+  // ==========================================================
+
+  getIt.registerLazySingleton<AdminTransactionRemoteDataSource>(
+    () => AdminTransactionRemoteDataSourceImpl(apiService: getIt<ApiService>()),
+  );
+
+  getIt.registerLazySingleton<AdminTransactionRepository>(
+    () => AdminTransactionRepositoryImpl(
+      remoteDataSource: getIt<AdminTransactionRemoteDataSource>(),
+    ),
+  );
+
+  getIt.registerLazySingleton<GetAdminTransactions>(
+    () => GetAdminTransactions(getIt<AdminTransactionRepository>()),
+  );
+
+  getIt.registerLazySingleton<GetAdminTransaction>(
+    () => GetAdminTransaction(getIt<AdminTransactionRepository>()),
+  );
+
+  getIt.registerFactory<AdminTransactionsCubit>(
+    () => AdminTransactionsCubit(
+      getAdminTransactions: getIt<GetAdminTransactions>(),
+      getAdminTransaction: getIt<GetAdminTransaction>(),
     ),
   );
 }
