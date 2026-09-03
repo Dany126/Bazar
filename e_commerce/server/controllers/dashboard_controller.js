@@ -10,39 +10,41 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 const DEFAULT_LOW_STOCK_THRESHOLD = 15;
 
-function getDateRange(period = "month") {
-  const now = new Date();
+const VALID_PERIODS = [
+  "week",
+  "month",
+  "year",
+];
 
-  let start;
+function getDateRange(period) {
+  const end = new Date();
+
+  let duration;
 
   switch (period) {
     case "week":
-      start = new Date(
-        now.getTime() - 7 * DAY_MS,
-      );
+      duration = 7 * DAY_MS;
       break;
 
     case "year":
-      start = new Date(
-        now.getTime() - 365 * DAY_MS,
-      );
+      duration = 365 * DAY_MS;
       break;
 
     case "month":
     default:
-      start = new Date(
-        now.getTime() - 30 * DAY_MS,
-      );
+      duration = 30 * DAY_MS;
       break;
   }
 
   return {
-    start,
-    end: now,
+    start: new Date(
+      end.getTime() - duration,
+    ),
+    end,
   };
 }
 
-function getPreviousDateRange(start, end) {
+function getPreviousRange(start, end) {
   const duration =
     end.getTime() -
     start.getTime();
@@ -51,35 +53,15 @@ function getPreviousDateRange(start, end) {
     start: new Date(
       start.getTime() - duration,
     ),
-
     end: new Date(start),
   };
-}
-
-function calculatePercentageChange(
-  current,
-  previous,
-) {
-  if (previous === 0) {
-    if (current === 0) {
-      return 0;
-    }
-
-    return null;
-  }
-
-  return (
-    ((current - previous) /
-      Math.abs(previous)) *
-    100
-  );
 }
 
 function round(value, digits = 2) {
   if (
     value === null ||
     value === undefined ||
-    Number.isNaN(value)
+    Number.isNaN(Number(value))
   ) {
     return null;
   }
@@ -89,9 +71,35 @@ function round(value, digits = 2) {
   );
 }
 
+function percentageChange(
+  current,
+  previous,
+) {
+  if (previous === 0) {
+    return current === 0
+      ? 0
+      : null;
+  }
+
+  return (
+    ((current - previous) /
+      Math.abs(previous)) *
+    100
+  );
+}
+
+const validOrderMatch = {
+  orderStatus: {
+    $nin: [
+      "cancelled",
+      "canceled",
+    ],
+  },
+};
+
 /*
 |--------------------------------------------------------------------------
-| Track visitor
+| VISITOR TRACKING
 |--------------------------------------------------------------------------
 */
 
@@ -100,11 +108,12 @@ export const trackVisitor =
     try {
       const {
         visitorId,
+        path,
       } = req.body;
 
       if (!visitorId) {
         return res.status(400).json({
-          status: "Error",
+          status: "Failed",
           message:
             "visitorId is required",
         });
@@ -112,26 +121,47 @@ export const trackVisitor =
 
       const now = new Date();
 
+      /*
+       * IMPORTANT:
+       * Visitor schema requires monthKey.
+       */
+
+      const monthKey =
+        `${now.getUTCFullYear()}-${String(
+          now.getUTCMonth() + 1,
+        ).padStart(2, "0")}`;
+
       const visitor =
         await Visitor.findOneAndUpdate(
           {
             visitorId,
+            monthKey,
           },
 
           {
             $set: {
               lastSeenAt: now,
+
+              ...(path
+                ? {
+                    lastPath:
+                      path,
+                  }
+                : {}),
             },
 
             $setOnInsert: {
               visitorId,
-              createdAt: now,
+              monthKey,
+              converted: false,
             },
           },
 
           {
             new: true,
             upsert: true,
+            setDefaultsOnInsert:
+              true,
           },
         );
 
@@ -146,7 +176,7 @@ export const trackVisitor =
       );
 
       return res.status(500).json({
-        status: "Error",
+        status: "Failed",
         message:
           "Failed to track visitor",
       });
@@ -155,15 +185,22 @@ export const trackVisitor =
 
 /*
 |--------------------------------------------------------------------------
-| Admin dashboard
+| ADMIN DASHBOARD
 |--------------------------------------------------------------------------
 */
 
 export const getAdminDashboard =
   async (req, res) => {
     try {
-      const period =
+      const requestedPeriod =
         req.query.period || "month";
+
+      const period =
+        VALID_PERIODS.includes(
+          requestedPeriod,
+        )
+          ? requestedPeriod
+          : "month";
 
       const {
         start,
@@ -173,19 +210,75 @@ export const getAdminDashboard =
       const {
         start: previousStart,
         end: previousEnd,
-      } =
-        getPreviousDateRange(
-          start,
-          end,
-        );
+      } = getPreviousRange(
+        start,
+        end,
+      );
 
       /*
       |--------------------------------------------------------------------------
-      | Revenue
+      | TOTAL PRODUCTS
       |--------------------------------------------------------------------------
       */
 
-      const revenueAggregation =
+      const totalProducts =
+        await Product.countDocuments();
+
+      /*
+      |--------------------------------------------------------------------------
+      | TOTAL CATEGORIES
+      |--------------------------------------------------------------------------
+      */
+
+      const totalCategories =
+        await Category.countDocuments();
+
+      /*
+      |--------------------------------------------------------------------------
+      | TOTAL CUSTOMERS
+      |--------------------------------------------------------------------------
+      */
+
+      const totalUsers =
+        await User.countDocuments({
+          role: {
+            $ne: "admin",
+          },
+        });
+
+      /*
+      |--------------------------------------------------------------------------
+      | ORDERS
+      |--------------------------------------------------------------------------
+      */
+
+      const periodOrders =
+        await Order.countDocuments({
+          createdAt: {
+            $gte: start,
+            $lt: end,
+          },
+
+          ...validOrderMatch,
+        });
+
+      const previousOrders =
+        await Order.countDocuments({
+          createdAt: {
+            $gte: previousStart,
+            $lt: previousEnd,
+          },
+
+          ...validOrderMatch,
+        });
+
+      /*
+      |--------------------------------------------------------------------------
+      | REVENUE
+      |--------------------------------------------------------------------------
+      */
+
+      const revenueResult =
         await Order.aggregate([
           {
             $match: {
@@ -194,12 +287,7 @@ export const getAdminDashboard =
                 $lt: end,
               },
 
-              orderStatus: {
-                $nin: [
-                  "cancelled",
-                  "canceled",
-                ],
-              },
+              ...validOrderMatch,
             },
           },
 
@@ -219,7 +307,7 @@ export const getAdminDashboard =
           },
         ]);
 
-      const previousRevenueAggregation =
+      const previousRevenueResult =
         await Order.aggregate([
           {
             $match: {
@@ -228,12 +316,7 @@ export const getAdminDashboard =
                 $lt: previousEnd,
               },
 
-              orderStatus: {
-                $nin: [
-                  "cancelled",
-                  "canceled",
-                ],
-              },
+              ...validOrderMatch,
             },
           },
 
@@ -254,86 +337,27 @@ export const getAdminDashboard =
         ]);
 
       const periodRevenue =
-        revenueAggregation[0]?.total || 0;
+        Number(
+          revenueResult[0]?.total ||
+            0,
+        );
 
       const previousRevenue =
-        previousRevenueAggregation[0]?.total ||
-        0;
+        Number(
+          previousRevenueResult[0]
+            ?.total || 0,
+        );
 
       /*
       |--------------------------------------------------------------------------
-      | Orders
+      | VISITORS
       |--------------------------------------------------------------------------
+      |
+      | Visitor documents are monthly.
+      |
       */
 
-      const periodOrders =
-        await Order.countDocuments({
-          createdAt: {
-            $gte: start,
-            $lt: end,
-          },
-
-          orderStatus: {
-            $nin: [
-              "cancelled",
-              "canceled",
-            ],
-          },
-        });
-
-      const previousOrders =
-        await Order.countDocuments({
-          createdAt: {
-            $gte: previousStart,
-            $lt: previousEnd,
-          },
-
-          orderStatus: {
-            $nin: [
-              "cancelled",
-              "canceled",
-            ],
-          },
-        });
-
-      /*
-      |--------------------------------------------------------------------------
-      | Customers
-      |--------------------------------------------------------------------------
-      */
-
-      const totalCustomers =
-        await User.countDocuments({
-          role: {
-            $ne: "admin",
-          },
-        });
-
-      /*
-      |--------------------------------------------------------------------------
-      | Products
-      |--------------------------------------------------------------------------
-      */
-
-      const totalProducts =
-        await Product.countDocuments();
-
-      /*
-      |--------------------------------------------------------------------------
-      | Categories
-      |--------------------------------------------------------------------------
-      */
-
-      const totalCategories =
-        await Category.countDocuments();
-
-      /*
-      |--------------------------------------------------------------------------
-      | Visitors
-      |--------------------------------------------------------------------------
-      */
-
-      const visitorAggregation =
+      const visitors =
         await Visitor.aggregate([
           {
             $match: {
@@ -362,21 +386,16 @@ export const getAdminDashboard =
           },
 
           {
-            $count: "count",
+            $count: "total",
           },
         ]);
 
       const totalVisitors =
-        visitorAggregation[0]?.count ||
-        0;
+        Number(
+          visitors[0]?.total || 0,
+        );
 
-      /*
-      |--------------------------------------------------------------------------
-      | Previous visitors
-      |--------------------------------------------------------------------------
-      */
-
-      const previousVisitorAggregation =
+      const previousVisitorsResult =
         await Visitor.aggregate([
           {
             $match: {
@@ -405,43 +424,46 @@ export const getAdminDashboard =
           },
 
           {
-            $count: "count",
+            $count: "total",
           },
         ]);
 
       const previousVisitors =
-        previousVisitorAggregation[0]?.count ||
-        0;
+        Number(
+          previousVisitorsResult[0]
+            ?.total || 0,
+        );
 
       /*
       |--------------------------------------------------------------------------
-      | Conversion
+      | CONVERTED VISITORS
       |--------------------------------------------------------------------------
+      |
+      | Use Visitor.converted.
+      |
       */
 
-      const convertedVisitors =
-        await Order.aggregate([
+      const convertedVisitorsResult =
+        await Visitor.aggregate([
           {
             $match: {
-              createdAt: {
-                $gte: start,
-                $lt: end,
-              },
+              converted: true,
 
-              visitorId: {
-                $exists: true,
-                $nin: [
-                  null,
-                  "",
-                ],
-              },
+              $or: [
+                {
+                  createdAt: {
+                    $gte: start,
+                    $lt: end,
+                  },
+                },
 
-              orderStatus: {
-                $nin: [
-                  "cancelled",
-                  "canceled",
-                ],
-              },
+                {
+                  lastSeenAt: {
+                    $gte: start,
+                    $lt: end,
+                  },
+                },
+              ],
             },
           },
 
@@ -452,50 +474,50 @@ export const getAdminDashboard =
           },
 
           {
-            $count: "count",
+            $count: "total",
           },
         ]);
 
-      const convertedVisitorCount =
-        convertedVisitors[0]?.count ||
-        0;
+      const convertedVisitors =
+        Number(
+          convertedVisitorsResult[0]
+            ?.total || 0,
+        );
 
       const conversionRate =
         totalVisitors > 0
-          ? (convertedVisitorCount /
+          ? (convertedVisitors /
               totalVisitors) *
             100
           : null;
 
       /*
       |--------------------------------------------------------------------------
-      | Previous conversion
+      | PREVIOUS CONVERSION
       |--------------------------------------------------------------------------
       */
 
-      const previousConvertedVisitors =
-        await Order.aggregate([
+      const previousConvertedResult =
+        await Visitor.aggregate([
           {
             $match: {
-              createdAt: {
-                $gte: previousStart,
-                $lt: previousEnd,
-              },
+              converted: true,
 
-              visitorId: {
-                $exists: true,
-                $nin: [
-                  null,
-                  "",
-                ],
-              },
+              $or: [
+                {
+                  createdAt: {
+                    $gte: previousStart,
+                    $lt: previousEnd,
+                  },
+                },
 
-              orderStatus: {
-                $nin: [
-                  "cancelled",
-                  "canceled",
-                ],
-              },
+                {
+                  lastSeenAt: {
+                    $gte: previousStart,
+                    $lt: previousEnd,
+                  },
+                },
+              ],
             },
           },
 
@@ -506,36 +528,30 @@ export const getAdminDashboard =
           },
 
           {
-            $count: "count",
+            $count: "total",
           },
         ]);
 
-      const previousConvertedCount =
-        previousConvertedVisitors[0]?.count ||
-        0;
+      const previousConvertedVisitors =
+        Number(
+          previousConvertedResult[0]
+            ?.total || 0,
+        );
 
       const previousConversionRate =
         previousVisitors > 0
-          ? (previousConvertedCount /
+          ? (previousConvertedVisitors /
               previousVisitors) *
             100
           : null;
 
-      let conversionChange = null;
-
-      if (
-        conversionRate !== null &&
-        previousConversionRate !== null
-      ) {
-        conversionChange =
-          conversionRate -
-          previousConversionRate;
-      }
-
       /*
       |--------------------------------------------------------------------------
-      | Low inventory threshold
+      | LOW STOCK
       |--------------------------------------------------------------------------
+      |
+      | Stock belongs to Variant.
+      |
       */
 
       let lowStockThreshold =
@@ -546,33 +562,18 @@ export const getAdminDashboard =
           await StoreSettings.findOne();
 
         if (
-          settings?.lowStockThreshold !==
-          undefined
+          settings?.lowStockThreshold !=
+          null
         ) {
           lowStockThreshold =
             Number(
               settings.lowStockThreshold,
             );
         }
-      } catch (error) {
-        console.warn(
-          "Could not load store settings:",
-          error.message,
-        );
-      }
-
-      /*
-      |--------------------------------------------------------------------------
-      | Low inventory
-      |--------------------------------------------------------------------------
-      |
-      | NO LIMIT.
-      | The dashboard receives every low-stock product.
-      |
-      */
+      } catch (_) {}
 
       const lowInventory =
-        await Product.aggregate([
+        await Variant.aggregate([
           {
             $match: {
               stock: {
@@ -583,30 +584,58 @@ export const getAdminDashboard =
           },
 
           {
-            $sort: {
-              stock: 1,
+            $lookup: {
+              from: "products",
+
+              localField:
+                "product",
+
+              foreignField:
+                "_id",
+
+              as: "product",
             },
+          },
+
+          {
+            $unwind: "$product",
           },
 
           {
             $project: {
               _id: 1,
-              name: 1,
+
+              productId:
+                "$product._id",
+
+              name:
+                "$product.name",
+
+              size: 1,
+
+              color: 1,
+
               stock: 1,
+
               price: 1,
-              thumbnailUrl: 1,
-              category: 1,
+
+              soldCount: 1,
+            },
+          },
+
+          {
+            $sort: {
+              stock: 1,
             },
           },
         ]);
 
       /*
       |--------------------------------------------------------------------------
-      | Category breakdown
+      | TOP CATEGORIES
       |--------------------------------------------------------------------------
       |
-      | IMPORTANT:
-      | This is based on ORDERS, not product count.
+      | ACTUAL ORDER FIELD = products
       |
       */
 
@@ -619,21 +648,12 @@ export const getAdminDashboard =
                 $lt: end,
               },
 
-              orderStatus: {
-                $nin: [
-                  "cancelled",
-                  "canceled",
-                ],
-              },
+              ...validOrderMatch,
             },
           },
 
           {
-            $unwind: {
-              path: "$items",
-              preserveNullAndEmptyArrays:
-                false,
-            },
+            $unwind: "$products",
           },
 
           {
@@ -641,20 +661,17 @@ export const getAdminDashboard =
               from: "products",
 
               localField:
-                "items.product",
+                "products.product",
 
-              foreignField: "_id",
+              foreignField:
+                "_id",
 
               as: "product",
             },
           },
 
           {
-            $unwind: {
-              path: "$product",
-              preserveNullAndEmptyArrays:
-                true,
-            },
+            $unwind: "$product",
           },
 
           {
@@ -664,7 +681,8 @@ export const getAdminDashboard =
               localField:
                 "product.category",
 
-              foreignField: "_id",
+              foreignField:
+                "_id",
 
               as: "category",
             },
@@ -684,44 +702,98 @@ export const getAdminDashboard =
                 "$category._id",
 
               categoryName: {
-                $first:
-                  "$category.name",
+                $first: {
+                  $ifNull: [
+                    "$category.name",
+                    "Uncategorized",
+                  ],
+                },
               },
 
-              orders: {
-                $sum: 1,
+              count: {
+                $sum: {
+                  $ifNull: [
+                    "$products.quantity",
+                    1,
+                  ],
+                },
+              },
+
+              revenue: {
+                $sum: {
+                  $multiply: [
+                    {
+                      $ifNull: [
+                        "$products.price",
+                        0,
+                      ],
+                    },
+
+                    {
+                      $ifNull: [
+                        "$products.quantity",
+                        1,
+                      ],
+                    },
+                  ],
+                },
               },
             },
           },
 
           {
             $sort: {
-              orders: -1,
-            },
-          },
-
-          {
-            $project: {
-              _id: 0,
-
-              categoryId:
-                "$_id",
-
-              categoryName: {
-                $ifNull: [
-                  "$categoryName",
-                  "Uncategorized",
-                ],
-              },
-
-              orders: 1,
+              count: -1,
             },
           },
         ]);
 
+      const totalCategoryCount =
+        categoryBreakdown.reduce(
+          (sum, item) =>
+            sum +
+            Number(
+              item.count || 0,
+            ),
+          0,
+        );
+
+      const categories =
+        categoryBreakdown.map(
+          (item) => ({
+            categoryId:
+              item._id,
+
+            categoryName:
+              item.categoryName,
+
+            count:
+              Number(
+                item.count || 0,
+              ),
+
+            revenue:
+              round(
+                item.revenue || 0,
+              ),
+
+            percent:
+              totalCategoryCount >
+              0
+                ? round(
+                    (Number(
+                      item.count || 0,
+                    ) /
+                      totalCategoryCount) *
+                      100,
+                  )
+                : 0,
+          }),
+        );
+
       /*
       |--------------------------------------------------------------------------
-      | Revenue chart
+      | REVENUE OVER TIME
       |--------------------------------------------------------------------------
       */
 
@@ -734,12 +806,7 @@ export const getAdminDashboard =
                 $lt: end,
               },
 
-              orderStatus: {
-                $nin: [
-                  "cancelled",
-                  "canceled",
-                ],
-              },
+              ...validOrderMatch,
             },
           },
 
@@ -747,8 +814,11 @@ export const getAdminDashboard =
             $group: {
               _id: {
                 $dateToString: {
-                  format: "%Y-%m-%d",
-                  date: "$createdAt",
+                  format:
+                    "%Y-%m-%d",
+
+                  date:
+                    "$createdAt",
                 },
               },
 
@@ -782,7 +852,73 @@ export const getAdminDashboard =
 
       /*
       |--------------------------------------------------------------------------
-      | Response
+      | STORE
+      |--------------------------------------------------------------------------
+      */
+
+      let storeName = "";
+      let currency = "EGP";
+      let storeEnabled = true;
+      let acceptOrders = true;
+
+      try {
+        const settings =
+          await StoreSettings.findOne();
+
+        if (settings) {
+          storeName =
+            settings.name ??
+            settings.storeName ??
+            "";
+
+          currency =
+            settings.currency ??
+            "EGP";
+
+          storeEnabled =
+            settings.storeEnabled ??
+            true;
+
+          acceptOrders =
+            settings.acceptOrders ??
+            true;
+        }
+      } catch (_) {}
+
+      /*
+      |--------------------------------------------------------------------------
+      | CHANGES
+      |--------------------------------------------------------------------------
+      */
+
+      const revenueChange =
+        percentageChange(
+          periodRevenue,
+          previousRevenue,
+        );
+
+      const ordersChange =
+        percentageChange(
+          periodOrders,
+          previousOrders,
+        );
+
+      const visitorsChange =
+        percentageChange(
+          totalVisitors,
+          previousVisitors,
+        );
+
+      const conversionChange =
+        conversionRate !== null &&
+        previousConversionRate !== null
+          ? conversionRate -
+            previousConversionRate
+          : null;
+
+      /*
+      |--------------------------------------------------------------------------
+      | RESPONSE
       |--------------------------------------------------------------------------
       */
 
@@ -792,26 +928,21 @@ export const getAdminDashboard =
         data: {
           period,
 
-          range: {
-            start,
-            end,
-          },
-
           revenue: {
-            total: round(
-              periodRevenue,
-            ),
-
-            previous: round(
-              previousRevenue,
-            ),
-
-            change: round(
-              calculatePercentageChange(
+            total:
+              round(
                 periodRevenue,
+              ),
+
+            previous:
+              round(
                 previousRevenue,
               ),
-            ),
+
+            change:
+              round(
+                revenueChange,
+              ),
           },
 
           orders: {
@@ -821,12 +952,10 @@ export const getAdminDashboard =
             previous:
               previousOrders,
 
-            change: round(
-              calculatePercentageChange(
-                periodOrders,
-                previousOrders,
+            change:
+              round(
+                ordersChange,
               ),
-            ),
           },
 
           products: {
@@ -841,7 +970,7 @@ export const getAdminDashboard =
 
           customers: {
             total:
-              totalCustomers,
+              totalUsers,
           },
 
           visitors: {
@@ -851,23 +980,22 @@ export const getAdminDashboard =
             previous:
               previousVisitors,
 
-            change: round(
-              calculatePercentageChange(
-                totalVisitors,
-                previousVisitors,
+            change:
+              round(
+                visitorsChange,
               ),
-            ),
           },
 
           conversionRate: {
             rate:
-              conversionRate === null
+              conversionRate ===
+              null
                 ? null
                 : round(
                     conversionRate,
                   ),
 
-            previousRate:
+            previous:
               previousConversionRate ===
               null
                 ? null
@@ -876,26 +1004,68 @@ export const getAdminDashboard =
                   ),
 
             change:
-              conversionChange === null
+              conversionChange ===
+              null
                 ? null
                 : round(
                     conversionChange,
                   ),
 
+            convertedVisitors,
+
             visitors:
               totalVisitors,
-
-            convertedVisitors:
-              convertedVisitorCount,
           },
 
           lowStockThreshold,
 
+          lowStockAlerts:
+            lowInventory.length,
+
           lowInventory,
 
-          categoryBreakdown,
+          categoryBreakdown:
+            categories,
 
           revenueChart,
+
+          store: {
+            name:
+              storeName,
+
+            currency,
+
+            storeEnabled,
+
+            acceptOrders,
+
+            lowStockThreshold,
+          },
+
+          changes: {
+            revenue:
+              round(
+                revenueChange,
+              ),
+
+            orders:
+              round(
+                ordersChange,
+              ),
+
+            visitors:
+              round(
+                visitorsChange,
+              ),
+
+            conversionRate:
+              conversionChange ===
+              null
+                ? null
+                : round(
+                    conversionChange,
+                  ),
+          },
         },
       });
     } catch (error) {
@@ -905,7 +1075,7 @@ export const getAdminDashboard =
       );
 
       return res.status(500).json({
-        status: "Error",
+        status: "Failed",
         message:
           "Failed to load admin dashboard",
       });

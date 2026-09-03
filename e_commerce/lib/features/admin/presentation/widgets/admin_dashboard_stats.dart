@@ -7,11 +7,11 @@ class AdminDashboardStats extends StatelessWidget {
 
   final AdminDashboardData data;
 
-  String money(double value) {
+  String _money(double value) {
     return '${value.toStringAsFixed(2)} ${data.store.currency}';
   }
 
-  String percentageChange(double? value) {
+  String _change(double? value) {
     if (value == null) {
       return 'No data';
     }
@@ -21,7 +21,7 @@ class AdminDashboardStats extends StatelessWidget {
     return '$prefix${value.toStringAsFixed(1)}%';
   }
 
-  String conversion(double? value) {
+  String _conversion(double? value) {
     if (value == null) {
       return 'No data';
     }
@@ -32,29 +32,29 @@ class AdminDashboardStats extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final stats = [
-      _MetricStat(
+      _Metric(
         label: 'Revenue',
-        value: money(data.periodRevenue),
-        change: percentageChange(data.changes.revenue),
+        value: _money(data.periodRevenue),
+        change: _change(data.changes.revenue),
         color: const Color(0xFF8E6CEF),
-        isPrimary: true,
+        primary: true,
       ),
-      _MetricStat(
+      _Metric(
         label: 'Orders',
         value: data.periodOrders.toString(),
-        change: percentageChange(data.changes.orders),
+        change: _change(data.changes.orders),
         color: const Color(0xFF4EC5A5),
       ),
-      _MetricStat(
+      _Metric(
         label: 'Visitors',
         value: data.totalVisitors.toString(),
-        change: percentageChange(data.changes.visitors),
+        change: _change(data.changes.visitors),
         color: const Color(0xFF1F2937),
       ),
-      _MetricStat(
+      _Metric(
         label: 'Conversion rate',
-        value: conversion(data.conversionRate),
-        change: percentageChange(data.changes.conversionRate),
+        value: _conversion(data.conversionRate),
+        change: _change(data.changes.conversionRate),
         color: const Color(0xFFDC2626),
       ),
     ];
@@ -63,27 +63,25 @@ class AdminDashboardStats extends StatelessWidget {
       builder: (context, constraints) {
         final width = constraints.maxWidth;
 
-        final crossAxisCount = width >= 1100
+        final columns = width >= 1100
             ? 4
             : width >= 600
             ? 2
             : 1;
-
-        final aspectRatio = width >= 1100
-            ? 1.65
-            : width >= 600
-            ? 1.8
-            : 2.5;
 
         return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
           itemCount: stats.length,
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
+            crossAxisCount: columns,
             crossAxisSpacing: 16,
             mainAxisSpacing: 16,
-            childAspectRatio: aspectRatio,
+            childAspectRatio: width >= 1100
+                ? 1.65
+                : width >= 600
+                ? 1.8
+                : 2.5,
           ),
           itemBuilder: (context, index) {
             final stat = stats[index];
@@ -93,7 +91,7 @@ class AdminDashboardStats extends StatelessWidget {
               value: stat.value,
               change: stat.change,
               color: stat.color,
-              isPrimary: stat.isPrimary,
+              isPrimary: stat.primary,
               comparisonLabel: 'vs previous ${data.period}',
             );
           },
@@ -103,18 +101,18 @@ class AdminDashboardStats extends StatelessWidget {
   }
 }
 
-class _MetricStat {
-  const _MetricStat({
+class _Metric {
+  const _Metric({
     required this.label,
     required this.value,
     required this.change,
     required this.color,
-    this.isPrimary = false,
+    this.primary = false,
   });
 
   final String label;
   final String value;
   final String change;
   final Color color;
-  final bool isPrimary;
+  final bool primary;
 }

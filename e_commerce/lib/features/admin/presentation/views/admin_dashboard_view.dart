@@ -15,7 +15,6 @@ import 'package:e_commerce/features/admin/presentation/widgets/admin_dashboard_c
 import 'package:e_commerce/features/admin/presentation/widgets/admin_dashboard_header.dart';
 import 'package:e_commerce/features/admin/presentation/widgets/admin_dashboard_inventory.dart';
 import 'package:e_commerce/features/admin/presentation/widgets/admin_dashboard_sales_overview.dart';
-import 'package:e_commerce/features/admin/presentation/widgets/admin_dashboard_stat_card.dart';
 import 'package:e_commerce/features/admin/presentation/widgets/admin_dashboard_stats.dart';
 import 'package:e_commerce/features/admin/presentation/widgets/admin_sidebar.dart';
 import 'package:flutter/material.dart';
@@ -51,10 +50,35 @@ class AdminDashboardView extends StatelessWidget {
 class _AdminDashboardBody extends StatelessWidget {
   const _AdminDashboardBody();
 
-  Widget _content(BuildContext context, int index, bool wide, bool medium) {
+  String _title(int index) {
     switch (index) {
       case 0:
-        return _dashboard(context, wide, medium);
+        return 'Dashboard';
+      case 1:
+        return 'Customers';
+      case 2:
+        return 'Products';
+      case 3:
+        return 'Categories';
+      case 4:
+        return 'Orders';
+      case 5:
+        return 'Workspace';
+      case 6:
+        return 'Settings';
+      case 7:
+        return 'Earnings';
+      case 8:
+        return 'Payouts';
+      default:
+        return 'Dashboard';
+    }
+  }
+
+  Widget _content(BuildContext context, int index, bool wide, bool tablet) {
+    switch (index) {
+      case 0:
+        return _dashboard(context, wide, tablet);
 
       case 1:
         return const AdminCustomersView();
@@ -85,7 +109,7 @@ class _AdminDashboardBody extends StatelessWidget {
     }
   }
 
-  Widget _dashboard(BuildContext context, bool wide, bool medium) {
+  Widget _dashboard(BuildContext context, bool wide, bool tablet) {
     return BlocBuilder<AdminDashboardCubit, AdminDashboardState>(
       builder: (context, state) {
         if (state is AdminDashboardInitial || state is AdminDashboardLoading) {
@@ -93,11 +117,26 @@ class _AdminDashboardBody extends StatelessWidget {
         }
 
         if (state is AdminDashboardFailure) {
-          return _DashboardError(
-            message: state.message,
-            onRetry: () {
-              context.read<AdminDashboardCubit>().loadDashboard();
-            },
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.all(24),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.error_outline, size: 48),
+                  const SizedBox(height: 12),
+                  Text(state.message, textAlign: TextAlign.center),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () {
+                      context.read<AdminDashboardCubit>().loadDashboard();
+                    },
+                    icon: const Icon(Icons.refresh),
+                    label: const Text('Retry'),
+                  ),
+                ],
+              ),
+            ),
           );
         }
 
@@ -123,7 +162,7 @@ class _AdminDashboardBody extends StatelessWidget {
 
                 const SizedBox(height: 18),
 
-                _DashboardPeriodSelector(
+                _PeriodSelector(
                   period: data.period,
                   onChanged: (period) {
                     context.read<AdminDashboardCubit>().loadDashboard(
@@ -134,29 +173,10 @@ class _AdminDashboardBody extends StatelessWidget {
 
                 const SizedBox(height: 20),
 
-                // =====================================
-                // MAIN STAT CARDS
-                // =====================================
                 AdminDashboardStats(data: data),
-
-                const SizedBox(height: 20),
-
-                // =====================================
-                // SECONDARY STAT CARDS
-                // Same style as main cards
-                // =====================================
-                _DashboardSummary(
-                  totalProducts: data.totalProducts,
-                  totalCategories: data.totalCategories,
-                  totalUsers: data.totalUsers,
-                  lowStockAlerts: data.lowStockAlerts,
-                ),
 
                 const SizedBox(height: 24),
 
-                // =====================================
-                // SALES + CATEGORY
-                // =====================================
                 if (wide)
                   Row(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -192,9 +212,6 @@ class _AdminDashboardBody extends StatelessWidget {
 
                 const SizedBox(height: 24),
 
-                // =====================================
-                // ALL LOW INVENTORY
-                // =====================================
                 AdminDashboardInventory(items: data.lowInventory),
               ],
             ),
@@ -208,11 +225,13 @@ class _AdminDashboardBody extends StatelessWidget {
   Widget build(BuildContext context) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final wide = constraints.maxWidth >= 1100;
+        final width = constraints.maxWidth;
 
-        final medium = constraints.maxWidth >= 760;
+        final desktop = width >= 1100;
 
-        final sidebarVisible = constraints.maxWidth >= 900;
+        final tablet = width >= 600;
+
+        final showDrawer = !desktop;
 
         return BlocBuilder<AdminNavigationCubit, int>(
           builder: (context, selectedIndex) {
@@ -221,7 +240,7 @@ class _AdminDashboardBody extends StatelessWidget {
               onItemSelected: (index) {
                 context.read<AdminNavigationCubit>().updateIndex(index);
 
-                if (!sidebarVisible && Navigator.of(context).canPop()) {
+                if (showDrawer) {
                   Navigator.of(context).pop();
                 }
               },
@@ -230,16 +249,34 @@ class _AdminDashboardBody extends StatelessWidget {
             return Scaffold(
               backgroundColor: const Color(0xFFF3F5F9),
 
-              drawer: sidebarVisible ? null : Drawer(child: sidebar),
+              drawer: showDrawer
+                  ? Drawer(
+                      width: tablet ? 320 : width * .82,
+                      child: SafeArea(child: sidebar),
+                    )
+                  : null,
 
               body: SafeArea(
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    if (sidebarVisible) sidebar,
+                    if (desktop) sidebar,
 
                     Expanded(
-                      child: _content(context, selectedIndex, wide, medium),
+                      child: Column(
+                        children: [
+                          if (showDrawer)
+                            _MobileAdminBar(title: _title(selectedIndex)),
+
+                          Expanded(
+                            child: _content(
+                              context,
+                              selectedIndex,
+                              desktop,
+                              tablet,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
@@ -252,11 +289,51 @@ class _AdminDashboardBody extends StatelessWidget {
   }
 }
 
-class _DashboardPeriodSelector extends StatelessWidget {
-  const _DashboardPeriodSelector({
-    required this.period,
-    required this.onChanged,
-  });
+class _MobileAdminBar extends StatelessWidget {
+  const _MobileAdminBar({required this.title});
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return Builder(
+      builder: (context) {
+        return Container(
+          height: 64,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: const BoxDecoration(
+            color: Colors.white,
+            border: Border(bottom: BorderSide(color: Color(0xFFE5E7EB))),
+          ),
+          child: Row(
+            children: [
+              IconButton(
+                tooltip: 'Open navigation',
+                onPressed: () {
+                  Scaffold.of(context).openDrawer();
+                },
+                icon: const Icon(Icons.menu_rounded),
+              ),
+
+              const SizedBox(width: 8),
+
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _PeriodSelector extends StatelessWidget {
+  const _PeriodSelector({required this.period, required this.onChanged});
 
   final String period;
   final ValueChanged<String> onChanged;
@@ -274,9 +351,13 @@ class _DashboardPeriodSelector extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.calendar_month_rounded, size: 20),
+
           const SizedBox(width: 10),
+
           const Text('Period', style: TextStyle(fontWeight: FontWeight.w600)),
+
           const SizedBox(width: 12),
+
           DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: period,
@@ -294,133 +375,6 @@ class _DashboardPeriodSelector extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _DashboardSummary extends StatelessWidget {
-  const _DashboardSummary({
-    required this.totalProducts,
-    required this.totalCategories,
-    required this.totalUsers,
-    required this.lowStockAlerts,
-  });
-
-  final int totalProducts;
-  final int totalCategories;
-  final int totalUsers;
-  final int lowStockAlerts;
-
-  @override
-  Widget build(BuildContext context) {
-    final cards = [
-      _SummaryStat(
-        label: 'Products',
-        value: totalProducts.toString(),
-        color: const Color(0xFF6366F1),
-        icon: Icons.inventory_2_rounded,
-      ),
-      _SummaryStat(
-        label: 'Categories',
-        value: totalCategories.toString(),
-        color: const Color(0xFF0EA5E9),
-        icon: Icons.category_rounded,
-      ),
-      _SummaryStat(
-        label: 'Customers',
-        value: totalUsers.toString(),
-        color: const Color(0xFF10B981),
-        icon: Icons.people_alt_rounded,
-      ),
-      _SummaryStat(
-        label: 'Low inventory',
-        value: lowStockAlerts.toString(),
-        color: const Color(0xFFF59E0B),
-        icon: Icons.warning_amber_rounded,
-      ),
-    ];
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final width = constraints.maxWidth;
-
-        final crossAxisCount = width >= 1100
-            ? 4
-            : width >= 600
-            ? 2
-            : 1;
-
-        return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: cards.length,
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: 16,
-            mainAxisSpacing: 16,
-            childAspectRatio: width >= 1100
-                ? 1.65
-                : width >= 600
-                ? 1.8
-                : 2.5,
-          ),
-          itemBuilder: (context, index) {
-            final card = cards[index];
-
-            return AdminDashboardStatCard(
-              label: card.label,
-              value: card.value,
-              change: 'No data',
-              color: card.color,
-              comparisonLabel: '',
-            );
-          },
-        );
-      },
-    );
-  }
-}
-
-class _SummaryStat {
-  const _SummaryStat({
-    required this.label,
-    required this.value,
-    required this.color,
-    required this.icon,
-  });
-
-  final String label;
-  final String value;
-  final Color color;
-  final IconData icon;
-}
-
-class _DashboardError extends StatelessWidget {
-  const _DashboardError({required this.message, required this.onRetry});
-
-  final String message;
-  final VoidCallback onRetry;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const Icon(Icons.error_outline_rounded, size: 48),
-            const SizedBox(height: 12),
-            Text(message, textAlign: TextAlign.center),
-            const SizedBox(height: 16),
-            ElevatedButton.icon(
-              onPressed: onRetry,
-              icon: const Icon(Icons.refresh),
-              label: const Text('Retry'),
-            ),
-          ],
-        ),
       ),
     );
   }

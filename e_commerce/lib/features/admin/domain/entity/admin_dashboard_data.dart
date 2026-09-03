@@ -7,10 +7,10 @@ class AdminDashboardData {
   final int totalOrders;
   final int periodOrders;
 
+  // Dashboard summary cards
   final int totalProducts;
   final int totalCategories;
   final int totalUsers;
-
   final int totalVisitors;
 
   final double? conversionRate;

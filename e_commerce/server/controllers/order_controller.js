@@ -76,13 +76,40 @@ export const createOrder = async (req, res) => {
       });
     }
     if (order.visitorId) {
-  const monthKey = `${order.createdAt.getUTCFullYear()}-${String(
-    order.createdAt.getUTCMonth() + 1,
-  ).padStart(2, "0")}`;
+  const monthKey =
+    `${order.createdAt.getUTCFullYear()}-${String(
+      order.createdAt.getUTCMonth() + 1,
+    ).padStart(2, "0")}`;
 
-  await Visitor.updateMany(
-    { visitorId: order.visitorId, monthKey },
-    { $set: { converted: true } },
+  await Visitor.findOneAndUpdate(
+    {
+      visitorId:
+        order.visitorId,
+
+      monthKey,
+    },
+    {
+      $set: {
+        converted: true,
+        lastSeenAt:
+          order.createdAt,
+      },
+
+      $setOnInsert: {
+        visitorId:
+          order.visitorId,
+
+        monthKey,
+
+        converted: true,
+      },
+    },
+    {
+      upsert: true,
+      new: true,
+      setDefaultsOnInsert:
+        true,
+    },
   );
 }
 
