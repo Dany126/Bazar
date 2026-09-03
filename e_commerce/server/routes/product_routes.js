@@ -25,5 +25,5 @@ productRouter
 productRouter
   .route("/:id")
   .get(checkID, getProduct)
-  .patch(restrictTo('admin'), checkID, updateProduct)
+  .patch(restrictTo('admin'), checkID, upload.array("image"), updateProduct)
   .delete(restrictTo('admin'), checkID, deleteProduct);

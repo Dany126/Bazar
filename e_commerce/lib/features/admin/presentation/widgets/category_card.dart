@@ -1,3 +1,4 @@
+import 'package:e_commerce/core/helper_function/fix_image_utl.dart';
 import 'package:e_commerce/features/home/data/models/category_model.dart';
 import 'package:flutter/material.dart';
 
@@ -35,7 +36,9 @@ class CategoryCard extends StatelessWidget {
           child: Row(
             children: [
               _CategoryImage(imageUrl: category.imageUrl),
+
               const SizedBox(width: 12),
+
               Expanded(
                 child: Text(
                   category.name,
@@ -48,6 +51,7 @@ class CategoryCard extends StatelessWidget {
                   ),
                 ),
               ),
+
               if (selected)
                 const Icon(
                   Icons.check_circle,
@@ -69,6 +73,8 @@ class _CategoryImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final fixedUrl = fixImageUrl(imageUrl);
+
     return Container(
       width: 48,
       height: 48,
@@ -77,18 +83,47 @@ class _CategoryImage extends StatelessWidget {
         color: const Color(0xffEEEEF5),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: imageUrl == null || imageUrl!.isEmpty
-          ? const Icon(Icons.category_outlined, color: Color(0xff8A8D9B))
+      child: fixedUrl.isEmpty
+          ? const _CategoryPlaceholder()
           : Image.network(
-              imageUrl!,
+              fixedUrl,
+              width: 48,
+              height: 48,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) {
-                return const Icon(
-                  Icons.category_outlined,
-                  color: Color(0xff8A8D9B),
+
+              loadingBuilder: (context, child, loadingProgress) {
+                if (loadingProgress == null) {
+                  return child;
+                }
+
+                return const Center(
+                  child: SizedBox(
+                    width: 18,
+                    height: 18,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  ),
                 );
               },
+
+              errorBuilder: (context, error, stackTrace) {
+                debugPrint('CATEGORY IMAGE ERROR');
+                debugPrint('URL: $fixedUrl');
+                debugPrint('ERROR: $error');
+
+                return const _CategoryPlaceholder();
+              },
             ),
+    );
+  }
+}
+
+class _CategoryPlaceholder extends StatelessWidget {
+  const _CategoryPlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Icon(Icons.category_outlined, color: Color(0xff8A8D9B)),
     );
   }
 }

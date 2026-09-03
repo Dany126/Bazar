@@ -36,12 +36,14 @@ class AdminProductRepositoryImpl implements AdminProductRepository {
     String? name,
     String? categoryId,
     double? price,
+    List<XFile>? images,
   }) {
     return remoteDataSource.updateProduct(
       id: id,
       name: name,
       categoryId: categoryId,
       price: price,
+      images: images,
     );
   }
 

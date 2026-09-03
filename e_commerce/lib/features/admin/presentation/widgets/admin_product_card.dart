@@ -1,3 +1,4 @@
+import 'package:e_commerce/core/helper_function/fix_image_utl.dart';
 import 'package:e_commerce/features/home/data/models/product_model.dart';
 import 'package:flutter/material.dart';
 
@@ -8,9 +9,7 @@ class AdminProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final imageUrl = product.thumbnailUrl.isNotEmpty
-        ? product.thumbnailUrl
-        : null;
+    final imageUrl = fixImageUrl(product.thumbnailUrl);
 
     return Container(
       decoration: BoxDecoration(
@@ -26,29 +25,41 @@ class AdminProductCard extends StatelessWidget {
             child: Container(
               width: double.infinity,
               color: const Color(0xffF5F5F8),
-              child: imageUrl == null || imageUrl.isEmpty
-                  ? const Center(
-                      child: Icon(
-                        Icons.image_outlined,
-                        size: 45,
-                        color: Color(0xffB0B2BD),
-                      ),
-                    )
+              child: imageUrl.isEmpty
+                  ? const _ProductImagePlaceholder()
                   : Image.network(
                       imageUrl,
+                      width: double.infinity,
+                      height: double.infinity,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) {
+
+                      // Prevent broken image exceptions
+                      // from breaking the card.
+                      errorBuilder: (context, error, stackTrace) {
+                        debugPrint('PRODUCT IMAGE ERROR');
+                        debugPrint('URL: $imageUrl');
+                        debugPrint('ERROR: $error');
+
+                        return const _ProductImagePlaceholder();
+                      },
+
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) {
+                          return child;
+                        }
+
                         return const Center(
-                          child: Icon(
-                            Icons.image_outlined,
-                            size: 45,
-                            color: Color(0xffB0B2BD),
+                          child: SizedBox(
+                            width: 28,
+                            height: 28,
+                            child: CircularProgressIndicator(strokeWidth: 2),
                           ),
                         );
                       },
                     ),
             ),
           ),
+
           Padding(
             padding: const EdgeInsets.all(14),
             child: Column(
@@ -64,7 +75,9 @@ class AdminProductCard extends StatelessWidget {
                     color: Color(0xff20222F),
                   ),
                 ),
+
                 const SizedBox(height: 10),
+
                 Text(
                   '\$${product.price.toStringAsFixed(2)}',
                   style: const TextStyle(
@@ -73,7 +86,9 @@ class AdminProductCard extends StatelessWidget {
                     color: Color(0xff6C63FF),
                   ),
                 ),
+
                 const SizedBox(height: 6),
+
                 Text(
                   'Stock: ${product.stock}',
                   style: const TextStyle(
@@ -86,6 +101,17 @@ class AdminProductCard extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+class _ProductImagePlaceholder extends StatelessWidget {
+  const _ProductImagePlaceholder();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Center(
+      child: Icon(Icons.image_outlined, size: 45, color: Color(0xffB0B2BD)),
     );
   }
 }

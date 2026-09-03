@@ -19,31 +19,28 @@ class AddProductSheet extends StatefulWidget {
 class _AddProductSheetState extends State<AddProductSheet> {
   final _formKey = GlobalKey<FormState>();
 
-  final _nameController = TextEditingController();
-  final _priceController = TextEditingController();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
 
   final ImagePicker _imagePicker = ImagePicker();
 
+  List<CategoryModel> _categories = [];
   CategoryModel? _selectedCategory;
 
-  final List<CategoryModel> _categories = [];
-
   final List<XFile> _images = [];
-
   final Map<String, Uint8List> _imageBytes = {};
 
   final List<_VariantFormData> _variants = [];
 
-  bool _loadingCategories = true;
+  bool _isLoadingCategories = true;
   bool _isSubmitting = false;
 
   @override
   void initState() {
     super.initState();
-
     _loadCategories();
 
-    // Start with one variant.
+    // Start with one variant so the form is immediately usable.
     _addVariant();
   }
 
@@ -59,42 +56,47 @@ class _AddProductSheetState extends State<AddProductSheet> {
     super.dispose();
   }
 
-  // ============================================================
-  // CATEGORIES
-  // ============================================================
-
   Future<void> _loadCategories() async {
     setState(() {
-      _loadingCategories = true;
+      _isLoadingCategories = true;
     });
 
-    final result = await getIt<GetAllAdminCategoriesUseCase>()();
+    try {
+      final result = await getIt<GetAllAdminCategoriesUseCase>()();
 
-    if (!mounted) return;
+      result.fold(
+        (failure) {
+          if (!mounted) return;
 
-    result.fold(
-      (failure) {
-        setState(() {
-          _loadingCategories = false;
-        });
+          setState(() {
+            _isLoadingCategories = false;
+          });
 
-        _showMessage(failure.message);
-      },
-      (categories) {
-        setState(() {
-          _categories
-            ..clear()
-            ..addAll(categories);
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(failure.message)));
+        },
+        (categories) {
+          if (!mounted) return;
 
-          _loadingCategories = false;
-        });
-      },
-    );
+          setState(() {
+            _categories = categories;
+            _isLoadingCategories = false;
+          });
+        },
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isLoadingCategories = false;
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to load categories: $e')));
+    }
   }
-
-  // ============================================================
-  // IMAGES
-  // ============================================================
 
   Future<void> _pickImages() async {
     if (_isSubmitting) return;
@@ -107,17 +109,21 @@ class _AddProductSheetState extends State<AddProductSheet> {
       for (final image in pickedImages) {
         final bytes = await image.readAsBytes();
 
-        if (!mounted) return;
-
-        setState(() {
+        if (!_images.any((existing) => existing.name == image.name)) {
           _images.add(image);
           _imageBytes[image.name] = bytes;
-        });
+        }
+      }
+
+      if (mounted) {
+        setState(() {});
       }
     } catch (e) {
       if (!mounted) return;
 
-      _showMessage('Failed to select images: $e');
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to select images: $e')));
     }
   }
 
@@ -126,19 +132,23 @@ class _AddProductSheetState extends State<AddProductSheet> {
 
     final image = _images[index];
 
-    setState(() {
-      _images.removeAt(index);
-      _imageBytes.remove(image.name);
-    });
+    _imageBytes.remove(image.name);
+    _images.removeAt(index);
+
+    setState(() {});
   }
 
-  // ============================================================
-  // VARIANTS
-  // ============================================================
-
   void _addVariant() {
+    if (_isSubmitting) return;
+
+    final basePrice = double.tryParse(_priceController.text.trim());
+
+    final variant = _VariantFormData(
+      price: basePrice != null ? basePrice.toString() : '',
+    );
+
     setState(() {
-      _variants.add(_VariantFormData(price: _priceController.text));
+      _variants.add(variant);
     });
   }
 
@@ -146,79 +156,97 @@ class _AddProductSheetState extends State<AddProductSheet> {
     if (_isSubmitting) return;
 
     if (_variants.length == 1) {
-      _showMessage('At least one variant is required.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('A product must have at least one variant.'),
+        ),
+      );
       return;
     }
 
-    final variant = _variants[index];
-
+    final variant = _variants.removeAt(index);
     variant.dispose();
 
-    setState(() {
-      _variants.removeAt(index);
-    });
+    setState(() {});
   }
 
-  // ============================================================
-  // CREATE PRODUCT + VARIANTS
-  // ============================================================
-
-  Future<void> _createProduct() async {
+  void _updateVariantPriceFromBasePrice(String value) {
     if (_isSubmitting) return;
+
+    final trimmed = value.trim();
+
+    if (trimmed.isEmpty) return;
+
+    for (final variant in _variants) {
+      if (variant.priceController.text.trim().isEmpty) {
+        variant.priceController.text = trimmed;
+      }
+    }
+
+    setState(() {});
+  }
+
+  Future<void> _submit() async {
+    if (_isSubmitting) return;
+
+    FocusScope.of(context).unfocus();
 
     if (!_formKey.currentState!.validate()) {
       return;
     }
 
     if (_selectedCategory == null) {
-      _showMessage('Please select a category.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please select a category.')),
+      );
       return;
     }
 
     if (_images.isEmpty) {
-      _showMessage('Please select at least one product image.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select at least one product image.'),
+        ),
+      );
       return;
     }
 
     if (_variants.isEmpty) {
-      _showMessage('Please add at least one variant.');
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please add at least one variant.')),
+      );
       return;
     }
 
-    final basePrice = double.tryParse(_priceController.text.trim());
-
-    if (basePrice == null || basePrice < 0) {
-      _showMessage('Please enter a valid price.');
-      return;
-    }
-
-    // Validate variants manually.
     for (int i = 0; i < _variants.length; i++) {
       final variant = _variants[i];
 
-      if (variant.size == null) {
-        _showMessage('Please select a size for variant ${i + 1}.');
+      if (variant.colorController.text.trim().isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Please enter a color for variant ${i + 1}.')),
+        );
         return;
       }
 
-      final color = variant.colorController.text.trim();
+      final price = double.tryParse(variant.priceController.text.trim());
 
-      if (color.isEmpty) {
-        _showMessage('Please enter a color for variant ${i + 1}.');
-        return;
-      }
-
-      final variantPrice = double.tryParse(variant.priceController.text.trim());
-
-      if (variantPrice == null || variantPrice < 0) {
-        _showMessage('Please enter a valid price for variant ${i + 1}.');
+      if (price == null || price < 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Please enter a valid price for variant ${i + 1}.'),
+          ),
+        );
         return;
       }
 
       final stock = int.tryParse(variant.stockController.text.trim());
 
       if (stock == null || stock < 0) {
-        _showMessage('Please enter valid stock for variant ${i + 1}.');
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Please enter a valid stock for variant ${i + 1}.'),
+          ),
+        );
         return;
       }
     }
@@ -227,291 +255,286 @@ class _AddProductSheetState extends State<AddProductSheet> {
       _isSubmitting = true;
     });
 
-    final cubit = context.read<AdminProductsCubit>();
+    try {
+      final cubit = context.read<AdminProductsCubit>();
 
-    // ------------------------------------------------------------
-    // STEP 1: CREATE PRODUCT
-    // ------------------------------------------------------------
-
-    final ProductModel? product = await cubit.createProduct(
-      name: _nameController.text.trim(),
-      categoryId: _selectedCategory!.id,
-      price: basePrice,
-      images: _images,
-    );
-
-    if (!mounted) return;
-
-    if (product == null) {
-      setState(() {
-        _isSubmitting = false;
-      });
-
-      return;
-    }
-
-    // ------------------------------------------------------------
-    // STEP 2: CREATE VARIANTS
-    // ------------------------------------------------------------
-
-    final List<String> variantErrors = [];
-
-    for (final variant in _variants) {
-      final variantPrice = double.parse(variant.priceController.text.trim());
-
-      final stock = int.parse(variant.stockController.text.trim());
-
-      final error = await cubit.createVariant(
-        productId: product.id,
-        size: variant.size!,
-        color: variant.colorController.text.trim(),
-        price: variantPrice,
-        stock: stock,
+      final ProductModel? product = await cubit.createProduct(
+        name: _nameController.text.trim(),
+        categoryId: _selectedCategory!.id,
+        price: double.parse(_priceController.text.trim()),
+        images: _images,
       );
 
-      if (error != null) {
-        variantErrors.add(error);
+      if (!mounted) return;
+
+      if (product == null) {
+        setState(() {
+          _isSubmitting = false;
+        });
+
+        return;
       }
-    }
 
-    if (!mounted) return;
+      final productId = product.id;
 
-    setState(() {
-      _isSubmitting = false;
-    });
+      if (productId.isEmpty) {
+        setState(() {
+          _isSubmitting = false;
+        });
 
-    // ------------------------------------------------------------
-    // RESULT
-    // ------------------------------------------------------------
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+              'Product was created but no product ID was returned.',
+            ),
+          ),
+        );
 
-    if (variantErrors.isNotEmpty) {
-      _showMessage(
-        'Product was created, but some variants failed:\n'
-        '${variantErrors.join('\n')}',
-      );
+        return;
+      }
 
-      // Still refresh products.
+      String? variantError;
+
+      for (final variant in _variants) {
+        final error = await cubit.createVariant(
+          productId: productId,
+          size: variant.size,
+          color: variant.colorController.text.trim(),
+          price: double.parse(variant.priceController.text.trim()),
+          stock: int.parse(variant.stockController.text.trim()),
+        );
+
+        if (error != null) {
+          variantError = error;
+          break;
+        }
+      }
+
+      if (!mounted) return;
+
+      if (variantError != null) {
+        setState(() {
+          _isSubmitting = false;
+        });
+
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              'Product created, but a variant failed: $variantError',
+            ),
+          ),
+        );
+
+        await cubit.loadProducts();
+
+        if (mounted) {
+          Navigator.of(context).pop();
+        }
+
+        return;
+      }
+
       await cubit.loadProducts();
 
       if (!mounted) return;
 
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Product created successfully.')),
+      );
+
       Navigator.of(context).pop();
-      return;
+    } catch (e) {
+      if (!mounted) return;
+
+      setState(() {
+        _isSubmitting = false;
+      });
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to create product: $e')));
     }
-
-    await cubit.loadProducts();
-
-    if (!mounted) return;
-
-    Navigator.of(context).pop();
-
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Product and variants created successfully'),
-      ),
-    );
   }
-
-  // ============================================================
-  // MESSAGE
-  // ============================================================
-
-  void _showMessage(String message) {
-    if (!mounted) return;
-
-    ScaffoldMessenger.of(
-      context,
-    ).showSnackBar(SnackBar(content: Text(message)));
-  }
-
-  // ============================================================
-  // BUILD
-  // ============================================================
 
   @override
   Widget build(BuildContext context) {
     return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 24,
-          right: 24,
-          top: 24,
-          bottom: MediaQuery.of(context).viewInsets.bottom + 24,
-        ),
-        child: SingleChildScrollView(
-          child: Form(
-            key: _formKey,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                _buildHeader(),
+      child: Material(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final width = constraints.maxWidth.isFinite
+                ? constraints.maxWidth
+                : MediaQuery.of(context).size.width;
 
-                const SizedBox(height: 24),
+            final contentWidth = width > 900 ? 850.0 : width;
 
-                _buildTextField(
-                  controller: _nameController,
-                  label: 'Product Name',
-                  hint: 'Enter product name',
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Product name is required';
-                    }
+            return Center(
+              child: SizedBox(
+                width: contentWidth,
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    children: [
+                      _buildHeader(),
+                      const Divider(height: 1),
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(24),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              _buildProductInformation(),
 
-                    return null;
-                  },
-                ),
+                              const SizedBox(height: 24),
 
-                const SizedBox(height: 16),
+                              _buildImages(),
 
-                _buildCategoryDropdown(),
+                              const SizedBox(height: 28),
 
-                const SizedBox(height: 16),
+                              _buildVariants(),
 
-                _buildTextField(
-                  controller: _priceController,
-                  label: 'Base Price',
-                  hint: '0.00',
-                  keyboardType: const TextInputType.numberWithOptions(
-                    decimal: true,
-                  ),
-                  validator: (value) {
-                    if (value == null || value.trim().isEmpty) {
-                      return 'Price is required';
-                    }
+                              const SizedBox(height: 32),
 
-                    final price = double.tryParse(value.trim());
-
-                    if (price == null || price < 0) {
-                      return 'Invalid price';
-                    }
-
-                    return null;
-                  },
-                ),
-
-                const SizedBox(height: 20),
-
-                _buildImages(),
-
-                const SizedBox(height: 28),
-
-                _buildVariants(),
-
-                const SizedBox(height: 28),
-
-                SizedBox(
-                  width: double.infinity,
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _createProduct,
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            height: 22,
-                            width: 22,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          )
-                        : const Text(
-                            'Create Product',
-                            style: TextStyle(fontWeight: FontWeight.w600),
+                              _buildSubmitButton(),
+                            ],
                           ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         ),
       ),
     );
   }
 
-  // ============================================================
-  // HEADER
-  // ============================================================
-
   Widget _buildHeader() {
-    return Row(
-      children: [
-        const Expanded(
-          child: Text(
-            'Add Product',
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 18),
+      child: Row(
+        children: [
+          const Expanded(
+            child: Text(
+              'Add Product',
+              style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+            ),
           ),
+          IconButton(
+            onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
+            icon: const Icon(Icons.close),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildProductInformation() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Product Information',
+          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
         ),
-        IconButton(
-          onPressed: _isSubmitting ? null : () => Navigator.of(context).pop(),
-          icon: const Icon(Icons.close),
+
+        const SizedBox(height: 16),
+
+        TextFormField(
+          controller: _nameController,
+          enabled: !_isSubmitting,
+          textInputAction: TextInputAction.next,
+          decoration: const InputDecoration(
+            labelText: 'Product Name',
+            hintText: 'Enter product name',
+            border: OutlineInputBorder(),
+          ),
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Product name is required';
+            }
+
+            return null;
+          },
+        ),
+
+        const SizedBox(height: 16),
+
+        _buildCategoryDropdown(),
+
+        const SizedBox(height: 16),
+
+        TextFormField(
+          controller: _priceController,
+          enabled: !_isSubmitting,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            labelText: 'Base Price',
+            hintText: 'Enter base price',
+            border: OutlineInputBorder(),
+          ),
+          onChanged: _updateVariantPriceFromBasePrice,
+          validator: (value) {
+            if (value == null || value.trim().isEmpty) {
+              return 'Price is required';
+            }
+
+            final price = double.tryParse(value.trim());
+
+            if (price == null) {
+              return 'Enter a valid price';
+            }
+
+            if (price < 0) {
+              return 'Price cannot be negative';
+            }
+
+            return null;
+          },
         ),
       ],
     );
   }
 
-  // ============================================================
-  // TEXT FIELD
-  // ============================================================
-
-  Widget _buildTextField({
-    required TextEditingController controller,
-    required String label,
-    required String hint,
-    String? Function(String?)? validator,
-    TextInputType? keyboardType,
-    int maxLines = 1,
-  }) {
-    return TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      maxLines: maxLines,
-      enabled: !_isSubmitting,
-      validator: validator,
-      decoration: InputDecoration(
-        labelText: label,
-        hintText: hint,
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-      ),
-    );
-  }
-
-  // ============================================================
-  // CATEGORY DROPDOWN
-  // ============================================================
-
   Widget _buildCategoryDropdown() {
-    if (_loadingCategories) {
-      return const InputDecorator(
-        decoration: InputDecoration(
-          labelText: 'Category',
-          border: OutlineInputBorder(),
+    if (_isLoadingCategories) {
+      return const SizedBox(
+        height: 56,
+        child: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    if (_categories.isEmpty) {
+      return Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          border: Border.all(color: Theme.of(context).dividerColor),
+          borderRadius: BorderRadius.circular(8),
         ),
-        child: Row(
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            SizedBox(
-              width: 18,
-              height: 18,
-              child: CircularProgressIndicator(strokeWidth: 2),
+            Text(
+              'No categories available',
+              style: TextStyle(fontWeight: FontWeight.w600),
             ),
-            SizedBox(width: 12),
-            Text('Loading categories...'),
+            SizedBox(height: 4),
+            Text('Create a category first before adding a product.'),
           ],
         ),
       );
     }
 
-    if (_categories.isEmpty) {
-      return InputDecorator(
-        decoration: InputDecoration(
-          labelText: 'Category',
-          border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-          errorText: 'No categories available',
-        ),
-        child: const Text('Create a category first'),
-      );
-    }
-
     return DropdownButtonFormField<CategoryModel>(
       value: _selectedCategory,
-      decoration: InputDecoration(
+      isExpanded: true,
+      decoration: const InputDecoration(
         labelText: 'Category',
-        border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+        border: OutlineInputBorder(),
       ),
       items: _categories.map((category) {
         return DropdownMenuItem<CategoryModel>(
@@ -536,93 +559,7 @@ class _AddProductSheetState extends State<AddProductSheet> {
     );
   }
 
-  // ============================================================
-  // IMAGES
-  // ============================================================
-
   Widget _buildImages() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        const Text(
-          'Product Images',
-          style: TextStyle(fontWeight: FontWeight.w600),
-        ),
-
-        const SizedBox(height: 10),
-
-        OutlinedButton.icon(
-          onPressed: _isSubmitting ? null : _pickImages,
-          icon: const Icon(Icons.photo_library_outlined),
-          label: const Text('Select Images'),
-        ),
-
-        if (_images.isNotEmpty) ...[
-          const SizedBox(height: 12),
-
-          SizedBox(
-            height: 110,
-            child: ListView.separated(
-              scrollDirection: Axis.horizontal,
-              itemCount: _images.length,
-              separatorBuilder: (_, __) => const SizedBox(width: 10),
-              itemBuilder: (context, index) {
-                final image = _images[index];
-                final bytes = _imageBytes[image.name];
-
-                return Stack(
-                  children: [
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: bytes == null
-                          ? Container(
-                              width: 110,
-                              height: 110,
-                              color: Colors.grey.shade200,
-                              child: const CircularProgressIndicator(),
-                            )
-                          : Image.memory(
-                              bytes,
-                              width: 110,
-                              height: 110,
-                              fit: BoxFit.cover,
-                            ),
-                    ),
-
-                    Positioned(
-                      top: 4,
-                      right: 4,
-                      child: InkWell(
-                        onTap: _isSubmitting ? null : () => _removeImage(index),
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: const BoxDecoration(
-                            color: Colors.black54,
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Icons.close,
-                            size: 16,
-                            color: Colors.white,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                );
-              },
-            ),
-          ),
-        ],
-      ],
-    );
-  }
-
-  // ============================================================
-  // VARIANTS
-  // ============================================================
-
-  Widget _buildVariants() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -630,185 +567,375 @@ class _AddProductSheetState extends State<AddProductSheet> {
           children: [
             const Expanded(
               child: Text(
-                'Variants',
+                'Product Images',
                 style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
               ),
             ),
-            OutlinedButton.icon(
-              onPressed: _isSubmitting ? null : _addVariant,
-              icon: const Icon(Icons.add),
-              label: const Text('Add Variant'),
+            Text(
+              '${_images.length} selected',
+              style: TextStyle(
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
             ),
           ],
         ),
 
         const SizedBox(height: 12),
 
-        ...List.generate(_variants.length, (index) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
-            child: _buildVariantCard(index, _variants[index]),
-          );
-        }),
+        // IMPORTANT:
+        // This button has finite width and therefore cannot
+        // produce BoxConstraints(w=Infinity).
+        SizedBox(
+          width: double.infinity,
+          height: 46,
+          child: OutlinedButton.icon(
+            onPressed: _isSubmitting ? null : _pickImages,
+            icon: const Icon(Icons.image_outlined),
+            label: const Text('Select Images'),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        if (_images.isEmpty)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 32, horizontal: 16),
+            decoration: BoxDecoration(
+              border: Border.all(color: Theme.of(context).dividerColor),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: const Column(
+              children: [
+                Icon(Icons.photo_library_outlined, size: 42),
+                SizedBox(height: 10),
+                Text('No images selected'),
+              ],
+            ),
+          )
+        else
+          Wrap(
+            spacing: 12,
+            runSpacing: 12,
+            children: List.generate(_images.length, (index) {
+              final image = _images[index];
+              final bytes = _imageBytes[image.name];
+
+              return _buildImagePreview(index: index, bytes: bytes);
+            }),
+          ),
       ],
     );
   }
 
-  Widget _buildVariantCard(int index, _VariantFormData variant) {
-    return Card(
-      elevation: 0,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade300),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    'Variant ${index + 1}',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                ),
-                IconButton(
-                  tooltip: 'Remove variant',
-                  onPressed: _isSubmitting ? null : () => _removeVariant(index),
-                  icon: const Icon(
-                    Icons.delete_outline,
-                    color: Colors.redAccent,
-                  ),
-                ),
-              ],
+  Widget _buildImagePreview({required int index, required Uint8List? bytes}) {
+    return SizedBox(
+      width: 120,
+      height: 120,
+      child: Stack(
+        children: [
+          Positioned.fill(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: bytes == null
+                  ? Container(
+                      color: Theme.of(
+                        context,
+                      ).colorScheme.surfaceContainerHighest,
+                      child: const Icon(Icons.broken_image_outlined, size: 32),
+                    )
+                  : Image.memory(bytes, fit: BoxFit.cover),
             ),
+          ),
 
-            const SizedBox(height: 12),
-
-            DropdownButtonFormField<String>(
-              value: variant.size,
-              decoration: InputDecoration(
-                labelText: 'Size',
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(12),
+          Positioned(
+            top: 6,
+            right: 6,
+            child: Material(
+              color: Colors.black54,
+              shape: const CircleBorder(),
+              child: InkWell(
+                customBorder: const CircleBorder(),
+                onTap: _isSubmitting ? null : () => _removeImage(index),
+                child: const Padding(
+                  padding: EdgeInsets.all(5),
+                  child: Icon(Icons.close, size: 18, color: Colors.white),
                 ),
               ),
-              items: const ['S', 'M', 'L', 'XL', '2XL', '3XL'].map((size) {
-                return DropdownMenuItem<String>(value: size, child: Text(size));
-              }).toList(),
-              onChanged: _isSubmitting
-                  ? null
-                  : (value) {
-                      setState(() {
-                        variant.size = value;
-                      });
-                    },
-              validator: (value) {
-                if (value == null) {
-                  return 'Size is required';
-                }
-
-                return null;
-              },
             ),
+          ),
 
-            const SizedBox(height: 12),
-
-            _buildTextField(
-              controller: variant.colorController,
-              label: 'Color',
-              hint: '#FF0000 or Red',
-              validator: (value) {
-                if (value == null || value.trim().isEmpty) {
-                  return 'Color is required';
-                }
-
-                return null;
-              },
+          if (index == 0)
+            Positioned(
+              left: 6,
+              bottom: 6,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                decoration: BoxDecoration(
+                  color: Colors.black54,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: const Text(
+                  'Main',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
             ),
+        ],
+      ),
+    );
+  }
 
-            const SizedBox(height: 12),
+  Widget _buildVariants() {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final availableWidth = constraints.maxWidth.isFinite
+            ? constraints.maxWidth
+            : MediaQuery.of(context).size.width - 48;
 
-            Row(
-              children: [
-                Expanded(
-                  child: _buildTextField(
-                    controller: variant.priceController,
-                    label: 'Price',
-                    hint: '0.00',
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
+        return SizedBox(
+          width: availableWidth,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      'Variants',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w700,
+                      ),
                     ),
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Required';
-                      }
-
-                      final price = double.tryParse(value.trim());
-
-                      if (price == null || price < 0) {
-                        return 'Invalid';
-                      }
-
-                      return null;
-                    },
                   ),
+
+                  const SizedBox(width: 12),
+
+                  // FIX:
+                  // Never use double.infinity here.
+                  // This button is inside a Row.
+                  SizedBox(
+                    width: 130,
+                    height: 42,
+                    child: OutlinedButton.icon(
+                      onPressed: _isSubmitting ? null : _addVariant,
+                      icon: const Icon(Icons.add, size: 18),
+                      label: const Text(
+                        'Add Variant',
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 16),
+
+              if (_variants.isEmpty)
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(
+                    border: Border.all(color: Theme.of(context).dividerColor),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Center(child: Text('No variants added.')),
                 ),
 
-                const SizedBox(width: 12),
+              ...List.generate(_variants.length, (index) {
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: _buildVariantCard(index, _variants[index]),
+                );
+              }),
+            ],
+          ),
+        );
+      },
+    );
+  }
 
-                Expanded(
-                  child: _buildTextField(
-                    controller: variant.stockController,
-                    label: 'Stock',
-                    hint: '0',
-                    keyboardType: TextInputType.number,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Required';
-                      }
-
-                      final stock = int.tryParse(value.trim());
-
-                      if (stock == null || stock < 0) {
-                        return 'Invalid';
-                      }
-
-                      return null;
-                    },
+  Widget _buildVariantCard(int index, _VariantFormData variant) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        border: Border.all(color: Theme.of(context).dividerColor),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'Variant ${index + 1}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
                   ),
                 ),
-              ],
+              ),
+
+              IconButton(
+                tooltip: 'Remove variant',
+                onPressed: _isSubmitting ? null : () => _removeVariant(index),
+                icon: const Icon(Icons.delete_outline),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          DropdownButtonFormField<String>(
+            value: variant.size,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: 'Size',
+              border: OutlineInputBorder(),
             ),
-          ],
-        ),
+            items: const [
+              DropdownMenuItem(value: 'S', child: Text('S')),
+              DropdownMenuItem(value: 'M', child: Text('M')),
+              DropdownMenuItem(value: 'L', child: Text('L')),
+              DropdownMenuItem(value: 'XL', child: Text('XL')),
+              DropdownMenuItem(value: '2XL', child: Text('2XL')),
+              DropdownMenuItem(value: '3XL', child: Text('3XL')),
+            ],
+            onChanged: _isSubmitting
+                ? null
+                : (value) {
+                    if (value == null) return;
+
+                    setState(() {
+                      variant.size = value;
+                    });
+                  },
+          ),
+
+          const SizedBox(height: 12),
+
+          TextFormField(
+            controller: variant.colorController,
+            enabled: !_isSubmitting,
+            decoration: const InputDecoration(
+              labelText: 'Color',
+              hintText: 'Example: black or #000000',
+              border: OutlineInputBorder(),
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          LayoutBuilder(
+            builder: (context, constraints) {
+              if (constraints.maxWidth < 500) {
+                return Column(
+                  children: [
+                    TextFormField(
+                      controller: variant.priceController,
+                      enabled: !_isSubmitting,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Price',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+
+                    const SizedBox(height: 12),
+
+                    TextFormField(
+                      controller: variant.stockController,
+                      enabled: !_isSubmitting,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Stock',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ],
+                );
+              }
+
+              return Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: variant.priceController,
+                      enabled: !_isSubmitting,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                      ),
+                      decoration: const InputDecoration(
+                        labelText: 'Price',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(width: 12),
+
+                  Expanded(
+                    child: TextFormField(
+                      controller: variant.stockController,
+                      enabled: !_isSubmitting,
+                      keyboardType: TextInputType.number,
+                      decoration: const InputDecoration(
+                        labelText: 'Stock',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSubmitButton() {
+    return SizedBox(
+      width: double.infinity,
+      height: 50,
+      child: ElevatedButton(
+        onPressed: _isSubmitting ? null : _submit,
+        child: _isSubmitting
+            ? const SizedBox(
+                width: 22,
+                height: 22,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              )
+            : const Text(
+                'Create Product',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+              ),
       ),
     );
   }
 }
 
-// ============================================================
-// VARIANT FORM DATA
-// ============================================================
-
 class _VariantFormData {
-  String? size;
+  String size;
 
-  final TextEditingController colorController = TextEditingController();
+  final TextEditingController colorController;
+  final TextEditingController priceController;
+  final TextEditingController stockController;
 
-  final TextEditingController priceController = TextEditingController();
-
-  final TextEditingController stockController = TextEditingController(
-    text: '0',
-  );
-
-  _VariantFormData({String? price}) {
-    if (price != null && price.isNotEmpty) {
-      priceController.text = price;
-    }
-  }
+  _VariantFormData({String? price})
+    : size = 'S',
+      colorController = TextEditingController(),
+      priceController = TextEditingController(text: price ?? ''),
+      stockController = TextEditingController(text: '0');
 
   void dispose() {
     colorController.dispose();

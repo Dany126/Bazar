@@ -18,6 +18,7 @@ abstract class AdminProductRepository {
     String? name,
     String? categoryId,
     double? price,
+    List<XFile>? images,
   });
 
   Future<Either<Failure, Unit>> deleteProduct(String id);

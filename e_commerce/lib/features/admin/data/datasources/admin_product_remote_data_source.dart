@@ -21,6 +21,7 @@ abstract class AdminProductRemoteDataSource {
     String? name,
     String? categoryId,
     double? price,
+    List<XFile>? images,
   });
 
   Future<Either<Failure, Unit>> deleteProduct(String id);
@@ -37,11 +38,6 @@ class AdminProductRemoteDataSourceImpl implements AdminProductRemoteDataSource {
 
     return result.fold(
       (failure) {
-        // The current backend returns:
-        // 404 { status: "Failed", message: "No product found" }
-        //
-        // For the admin product list, this means:
-        // there are currently zero products.
         if (failure is ServerFailure &&
             failure.statusCode == 404 &&
             failure.message.toLowerCase().contains('no product found')) {
@@ -105,7 +101,12 @@ class AdminProductRemoteDataSourceImpl implements AdminProductRemoteDataSource {
       });
     } on DioException catch (e) {
       return Left(
-        ServerFailure(message: e.response?.data['message'] ?? e.message),
+        ServerFailure(
+          message:
+              e.response?.data?['message'] ??
+              e.message ??
+              'Failed to create product',
+        ),
       );
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
@@ -118,36 +119,86 @@ class AdminProductRemoteDataSourceImpl implements AdminProductRemoteDataSource {
     String? name,
     String? categoryId,
     double? price,
+    List<XFile>? images,
   }) async {
     try {
-      final Map<String, dynamic> data = {};
+      final formData = FormData();
+
+      /*
+      |--------------------------------------------------------------------------
+      | Text fields
+      |--------------------------------------------------------------------------
+      */
 
       if (name != null && name.trim().isNotEmpty) {
-        data['name'] = name.trim();
+        formData.fields.add(MapEntry('name', name.trim()));
       }
 
       if (categoryId != null && categoryId.trim().isNotEmpty) {
-        data['category'] = categoryId;
+        formData.fields.add(MapEntry('category', categoryId.trim()));
       }
 
       if (price != null) {
-        data['price'] = price;
+        formData.fields.add(MapEntry('price', price.toString()));
       }
 
-      if (data.isEmpty) {
+      /*
+      |--------------------------------------------------------------------------
+      | New images
+      |--------------------------------------------------------------------------
+      */
+
+      if (images != null && images.isNotEmpty) {
+        for (final image in images) {
+          final bytes = await image.readAsBytes();
+
+          formData.files.add(
+            MapEntry(
+              'image',
+              MultipartFile.fromBytes(bytes, filename: image.name),
+            ),
+          );
+        }
+      }
+
+      /*
+      |--------------------------------------------------------------------------
+      | Make sure something is actually being updated.
+      |--------------------------------------------------------------------------
+      */
+
+      if (formData.fields.isEmpty && formData.files.isEmpty) {
         return Left(
           ServerFailure(message: 'No product fields were provided for update'),
         );
       }
 
+      /*
+      |--------------------------------------------------------------------------
+      | PATCH
+      |--------------------------------------------------------------------------
+      */
+
       final result = await apiService.patch(
         '$kBaseUrl/product/$id',
-        data: data,
+        data: formData,
       );
 
       return result.fold((failure) => Left(failure), (responseData) {
+        /*
+           * Backend now returns both:
+           *
+           * product
+           * updatedProduct
+           *
+           * so support either one.
+           */
+
         final productJson =
-            responseData['product'] ?? responseData['data'] ?? responseData;
+            responseData['product'] ??
+            responseData['updatedProduct'] ??
+            responseData['data'] ??
+            responseData;
 
         if (productJson is! Map<String, dynamic>) {
           return Left(
@@ -159,7 +210,12 @@ class AdminProductRemoteDataSourceImpl implements AdminProductRemoteDataSource {
       });
     } on DioException catch (e) {
       return Left(
-        ServerFailure(message: e.response?.data['message'] ?? e.message),
+        ServerFailure(
+          message:
+              e.response?.data?['message'] ??
+              e.message ??
+              'Failed to update product',
+        ),
       );
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));
@@ -174,7 +230,12 @@ class AdminProductRemoteDataSourceImpl implements AdminProductRemoteDataSource {
       return result.fold((failure) => Left(failure), (_) => const Right(unit));
     } on DioException catch (e) {
       return Left(
-        ServerFailure(message: e.response?.data['message'] ?? e.message),
+        ServerFailure(
+          message:
+              e.response?.data?['message'] ??
+              e.message ??
+              'Failed to delete product',
+        ),
       );
     } catch (e) {
       return Left(ServerFailure(message: e.toString()));

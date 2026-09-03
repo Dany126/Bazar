@@ -34,13 +34,6 @@ app.use(
   }),
   paymobWebhookRouter,
 );
-app.use(cookieParser());
-app.use(express.json());
-app.use(express.urlencoded());
-app.use(morgan("dev"));
-
-app.use("/public", express.static(path.join(import.meta.dirname, "./public")));
-
 app.use(
   cors({
     origin: true,
@@ -49,6 +42,16 @@ app.use(
     allowedHeaders: ["Content-Type", "Authorization"],
   }),
 );
+
+app.use(cookieParser());
+app.use(express.json());
+app.use(express.urlencoded());
+app.use(morgan("dev"));
+
+
+app.use("/public", express.static(path.join(import.meta.dirname, "./public")));
+
+
 
 //http://localhost:5000/api/user/register
 //http://localhost:5000/api/user/login

@@ -97,12 +97,14 @@ class AdminProductsCubit extends Cubit<AdminProductsState> {
     String? name,
     String? categoryId,
     double? price,
+    List<XFile>? images,
   }) async {
     final result = await updateProductUseCase(
       id: id,
       name: name,
       categoryId: categoryId,
       price: price,
+      images: images,
     );
 
     return result.fold(
@@ -113,11 +115,11 @@ class AdminProductsCubit extends Cubit<AdminProductsState> {
       },
       (_) async {
         await loadProducts();
+
         return true;
       },
     );
   }
-
   // ============================================================
   // DELETE PRODUCT
   // ============================================================
