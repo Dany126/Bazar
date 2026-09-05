@@ -50,6 +50,7 @@ export const getAllCategories = async (req, res) => {
     return res.status(200).json({
       status: "Success",
       categories,
+      noOfCategories: categories.length,
     });
   } catch (err) {
     console.log(err);

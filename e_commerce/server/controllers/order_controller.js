@@ -26,7 +26,7 @@ export const createOrder = async (req, res) => {
     // get all variants from db
     const variants = await Variant.find({
       _id: { $in: variantIDs },
-    });
+    }).populate("product");
 
     // put them in a map
     const variantMap = new Map(variants.map((v) => [v._id.toString(), v]));
@@ -50,8 +50,18 @@ export const createOrder = async (req, res) => {
         });
       }
 
+      const expectedPrice = variant.product.price + variant.price;
+
+      // check whether the price sent by the client is correct
+      if (el.price !== expectedPrice) {
+        return res.status(400).json({
+          status: "Failed",
+          message: "Invalid product price",
+        });
+      }
+
       // calculate total price and change the stock and soldCount
-      totalPrice += variant.price * el.quantity;
+      totalPrice += (variant.product.price + variant.price) * el.quantity;
       await Variant.findByIdAndUpdate(el.variant, {
         $inc: {
           stock: -el.quantity,
@@ -107,6 +117,7 @@ export const getAllOrders = async (req, res) => {
     return res.status(200).json({
       status: "Success",
       orders,
+      noOfOrders: orders.length,
     });
   } catch (err) {
     console.log(err);

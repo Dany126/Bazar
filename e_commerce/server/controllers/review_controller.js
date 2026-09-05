@@ -95,6 +95,7 @@ export const getAllReviews = async (req, res) => {
     return res.status(200).json({
       status: "Success",
       reviews,
+      noOfReviews: reviews.length,
     });
   } catch (err) {
     console.log(err);
