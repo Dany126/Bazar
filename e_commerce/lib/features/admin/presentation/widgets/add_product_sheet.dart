@@ -27,6 +27,10 @@ class _AddProductSheetState extends State<AddProductSheet> {
 
   CategoryModel? _selectedCategory;
 
+  // ============================================================
+  // MULTI IMAGE STATE
+  // ============================================================
+
   final List<XFile> _images = <XFile>[];
 
   final Map<String, Uint8List> _imageBytes = <String, Uint8List>{};
@@ -77,7 +81,7 @@ class _AddProductSheetState extends State<AddProductSheet> {
   }
 
   // ============================================================
-  // IMAGES
+  // MULTI PHOTO
   // ============================================================
 
   Future<void> _pickImages() async {
@@ -94,6 +98,8 @@ class _AddProductSheetState extends State<AddProductSheet> {
         return;
       }
 
+      final List<XFile> newImages = <XFile>[];
+
       for (final XFile image in pickedImages) {
         final bool alreadySelected = _images.any(
           (XFile existing) => existing.name == image.name,
@@ -105,21 +111,27 @@ class _AddProductSheetState extends State<AddProductSheet> {
 
         final Uint8List bytes = await image.readAsBytes();
 
-        _images.add(image);
+        newImages.add(image);
         _imageBytes[image.name] = bytes;
       }
 
+      if (newImages.isEmpty) {
+        return;
+      }
+
       if (!mounted) {
         return;
       }
 
-      setState(() {});
-    } catch (e) {
+      setState(() {
+        _images.addAll(newImages);
+      });
+    } catch (error) {
       if (!mounted) {
         return;
       }
 
-      _showError('Failed to select images: $e');
+      _showError('Failed to select images: $error');
     }
   }
 
@@ -134,10 +146,21 @@ class _AddProductSheetState extends State<AddProductSheet> {
 
     final XFile image = _images[index];
 
-    _imageBytes.remove(image.name);
-    _images.removeAt(index);
+    setState(() {
+      _images.removeAt(index);
+      _imageBytes.remove(image.name);
+    });
+  }
 
-    setState(() {});
+  void _clearAllImages() {
+    if (_isSubmitting) {
+      return;
+    }
+
+    setState(() {
+      _images.clear();
+      _imageBytes.clear();
+    });
   }
 
   // ============================================================
@@ -223,6 +246,10 @@ class _AddProductSheetState extends State<AddProductSheet> {
       return;
     }
 
+    // ----------------------------------------------------------
+    // MULTI IMAGE VALIDATION
+    // ----------------------------------------------------------
+
     if (_images.isEmpty) {
       _showError('Please select at least one product image.');
       return;
@@ -239,6 +266,10 @@ class _AddProductSheetState extends State<AddProductSheet> {
       _showError('Please enter a valid base price.');
       return;
     }
+
+    // ----------------------------------------------------------
+    // BUILD VARIANTS
+    // ----------------------------------------------------------
 
     final List<AdminProductVariantInput> variantInputs =
         <AdminProductVariantInput>[];
@@ -286,11 +317,16 @@ class _AddProductSheetState extends State<AddProductSheet> {
       );
     }
 
+    // ----------------------------------------------------------
+    // DUPLICATE VARIANT CHECK
+    // ----------------------------------------------------------
+
     final Set<String> combinations = <String>{};
 
     for (final AdminProductVariantInput variant in variantInputs) {
       final String key =
-          '${variant.size.toLowerCase()}_${variant.color.toLowerCase()}';
+          '${variant.size.toLowerCase()}_'
+          '${variant.color.toLowerCase()}';
 
       if (!combinations.add(key)) {
         _showError(
@@ -300,6 +336,10 @@ class _AddProductSheetState extends State<AddProductSheet> {
         return;
       }
     }
+
+    // ----------------------------------------------------------
+    // SUBMIT
+    // ----------------------------------------------------------
 
     setState(() {
       _isSubmitting = true;
@@ -312,7 +352,11 @@ class _AddProductSheetState extends State<AddProductSheet> {
             name: _nameController.text.trim(),
             categoryId: _selectedCategory!.id,
             price: basePrice,
-            images: _images,
+
+            // IMPORTANT:
+            // Send ALL selected images.
+            images: List<XFile>.from(_images),
+
             variants: variantInputs,
           );
 
@@ -324,16 +368,9 @@ class _AddProductSheetState extends State<AddProductSheet> {
         setState(() {
           _isSubmitting = false;
         });
+
         return;
       }
-
-      /*
-       * Do NOT call loadProducts() here.
-       *
-       * createProductWithVariants()
-       * should handle refreshing the products
-       * inside the Cubit.
-       */
 
       ScaffoldMessenger.of(context)
         ..hideCurrentSnackBar()
@@ -342,7 +379,7 @@ class _AddProductSheetState extends State<AddProductSheet> {
         );
 
       Navigator.of(context).pop();
-    } catch (e) {
+    } catch (error) {
       if (!mounted) {
         return;
       }
@@ -351,7 +388,7 @@ class _AddProductSheetState extends State<AddProductSheet> {
         _isSubmitting = false;
       });
 
-      _showError('Failed to create product: $e');
+      _showError('Failed to create product: $error');
     }
   }
 
@@ -379,9 +416,11 @@ class _AddProductSheetState extends State<AddProductSheet> {
 
     final double screenWidth = mediaQuery.size.width;
 
+    final double screenHeight = mediaQuery.size.height;
+
     final double sheetWidth = screenWidth > 900 ? 900 : screenWidth;
 
-    final double sheetHeight = mediaQuery.size.height * 0.90;
+    final double sheetHeight = screenHeight * 0.90;
 
     return Align(
       alignment: Alignment.bottomCenter,
@@ -442,7 +481,7 @@ class _AddProductSheetState extends State<AddProductSheet> {
   }
 
   // ============================================================
-  // SHEET HANDLE
+  // HANDLE
   // ============================================================
 
   Widget _buildSheetHandle() {
@@ -472,7 +511,6 @@ class _AddProductSheetState extends State<AddProductSheet> {
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
           ),
         ),
-
         IconButton(
           tooltip: 'Close',
           onPressed: _isSubmitting
@@ -685,7 +723,7 @@ class _AddProductSheetState extends State<AddProductSheet> {
   }
 
   // ============================================================
-  // IMAGES
+  // MULTI IMAGE SECTION
   // ============================================================
 
   Widget _buildImagesSection() {
@@ -705,12 +743,12 @@ class _AddProductSheetState extends State<AddProductSheet> {
               Container(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 10,
-                  vertical: 5,
+                  vertical: 6,
                 ),
                 decoration: BoxDecoration(
                   color: Theme.of(
                     context,
-                  ).colorScheme.primary.withValues(alpha: .10),
+                  ).colorScheme.primary.withValues(alpha: 0.10),
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
@@ -724,20 +762,47 @@ class _AddProductSheetState extends State<AddProductSheet> {
           ],
         ),
 
-        const SizedBox(height: 12),
+        const SizedBox(height: 8),
 
+        Text(
+          'Select multiple images for the product.',
+          style: TextStyle(fontSize: 13, color: Colors.grey.shade600),
+        ),
+
+        const SizedBox(height: 14),
+
+        // --------------------------------------------------------
+        // ADD MULTIPLE PHOTOS BUTTON
+        // --------------------------------------------------------
         SizedBox(
           width: double.infinity,
-          height: 48,
+          height: 50,
           child: OutlinedButton.icon(
             onPressed: _isSubmitting ? null : _pickImages,
             icon: const Icon(Icons.add_photo_alternate_outlined),
-            label: const Text('Select Product Images'),
+            label: Text(
+              _images.isEmpty ? 'Add Multiple Photos' : 'Add More Photos',
+            ),
           ),
         ),
 
-        const SizedBox(height: 16),
+        const SizedBox(height: 12),
 
+        if (_images.isNotEmpty)
+          SizedBox(
+            width: double.infinity,
+            child: TextButton.icon(
+              onPressed: _isSubmitting ? null : _clearAllImages,
+              icon: const Icon(Icons.delete_sweep_outlined),
+              label: const Text('Remove All Photos'),
+            ),
+          ),
+
+        const SizedBox(height: 8),
+
+        // --------------------------------------------------------
+        // IMAGE PREVIEW
+        // --------------------------------------------------------
         if (_images.isEmpty) _buildEmptyImagesState() else _buildImageGrid(),
       ],
     );
@@ -746,23 +811,27 @@ class _AddProductSheetState extends State<AddProductSheet> {
   Widget _buildEmptyImagesState() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 34, horizontal: 20),
+      padding: const EdgeInsets.symmetric(vertical: 36, horizontal: 20),
       decoration: BoxDecoration(
         border: Border.all(color: Theme.of(context).dividerColor),
         borderRadius: BorderRadius.circular(12),
       ),
       child: const Column(
         children: <Widget>[
-          Icon(Icons.photo_library_outlined, size: 44),
-          SizedBox(height: 10),
+          Icon(Icons.photo_library_outlined, size: 48),
+
+          SizedBox(height: 12),
+
           Text(
             'No images selected',
             style: TextStyle(fontWeight: FontWeight.w600),
           ),
-          SizedBox(height: 4),
+
+          SizedBox(height: 6),
+
           Text(
-            'Add one or more images '
-            'for the product.',
+            'Click "Add Multiple Photos" '
+            'to select one or more images.',
             textAlign: TextAlign.center,
           ),
         ],
@@ -796,41 +865,102 @@ class _AddProductSheetState extends State<AddProductSheet> {
 
             final Uint8List? bytes = _imageBytes[image.name];
 
-            return Stack(
-              children: <Widget>[
-                Positioned.fill(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(12),
+            return ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Stack(
+                fit: StackFit.expand,
+                children: <Widget>[
+                  // ------------------------------------------------
+                  // IMAGE
+                  // ------------------------------------------------
+
+                  Container(
+                    color: Colors.grey.shade100,
                     child: bytes == null
                         ? const Center(child: CircularProgressIndicator())
                         : Image.memory(bytes, fit: BoxFit.cover),
                   ),
-                ),
 
-                if (!_isSubmitting)
+                  // ------------------------------------------------
+                  // IMAGE NUMBER
+                  // ------------------------------------------------
                   Positioned(
-                    top: 6,
-                    right: 6,
-                    child: Material(
-                      color: Colors.black54,
-                      shape: const CircleBorder(),
-                      child: InkWell(
-                        customBorder: const CircleBorder(),
-                        onTap: () {
-                          _removeImage(index);
-                        },
-                        child: const Padding(
-                          padding: EdgeInsets.all(6),
-                          child: Icon(
-                            Icons.close,
-                            size: 18,
-                            color: Colors.white,
-                          ),
+                    left: 8,
+                    top: 8,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: Colors.black54,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${index + 1}',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
                     ),
                   ),
-              ],
+
+                  // ------------------------------------------------
+                  // REMOVE BUTTON
+                  // ------------------------------------------------
+                  if (!_isSubmitting)
+                    Positioned(
+                      right: 8,
+                      top: 8,
+                      child: Material(
+                        color: Colors.black54,
+                        shape: const CircleBorder(),
+                        child: InkWell(
+                          customBorder: const CircleBorder(),
+                          onTap: () {
+                            _removeImage(index);
+                          },
+                          child: const Padding(
+                            padding: EdgeInsets.all(7),
+                            child: Icon(
+                              Icons.close,
+                              size: 18,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                  // ------------------------------------------------
+                  // MAIN IMAGE LABEL
+                  // ------------------------------------------------
+                  if (index == 0)
+                    Positioned(
+                      left: 8,
+                      bottom: 8,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Theme.of(context).colorScheme.primary,
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'Main',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
             );
           },
         );
@@ -858,23 +988,13 @@ class _AddProductSheetState extends State<AddProductSheet> {
                     style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
                   ),
                   SizedBox(height: 4),
-                  Text(
-                    'Define size, color, '
-                    'price and stock.',
-                  ),
+                  Text('Define size, color, price and stock.'),
                 ],
               ),
             ),
 
             const SizedBox(width: 12),
 
-            // FIX: Without Flexible, this OutlinedButton.icon can be
-            // handed unbounded/infinite width constraints in certain
-            // layout situations (e.g. narrow parents, nested
-            // Row/Column combos in the scroll view), which crashes
-            // with "BoxConstraints forces an infinite width."
-            // Wrapping it in Flexible lets the Row give it a bounded
-            // width while still sizing to its content when possible.
             Flexible(
               child: OutlinedButton.icon(
                 onPressed: _isSubmitting ? null : _addVariant,
@@ -970,17 +1090,11 @@ class _AddProductSheetState extends State<AddProductSheet> {
                 return Column(
                   children: <Widget>[
                     _buildSizeDropdown(variant),
-
                     const SizedBox(height: 12),
-
                     _buildColorField(variant),
-
                     const SizedBox(height: 12),
-
                     _buildVariantPriceField(variant),
-
                     const SizedBox(height: 12),
-
                     _buildStockField(variant),
                   ],
                 );
@@ -990,17 +1104,11 @@ class _AddProductSheetState extends State<AddProductSheet> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: <Widget>[
                   Expanded(child: _buildSizeDropdown(variant)),
-
                   const SizedBox(width: 12),
-
                   Expanded(child: _buildColorField(variant)),
-
                   const SizedBox(width: 12),
-
                   Expanded(child: _buildVariantPriceField(variant)),
-
                   const SizedBox(width: 12),
-
                   Expanded(child: _buildStockField(variant)),
                 ],
               );
@@ -1136,7 +1244,7 @@ class _AddProductSheetState extends State<AddProductSheet> {
   }
 
   // ============================================================
-  // SUBMIT
+  // SUBMIT BUTTON
   // ============================================================
 
   Widget _buildSubmitButton() {
@@ -1168,7 +1276,7 @@ class _AddProductSheetState extends State<AddProductSheet> {
 }
 
 // ================================================================
-// UI FORM MODEL
+// VARIANT FORM MODEL
 // ================================================================
 
 class _VariantFormData {
@@ -1177,12 +1285,6 @@ class _VariantFormData {
       colorController = TextEditingController(),
       stockController = TextEditingController();
 
-  // IMPORTANT:
-  // Backend supports:
-  // S, M, L, XL, 2XL, 3XL.
-  //
-  // Start with a valid size so the first
-  // variant is immediately valid.
   String size = 'S';
 
   final TextEditingController colorController;

@@ -121,7 +121,7 @@ class GetProductsCubit extends Cubit<GetProductsState> {
       return ProductEntity(
         id: product.id,
         name: product.name,
-        thumbnailUrl: product.thumbnailUrl,
+        images: product.images,
         category: product.category,
         price: product.price,
         rating: product.rating,
@@ -188,7 +188,7 @@ class GetProductsCubit extends Cubit<GetProductsState> {
               return ProductEntity(
                 id: product.id,
                 name: product.name,
-                thumbnailUrl: product.thumbnailUrl,
+                images: product.images,
                 category: product.category,
                 price: product.price,
                 rating: product.rating,
@@ -361,7 +361,7 @@ class GetProductsCubit extends Cubit<GetProductsState> {
                 return ProductEntity(
                   id: product.id,
                   name: product.name,
-                  thumbnailUrl: product.thumbnailUrl,
+                  images: product.images,
                   category: product.category,
                   price: product.price,
                   rating: product.rating,

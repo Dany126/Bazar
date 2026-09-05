@@ -1,5 +1,6 @@
 import 'package:e_commerce/features/admin/data/models/admin_product_variant_model.dart';
 import 'package:e_commerce/features/admin/domain/usecases/create_admin_product.dart';
+import 'package:e_commerce/features/admin/domain/usecases/create_admin_product_with_variants.dart';
 import 'package:e_commerce/features/admin/domain/usecases/create_admin_variant.dart';
 import 'package:e_commerce/features/admin/domain/usecases/delete_admin_product.dart';
 import 'package:e_commerce/features/admin/domain/usecases/delete_admin_variant.dart';
@@ -15,6 +16,7 @@ import 'package:image_picker/image_picker.dart';
 class AdminProductsCubit extends Cubit<AdminProductsState> {
   final GetAllAdminProductsUseCase getAllProductsUseCase;
   final CreateAdminProductUseCase createProductUseCase;
+  final CreateAdminProductWithVariantsUseCase createProductWithVariantsUseCase;
   final UpdateAdminProductUseCase updateProductUseCase;
   final DeleteAdminProductUseCase deleteProductUseCase;
 
@@ -26,6 +28,7 @@ class AdminProductsCubit extends Cubit<AdminProductsState> {
   AdminProductsCubit({
     required this.getAllProductsUseCase,
     required this.createProductUseCase,
+    required this.createProductWithVariantsUseCase,
     required this.updateProductUseCase,
     required this.deleteProductUseCase,
     required this.createVariantUseCase,
@@ -90,6 +93,49 @@ class AdminProductsCubit extends Cubit<AdminProductsState> {
     await loadProducts();
 
     return createdProduct;
+  }
+
+  // ============================================================
+  // CREATE PRODUCT WITH VARIANTS
+  // ============================================================
+
+  Future<bool> createProductWithVariants({
+    required String name,
+    required String categoryId,
+    required double price,
+    required List<XFile> images,
+    required List<AdminProductVariantInput> variants,
+  }) async {
+    emit(const AdminProductsLoading());
+
+    final result = await createProductWithVariantsUseCase(
+      name: name,
+      categoryId: categoryId,
+      price: price,
+      images: images,
+      variants: variants,
+    );
+
+    bool success = false;
+
+    result.fold(
+      (failure) {
+        emit(AdminProductsFailure(failure.message));
+      },
+      (_) {
+        success = true;
+      },
+    );
+
+    if (!success) {
+      return false;
+    }
+
+    // Refresh products here.
+    // The AddProductSheet should NOT call loadProducts().
+    await loadProducts();
+
+    return true;
   }
 
   // ============================================================

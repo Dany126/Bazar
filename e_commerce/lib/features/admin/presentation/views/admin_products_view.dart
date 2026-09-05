@@ -1,7 +1,9 @@
-import 'package:e_commerce/core/services/get_it_services.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_commerce/core/helper_function/fix_image_utl.dart';
+import 'package:e_commerce/core/services/get_it_services.dart';
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
+import 'package:e_commerce/features/admin/presentation/cubit/admin_categories_cubit.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_products_cubit.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_products_state.dart';
 import 'package:e_commerce/features/admin/presentation/widgets/add_product_sheet.dart';
@@ -9,15 +11,22 @@ import 'package:e_commerce/features/admin/presentation/widgets/edit_product_shee
 import 'package:e_commerce/features/home/data/models/product_model.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 
 class AdminProductsView extends StatelessWidget {
   const AdminProductsView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider<AdminProductsCubit>(
-      create: (_) => getIt<AdminProductsCubit>()..loadProducts(),
+    return MultiBlocProvider(
+      providers: [
+        BlocProvider<AdminProductsCubit>(
+          create: (_) => getIt<AdminProductsCubit>()..loadProducts(),
+        ),
+
+        BlocProvider<AdminCategoriesCubit>(
+          create: (_) => getIt<AdminCategoriesCubit>()..loadCategories(),
+        ),
+      ],
       child: const _AdminProductsBody(),
     );
   }
@@ -29,21 +38,28 @@ class _AdminProductsBody extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return LayoutBuilder(
-      builder: (context, constraints) {
-        final double screenWidth = MediaQuery.sizeOf(context).width;
-
-        final double width =
-            constraints.hasBoundedWidth && constraints.maxWidth.isFinite
+      builder: (BuildContext context, BoxConstraints constraints) {
+        /*
+         * Always use a finite width.
+         *
+         * Some admin layouts can give this widget an unbounded width.
+         * Never pass Infinity to SizedBox/ConstrainedBox/GridView.
+         */
+        final double availableWidth = constraints.hasBoundedWidth
             ? constraints.maxWidth
-            : screenWidth;
+            : MediaQuery.sizeOf(context).width;
+
+        final double contentWidth = availableWidth.isFinite
+            ? availableWidth
+            : 1200;
 
         final int crossAxisCount;
 
-        if (width >= 1200) {
+        if (contentWidth >= 1200) {
           crossAxisCount = 4;
-        } else if (width >= 800) {
+        } else if (contentWidth >= 800) {
           crossAxisCount = 3;
-        } else if (width >= 500) {
+        } else if (contentWidth >= 500) {
           crossAxisCount = 2;
         } else {
           crossAxisCount = 1;
@@ -56,59 +72,58 @@ class _AdminProductsBody extends StatelessWidget {
           child: SingleChildScrollView(
             physics: const AlwaysScrollableScrollPhysics(),
             padding: const EdgeInsets.all(24),
-            child: SizedBox(
-              width: width,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const _ProductsHeader(),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                _ProductsHeader(availableWidth: contentWidth),
 
-                  const SizedBox(height: 24),
+                const SizedBox(height: 24),
 
-                  BlocConsumer<AdminProductsCubit, AdminProductsState>(
-                    listener: (context, state) {
-                      if (state is AdminProductsFailure) {
-                        ScaffoldMessenger.of(context).showSnackBar(
+                BlocConsumer<AdminProductsCubit, AdminProductsState>(
+                  listener: (BuildContext context, AdminProductsState state) {
+                    if (state is AdminProductsFailure) {
+                      ScaffoldMessenger.of(context)
+                        ..hideCurrentSnackBar()
+                        ..showSnackBar(
                           SnackBar(
                             content: Text(state.message),
                             behavior: SnackBarBehavior.floating,
                           ),
                         );
-                      }
-                    },
-                    builder: (context, state) {
-                      if (state is AdminProductsInitial ||
-                          state is AdminProductsLoading) {
-                        return const SizedBox(
-                          width: double.infinity,
-                          child: Padding(
-                            padding: EdgeInsets.symmetric(vertical: 80),
-                            child: Center(child: CircularProgressIndicator()),
-                          ),
-                        );
-                      }
+                    }
+                  },
+                  builder: (BuildContext context, AdminProductsState state) {
+                    if (state is AdminProductsInitial ||
+                        state is AdminProductsLoading) {
+                      return const SizedBox(
+                        width: double.infinity,
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 80),
+                          child: Center(child: CircularProgressIndicator()),
+                        ),
+                      );
+                    }
 
-                      if (state is AdminProductsFailure) {
-                        return _buildErrorState(context, state.message);
-                      }
+                    if (state is AdminProductsFailure) {
+                      return _buildErrorState(context, state.message);
+                    }
 
-                      if (state is AdminProductsLoaded) {
-                        if (state.products.isEmpty) {
-                          return _buildEmptyState(context);
-                        }
-
-                        return _buildProductsGrid(
-                          context,
-                          state.products,
-                          crossAxisCount,
-                        );
+                    if (state is AdminProductsLoaded) {
+                      if (state.products.isEmpty) {
+                        return _buildEmptyState(context);
                       }
 
-                      return const SizedBox.shrink();
-                    },
-                  ),
-                ],
-              ),
+                      return _buildProductsGrid(
+                        context,
+                        state.products,
+                        crossAxisCount,
+                      );
+                    }
+
+                    return const SizedBox.shrink();
+                  },
+                ),
+              ],
             ),
           ),
         );
@@ -135,7 +150,7 @@ class _AdminProductsBody extends StatelessWidget {
         mainAxisSpacing: 16,
         childAspectRatio: 0.82,
       ),
-      itemBuilder: (context, index) {
+      itemBuilder: (BuildContext context, int index) {
         final ProductModel product = products[index];
 
         return _AdminProductCard(
@@ -163,7 +178,7 @@ class _AdminProductsBody extends StatelessWidget {
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [
+            children: <Widget>[
               Icon(Icons.error_outline, size: 48, color: Colors.red.shade300),
 
               const SizedBox(height: 16),
@@ -186,12 +201,15 @@ class _AdminProductsBody extends StatelessWidget {
 
               const SizedBox(height: 20),
 
-              ElevatedButton.icon(
-                onPressed: () {
-                  context.read<AdminProductsCubit>().loadProducts();
-                },
-                icon: const Icon(Icons.refresh),
-                label: const Text('Try Again'),
+              SizedBox(
+                height: 46,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    context.read<AdminProductsCubit>().loadProducts();
+                  },
+                  icon: const Icon(Icons.refresh),
+                  label: const Text('Try Again'),
+                ),
               ),
             ],
           ),
@@ -212,7 +230,7 @@ class _AdminProductsBody extends StatelessWidget {
         child: Center(
           child: Column(
             mainAxisSize: MainAxisSize.min,
-            children: [
+            children: <Widget>[
               Container(
                 width: 90,
                 height: 90,
@@ -244,12 +262,15 @@ class _AdminProductsBody extends StatelessWidget {
 
               const SizedBox(height: 24),
 
-              ElevatedButton.icon(
-                onPressed: () {
-                  _openAddProductSheet(context);
-                },
-                icon: const Icon(Icons.add),
-                label: const Text('Add Product'),
+              SizedBox(
+                height: 46,
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    _openAddProductSheet(context);
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Product'),
+                ),
               ),
             ],
           ),
@@ -264,66 +285,77 @@ class _AdminProductsBody extends StatelessWidget {
 // ============================================================
 
 class _ProductsHeader extends StatelessWidget {
-  const _ProductsHeader();
+  const _ProductsHeader({required this.availableWidth});
+
+  final double availableWidth;
 
   @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final double width =
-            constraints.hasBoundedWidth && constraints.maxWidth.isFinite
-            ? constraints.maxWidth
-            : MediaQuery.sizeOf(context).width;
+    /*
+     * IMPORTANT:
+     *
+     * Do not use:
+     *
+     * SizedBox(width: width)
+     *
+     * when width can be Infinity.
+     *
+     * availableWidth is guaranteed to be finite by the parent.
+     */
 
-        if (width >= 700) {
-          return Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'Products',
-                  style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
-                ),
-              ),
-
-              SizedBox(
-                width: 170,
-                height: 46,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    _openAddProductSheet(context);
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Product'),
-                ),
-              ),
-            ],
-          );
-        }
-
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
+    if (availableWidth >= 700) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: <Widget>[
+          const Expanded(
+            child: Text(
               'Products',
               style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
             ),
+          ),
 
-            const SizedBox(height: 16),
-
-            SizedBox(
-              width: width,
-              height: 46,
-              child: ElevatedButton.icon(
-                onPressed: () {
-                  _openAddProductSheet(context);
-                },
-                icon: const Icon(Icons.add),
-                label: const Text('Add Product'),
-              ),
+          SizedBox(
+            width: 170,
+            height: 46,
+            child: ElevatedButton.icon(
+              onPressed: () {
+                _openAddProductSheet(context);
+              },
+              icon: const Icon(Icons.add),
+              label: const Text('Add Product'),
             ),
-          ],
-        );
-      },
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: <Widget>[
+        const Text(
+          'Products',
+          style: TextStyle(fontSize: 28, fontWeight: FontWeight.w700),
+        ),
+
+        const SizedBox(height: 16),
+
+        /*
+         * This is now bounded by the parent Column.
+         *
+         * No width: availableWidth is needed.
+         */
+        SizedBox(
+          width: double.infinity,
+          height: 46,
+          child: ElevatedButton.icon(
+            onPressed: () {
+              _openAddProductSheet(context);
+            },
+            icon: const Icon(Icons.add),
+            label: const Text('Add Product'),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -355,10 +387,9 @@ class _AdminProductCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisSize: MainAxisSize.min,
-        children: [
+        children: <Widget>[
           Stack(
-            children: [
+            children: <Widget>[
               SizedBox(
                 height: 220,
                 width: double.infinity,
@@ -369,14 +400,15 @@ class _AdminProductCard extends StatelessWidget {
                       : CachedNetworkImage(
                           imageUrl: imageUrl,
                           fit: BoxFit.cover,
-                          placeholder: (context, url) {
+                          placeholder: (BuildContext context, String url) {
                             return const Center(
                               child: CircularProgressIndicator(),
                             );
                           },
-                          errorWidget: (context, url, error) {
-                            return const _ImagePlaceholder();
-                          },
+                          errorWidget:
+                              (BuildContext context, String url, Object error) {
+                                return const _ImagePlaceholder();
+                              },
                         ),
                 ),
               ),
@@ -398,7 +430,7 @@ class _AdminProductCard extends StatelessWidget {
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
-                    onSelected: (value) {
+                    onSelected: (String value) {
                       if (value == 'edit') {
                         onEdit();
                       }
@@ -407,12 +439,12 @@ class _AdminProductCard extends StatelessWidget {
                         onDelete();
                       }
                     },
-                    itemBuilder: (context) {
-                      return const [
+                    itemBuilder: (BuildContext context) {
+                      return const <PopupMenuEntry<String>>[
                         PopupMenuItem<String>(
                           value: 'edit',
                           child: Row(
-                            children: [
+                            children: <Widget>[
                               Icon(Icons.edit_outlined, size: 20),
                               SizedBox(width: 10),
                               Text('Edit'),
@@ -422,7 +454,7 @@ class _AdminProductCard extends StatelessWidget {
                         PopupMenuItem<String>(
                           value: 'delete',
                           child: Row(
-                            children: [
+                            children: <Widget>[
                               Icon(
                                 Icons.delete_outline,
                                 size: 20,
@@ -445,8 +477,7 @@ class _AdminProductCard extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
+              children: <Widget>[
                 const SizedBox(height: 8),
 
                 Text(
@@ -493,42 +524,55 @@ class _ImagePlaceholder extends StatelessWidget {
 }
 
 // ============================================================
-// ADD
+// ADD PRODUCT
 // ============================================================
 
 void _openAddProductSheet(BuildContext context) {
+  final productsCubit = context.read<AdminProductsCubit>();
+  final categoriesCubit = context.read<AdminCategoriesCubit>();
+
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
-    backgroundColor: Colors.transparent,
     useSafeArea: true,
+    backgroundColor: Colors.transparent,
     builder: (_) {
-      return const AddProductSheet();
+      return MultiBlocProvider(
+        providers: [
+          BlocProvider<AdminProductsCubit>.value(value: productsCubit),
+          BlocProvider<AdminCategoriesCubit>.value(value: categoriesCubit),
+        ],
+        child: const AddProductSheet(),
+      );
     },
   );
 }
-
 // ============================================================
-// EDIT
+// EDIT PRODUCT
 // ============================================================
 
 void _openEditProductSheet(BuildContext context, ProductModel product) {
   final AdminProductsCubit productsCubit = context.read<AdminProductsCubit>();
 
+  final AdminCategoriesCubit categoriesCubit = context
+      .read<AdminCategoriesCubit>();
+
   showModalBottomSheet<void>(
     context: context,
     isScrollControlled: true,
     backgroundColor: Colors.transparent,
     useSafeArea: true,
     builder: (_) {
-      return BlocProvider.value(
-        value: productsCubit,
+      return MultiBlocProvider(
+        providers: [
+          BlocProvider.value(value: productsCubit),
+          BlocProvider.value(value: categoriesCubit),
+        ],
         child: EditProductSheet(product: product),
       );
     },
   );
 }
-
 // ============================================================
 // DELETE CONFIRMATION
 // ============================================================
@@ -536,13 +580,13 @@ void _openEditProductSheet(BuildContext context, ProductModel product) {
 Future<void> _confirmDelete(BuildContext context, ProductModel product) async {
   final bool? confirmed = await showDialog<bool>(
     context: context,
-    builder: (dialogContext) {
+    builder: (BuildContext dialogContext) {
       return AlertDialog(
         title: const Text('Delete Product'),
 
         content: Text('Are you sure you want to delete "${product.name}"?'),
 
-        actions: [
+        actions: <Widget>[
           TextButton(
             onPressed: () {
               Navigator.of(dialogContext).pop(false);
@@ -574,12 +618,14 @@ Future<void> _confirmDelete(BuildContext context, ProductModel product) async {
     return;
   }
 
-  ScaffoldMessenger.of(context).showSnackBar(
-    SnackBar(
-      content: Text(
-        success ? 'Product deleted successfully' : 'Failed to delete product',
+  ScaffoldMessenger.of(context)
+    ..hideCurrentSnackBar()
+    ..showSnackBar(
+      SnackBar(
+        content: Text(
+          success ? 'Product deleted successfully' : 'Failed to delete product',
+        ),
+        behavior: SnackBarBehavior.floating,
       ),
-      behavior: SnackBarBehavior.floating,
-    ),
-  );
+    );
 }

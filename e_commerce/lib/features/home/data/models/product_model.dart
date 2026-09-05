@@ -6,7 +6,7 @@ class ProductModel extends ProductEntity {
   ProductModel({
     required super.id,
     required super.name,
-    required super.thumbnailUrl,
+    required super.images,
     required super.price,
     required super.rating,
     required super.stock,
@@ -20,9 +20,9 @@ class ProductModel extends ProductEntity {
     return ProductModel(
       id: json['_id']?.toString() ?? '',
       name: json['name']?.toString() ?? '',
-      thumbnailUrl: _getImage(json['image']),
+      images: _getImages(json),
       price: _getDouble(json['price']),
-      rating: _getRating(json['avg_rating']),
+      rating: _getRating(json['avg_rating'] ?? json['rating']),
       stock: _getInt(json['stock']),
       soldCount: _getInt(json['soldCount']),
       isFavorite:
@@ -34,26 +34,37 @@ class ProductModel extends ProductEntity {
     );
   }
 
-  static String _getImage(dynamic image) {
-    if (image is List) {
-      for (final item in image) {
-        if (item == null) continue;
+  static List<String> _getImages(Map<String, dynamic> json) {
+    final dynamic value =
+        json['images'] ?? json['image'] ?? json['thumbnailUrl'];
 
-        final value = item.toString().trim();
+    if (value is List) {
+      final List<String> result = <String>[];
 
-        if (value.isNotEmpty) {
-          return value;
+      for (final dynamic item in value) {
+        if (item == null) {
+          continue;
+        }
+
+        final String image = item.toString().trim();
+
+        if (image.isNotEmpty) {
+          result.add(image);
         }
       }
 
-      return '';
+      return result;
     }
 
-    if (image is String) {
-      return image.trim();
+    if (value is String) {
+      final String image = value.trim();
+
+      if (image.isNotEmpty) {
+        return <String>[image];
+      }
     }
 
-    return '';
+    return <String>[];
   }
 
   static double _getDouble(dynamic value) {
@@ -75,7 +86,7 @@ class ProductModel extends ProductEntity {
   }
 
   static double _getRating(dynamic value) {
-    final rating = _getDouble(value);
+    final double rating = _getDouble(value);
 
     if (rating.isNaN || rating.isInfinite) {
       return 0.0;
@@ -114,15 +125,9 @@ class ProductModel extends ProductEntity {
 
   static CategoryModel _getCategory(dynamic category) {
     if (category is Map) {
-      return CategoryModel.fromJson(
-        Map<String, dynamic>.from(category),
-      );
+      return CategoryModel.fromJson(Map<String, dynamic>.from(category));
     }
 
-    return const CategoryModel(
-      id: '',
-      name: '',
-      imageUrl: '',
-    );
+    return const CategoryModel(id: '', name: '', imageUrl: '');
   }
 }

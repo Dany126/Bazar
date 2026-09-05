@@ -11,6 +11,7 @@ import '../models/product_model.dart';
 abstract class HomeRemoteDataSource {
   Future<Either<Failure, List<CategoryModel>>> getAllCategories();
 
+
   Future<Either<Failure, List<ProductModel>>> getAllProducts({
     required int page,
     required int limit,

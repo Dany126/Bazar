@@ -17,7 +17,7 @@ class OrderProductModel extends OrderProductEntity {
         : ProductModel(
             id: productRaw?.toString() ?? '',
             name: '',
-            thumbnailUrl: '',
+            images: [] as List<String>,
             price: 0,
             rating: 0,
             stock: 0,

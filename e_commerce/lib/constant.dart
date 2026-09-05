@@ -40,7 +40,7 @@ List<ProductEntity> kFakeProducts = [
   ProductEntity(
     id: '',
     name: '',
-    thumbnailUrl: '',
+    images: [] as List<String>,
     price: 0,
     rating: 0,
     stock: 0,
@@ -63,7 +63,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_001',
           name: 'Wireless Headphones',
-          thumbnailUrl: '',
+          images: [] as List<String>,
           price: 75.0,
           rating: 4.7,
           stock: 35,
@@ -82,7 +82,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_002',
           name: 'Smart Watch',
-          thumbnailUrl: '',
+         images:[] as List<String>,
           price: 50.0,
           rating: 4.5,
           stock: 20,
@@ -112,7 +112,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_003',
           name: 'Running Shoes',
-          thumbnailUrl: '',
+         images:[] as List<String>,
           price: 80.0,
           rating: 4.8,
           stock: 15,
@@ -127,7 +127,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_004',
           name: 'Sports T-Shirt',
-          thumbnailUrl: '',
+         images:[] as List<String>,
           price: 35.0,
           rating: 4.4,
           stock: 40,
@@ -157,7 +157,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_005',
           name: 'Leather Backpack',
-          thumbnailUrl: '',
+         images:[] as List<String>,
           price: 95.0,
           rating: 4.6,
           stock: 18,
@@ -183,7 +183,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_006',
           name: 'Cotton Hoodie',
-          thumbnailUrl: '',
+         images:[] as List<String>,
           price: 60.0,
           rating: 4.3,
           stock: 25,
@@ -202,7 +202,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_007',
           name: 'Baseball Cap',
-          thumbnailUrl: '',
+         images:[] as List<String>,
           price: 20.0,
           rating: 4.2,
           stock: 50,
@@ -232,7 +232,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_008',
           name: 'Mechanical Keyboard',
-          thumbnailUrl: '',
+         images:[] as List<String>,
           price: 120.0,
           rating: 4.9,
           stock: 12,
@@ -262,7 +262,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_009',
           name: 'Coffee Maker',
-          thumbnailUrl: '',
+         images:[] as List<String>,
           price: 110.0,
           rating: 4.5,
           stock: 10,
@@ -281,7 +281,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_010',
           name: 'Coffee Mug',
-          thumbnailUrl: '',
+         images:[] as List<String>,
           price: 15.0,
           rating: 4.1,
           stock: 100,
@@ -311,7 +311,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_011',
           name: 'Sunglasses',
-          thumbnailUrl: '',
+         images:[] as List<String>,
           price: 45.0,
           rating: 4.4,
           stock: 30,
