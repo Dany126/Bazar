@@ -1,110 +1,143 @@
+import 'package:e_commerce/features/admin/domain/entity/admin_orders_page.dart';
 import 'package:e_commerce/features/order/domin/entity/order_entity.dart';
 
 abstract class AdminOrdersState {
   const AdminOrdersState();
 }
 
+// ============================================================
+// INITIAL
+// ============================================================
+
 class AdminOrdersInitial extends AdminOrdersState {
   const AdminOrdersInitial();
 }
+
+// ============================================================
+// FIRST LOAD
+// ============================================================
 
 class AdminOrdersLoading extends AdminOrdersState {
   const AdminOrdersLoading();
 }
 
-class AdminOrdersLoaded extends AdminOrdersState {
-  final List<OrderEntity> orders;
-  final List<OrderEntity> filteredOrders;
+// ============================================================
+// PAGE LOADING
+// ============================================================
+
+class AdminOrdersLoadingPage extends AdminOrdersState {
+  final AdminOrdersPage previousPage;
 
   final String searchQuery;
 
   final String? updatingOrderId;
   final String? deletingOrderId;
 
-  // Pagination
-  final int currentPage;
-  final int itemsPerPage;
-
-  const AdminOrdersLoaded({
-    required this.orders,
-    required this.filteredOrders,
+  const AdminOrdersLoadingPage({
+    required this.previousPage,
     this.searchQuery = '',
     this.updatingOrderId,
     this.deletingOrderId,
-    this.currentPage = 1,
-    this.itemsPerPage = 10,
+  });
+}
+
+// ============================================================
+// LOADED
+// ============================================================
+
+class AdminOrdersLoaded extends AdminOrdersState {
+  final AdminOrdersPage pageData;
+
+  final String searchQuery;
+
+  final String? updatingOrderId;
+  final String? deletingOrderId;
+
+  const AdminOrdersLoaded({
+    required this.pageData,
+    this.searchQuery = '',
+    this.updatingOrderId,
+    this.deletingOrderId,
   });
 
-  int get totalItems => filteredOrders.length;
+  // ==========================================================
+  // EASY ACCESS
+  // ==========================================================
 
-  int get totalPages {
-    if (filteredOrders.isEmpty) {
-      return 1;
+  List<OrderEntity> get orders => pageData.orders;
+
+  List<OrderEntity> get filteredOrders {
+    final query = searchQuery.trim().toLowerCase();
+
+    if (query.isEmpty) {
+      return orders;
     }
 
-    return (filteredOrders.length / itemsPerPage).ceil();
+    return orders.where((order) {
+      return order.id.toLowerCase().contains(query) ||
+          order.orderStatus.toLowerCase().contains(query) ||
+          order.paymentStatus.toLowerCase().contains(query) ||
+          order.paymentMethod.toLowerCase().contains(query);
+    }).toList();
   }
 
-  List<OrderEntity> get paginatedOrders {
-    if (filteredOrders.isEmpty) {
-      return const [];
-    }
+  int get currentPage => pageData.currentPage;
 
-    final startIndex =
-        (currentPage - 1) * itemsPerPage;
+  int get itemsPerPage => pageData.itemsPerPage;
 
-    if (startIndex >= filteredOrders.length) {
-      return const [];
-    }
+  int get totalItems => pageData.totalOrders;
 
-    final endIndex =
-        (startIndex + itemsPerPage)
-            .clamp(0, filteredOrders.length);
-
-    return filteredOrders.sublist(
-      startIndex,
-      endIndex,
-    );
-  }
+  int get totalPages => pageData.totalPages;
 
   bool get hasPreviousPage =>
-      currentPage > 1;
+      pageData.hasPreviousPage;
 
   bool get hasNextPage =>
-      currentPage < totalPages;
+      pageData.hasNextPage;
+
+  List<OrderEntity> get paginatedOrders =>
+      filteredOrders;
+
+  int get startItem {
+    if (filteredOrders.isEmpty) {
+      return 0;
+    }
+
+    return pageData.startItem;
+  }
+
+  int get endItem {
+    if (filteredOrders.isEmpty) {
+      return 0;
+    }
+
+    return pageData.endItem;
+  }
 
   AdminOrdersLoaded copyWith({
-    List<OrderEntity>? orders,
-    List<OrderEntity>? filteredOrders,
+    AdminOrdersPage? pageData,
     String? searchQuery,
     String? updatingOrderId,
     String? deletingOrderId,
-    int? currentPage,
-    int? itemsPerPage,
     bool clearUpdatingOrderId = false,
     bool clearDeletingOrderId = false,
   }) {
     return AdminOrdersLoaded(
-      orders: orders ?? this.orders,
-      filteredOrders:
-          filteredOrders ?? this.filteredOrders,
-      searchQuery:
-          searchQuery ?? this.searchQuery,
+      pageData: pageData ?? this.pageData,
+      searchQuery: searchQuery ?? this.searchQuery,
       updatingOrderId: clearUpdatingOrderId
           ? null
-          : updatingOrderId ??
-              this.updatingOrderId,
+          : updatingOrderId ?? this.updatingOrderId,
       deletingOrderId: clearDeletingOrderId
           ? null
-          : deletingOrderId ??
-              this.deletingOrderId,
-      currentPage:
-          currentPage ?? this.currentPage,
-      itemsPerPage:
-          itemsPerPage ?? this.itemsPerPage,
+          : deletingOrderId ?? this.deletingOrderId,
     );
   }
 }
+
+// ============================================================
+// ERROR
+// ============================================================
 
 class AdminOrdersError extends AdminOrdersState {
   final String message;

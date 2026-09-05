@@ -1,5 +1,6 @@
-import 'package:e_commerce/features/order/domin/entity/order_entity.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
+import 'package:e_commerce/features/admin/domain/entity/admin_orders_page.dart';
 
 import 'package:e_commerce/features/admin/domain/usecases/delete_admin_order.dart';
 import 'package:e_commerce/features/admin/domain/usecases/get_admin_order.dart';
@@ -8,8 +9,9 @@ import 'package:e_commerce/features/admin/domain/usecases/update_admin_order.dar
 
 import 'package:e_commerce/features/admin/presentation/cubit/admin_orders_state.dart';
 
-class AdminOrdersCubit
-    extends Cubit<AdminOrdersState> {
+import 'package:e_commerce/features/order/domin/entity/order_entity.dart';
+
+class AdminOrdersCubit extends Cubit<AdminOrdersState> {
   final GetAllAdminOrders getAllAdminOrders;
   final GetAdminOrder getAdminOrder;
   final UpdateAdminOrder updateAdminOrder;
@@ -20,12 +22,10 @@ class AdminOrdersCubit
     required this.getAdminOrder,
     required this.updateAdminOrder,
     required this.deleteAdminOrder,
-  }) : super(
-          const AdminOrdersInitial(),
-        );
+  }) : super(const AdminOrdersInitial());
 
   // ============================================================
-  // PAGINATION CONFIG
+  // CONFIG
   // ============================================================
 
   static const int defaultItemsPerPage = 10;
@@ -34,63 +34,77 @@ class AdminOrdersCubit
   // LOAD ORDERS
   // ============================================================
 
-  Future<void> loadOrders() async {
-    emit(
-      const AdminOrdersLoading(),
-    );
+  Future<void> loadOrders({int page = 1}) async {
+    final bool isFirstLoad =
+        state is AdminOrdersInitial || state is AdminOrdersError;
 
-    final result =
-        await getAllAdminOrders();
+    if (isFirstLoad) {
+      emit(const AdminOrdersLoading());
+    } else if (state is AdminOrdersLoaded) {
+      final current = state as AdminOrdersLoaded;
+
+      emit(
+        AdminOrdersLoadingPage(
+          previousPage: current.pageData,
+          searchQuery: current.searchQuery,
+          updatingOrderId: current.updatingOrderId,
+          deletingOrderId: current.deletingOrderId,
+        ),
+      );
+    }
+
+    final result = await getAllAdminOrders(
+      page: page,
+      limit: defaultItemsPerPage,
+    );
 
     result.fold(
       (failure) {
-        emit(
-          AdminOrdersError(
-            message: failure.message,
-          ),
-        );
+        emit(AdminOrdersError(message: failure.message));
       },
-      (orders) {
-        emit(
-          AdminOrdersLoaded(
-            orders: orders,
-            filteredOrders: orders,
-            currentPage: 1,
-            itemsPerPage:
-                defaultItemsPerPage,
-          ),
-        );
+      (ordersPage) {
+        String searchQuery = '';
+
+        if (state is AdminOrdersLoadingPage) {
+          searchQuery = (state as AdminOrdersLoadingPage).searchQuery;
+        }
+
+        emit(AdminOrdersLoaded(pageData: ordersPage, searchQuery: searchQuery));
       },
     );
+  }
+
+  // ============================================================
+  // REFRESH
+  // ============================================================
+
+  Future<void> refreshOrders() async {
+    await loadOrders(page: 1);
   }
 
   // ============================================================
   // SEARCH
   // ============================================================
 
-  void searchOrders(
-    String query,
-  ) {
+  void searchOrders(String query) {
     final currentState = state;
 
-    if (currentState
-        is! AdminOrdersLoaded) {
+    if (currentState is AdminOrdersLoaded) {
+      emit(currentState.copyWith(searchQuery: query));
+
       return;
     }
 
-    final filtered =
-        _filterOrders(
-      currentState.orders,
-      query,
-    );
-
-    emit(
-      currentState.copyWith(
-        filteredOrders: filtered,
-        searchQuery: query,
-        currentPage: 1,
-      ),
-    );
+    if (currentState is AdminOrdersLoadingPage) {
+      emit(
+        AdminOrdersLoadingPage(
+          previousPage: currentState.previousPage,
+          searchQuery: query,
+          updatingOrderId: currentState.updatingOrderId,
+          deletingOrderId: currentState.deletingOrderId,
+        ),
+      );
+    }
   }
 
   // ============================================================
@@ -100,99 +114,19 @@ class AdminOrdersCubit
   void clearSearch() {
     final currentState = state;
 
-    if (currentState
-        is! AdminOrdersLoaded) {
-      return;
+    if (currentState is AdminOrdersLoaded) {
+      emit(currentState.copyWith(searchQuery: ''));
     }
-
-    emit(
-      currentState.copyWith(
-        filteredOrders:
-            currentState.orders,
-        searchQuery: '',
-        currentPage: 1,
-      ),
-    );
-  }
-
-  // ============================================================
-  // FILTER
-  // ============================================================
-
-  List<OrderEntity> _filterOrders(
-    List<OrderEntity> orders,
-    String query,
-  ) {
-    final value =
-        query.trim().toLowerCase();
-
-    if (value.isEmpty) {
-      return orders;
-    }
-
-    return orders.where(
-      (order) {
-        final id =
-            order.id.toLowerCase();
-
-        final orderStatus =
-            order.orderStatus
-                .toLowerCase();
-
-        final paymentStatus =
-            order.paymentStatus
-                .toLowerCase();
-
-        return id.contains(value) ||
-            orderStatus.contains(value) ||
-            paymentStatus.contains(value);
-      },
-    ).toList();
-  }
-
-  // ============================================================
-  // GO TO PAGE
-  // ============================================================
-
-  void goToPage(
-    int page,
-  ) {
-    final currentState = state;
-
-    if (currentState
-        is! AdminOrdersLoaded) {
-      return;
-    }
-
-    final totalPages =
-        currentState.totalPages;
-
-    if (page < 1 ||
-        page > totalPages) {
-      return;
-    }
-
-    if (page ==
-        currentState.currentPage) {
-      return;
-    }
-
-    emit(
-      currentState.copyWith(
-        currentPage: page,
-      ),
-    );
   }
 
   // ============================================================
   // NEXT PAGE
   // ============================================================
 
-  void nextPage() {
+  Future<void> nextPage() async {
     final currentState = state;
 
-    if (currentState
-        is! AdminOrdersLoaded) {
+    if (currentState is! AdminOrdersLoaded) {
       return;
     }
 
@@ -200,23 +134,17 @@ class AdminOrdersCubit
       return;
     }
 
-    emit(
-      currentState.copyWith(
-        currentPage:
-            currentState.currentPage + 1,
-      ),
-    );
+    await loadOrders(page: currentState.currentPage + 1);
   }
 
   // ============================================================
   // PREVIOUS PAGE
   // ============================================================
 
-  void previousPage() {
+  Future<void> previousPage() async {
     final currentState = state;
 
-    if (currentState
-        is! AdminOrdersLoaded) {
+    if (currentState is! AdminOrdersLoaded) {
       return;
     }
 
@@ -224,73 +152,65 @@ class AdminOrdersCubit
       return;
     }
 
-    emit(
-      currentState.copyWith(
-        currentPage:
-            currentState.currentPage - 1,
-      ),
-    );
+    await loadOrders(page: currentState.currentPage - 1);
   }
 
   // ============================================================
   // FIRST PAGE
   // ============================================================
 
-  void firstPage() {
+  Future<void> firstPage() async {
     final currentState = state;
 
-    if (currentState
-        is! AdminOrdersLoaded) {
+    if (currentState is! AdminOrdersLoaded) {
       return;
     }
 
-    emit(
-      currentState.copyWith(
-        currentPage: 1,
-      ),
-    );
+    if (!currentState.hasPreviousPage) {
+      return;
+    }
+
+    await loadOrders(page: 1);
   }
 
   // ============================================================
   // LAST PAGE
   // ============================================================
 
-  void lastPage() {
+  Future<void> lastPage() async {
     final currentState = state;
 
-    if (currentState
-        is! AdminOrdersLoaded) {
+    if (currentState is! AdminOrdersLoaded) {
       return;
     }
 
-    emit(
-      currentState.copyWith(
-        currentPage:
-            currentState.totalPages,
-      ),
-    );
+    if (!currentState.hasNextPage) {
+      return;
+    }
+
+    await loadOrders(page: currentState.totalPages);
   }
 
   // ============================================================
-  // ITEMS PER PAGE
+  // GO TO PAGE
   // ============================================================
 
-  void changeItemsPerPage(
-    int value,
-  ) {
+  Future<void> goToPage(int page) async {
     final currentState = state;
 
-    if (currentState
-        is! AdminOrdersLoaded) {
+    if (currentState is! AdminOrdersLoaded) {
       return;
     }
 
-    emit(
-      currentState.copyWith(
-        itemsPerPage: value,
-        currentPage: 1,
-      ),
-    );
+    if (page < 1 || page > currentState.totalPages) {
+      return;
+    }
+
+    if (page == currentState.currentPage) {
+      return;
+    }
+
+    await loadOrders(page: page);
   }
 
   // ============================================================
@@ -303,78 +223,44 @@ class AdminOrdersCubit
   }) async {
     final currentState = state;
 
-    if (currentState
-        is! AdminOrdersLoaded) {
+    if (currentState is! AdminOrdersLoaded) {
       return;
     }
 
-    emit(
-      currentState.copyWith(
-        updatingOrderId: orderId,
-      ),
-    );
+    emit(currentState.copyWith(updatingOrderId: orderId));
 
-    final result =
-        await updateAdminOrder(
+    final result = await updateAdminOrder(
       orderId: orderId,
-      data: {
-        'orderStatus': orderStatus,
-      },
+      data: {'orderStatus': orderStatus},
     );
 
     result.fold(
       (failure) {
-        emit(
-          currentState.copyWith(
-            clearUpdatingOrderId: true,
-          ),
-        );
+        emit(currentState.copyWith(clearUpdatingOrderId: true));
+
+        emit(AdminOrdersError(message: failure.message));
       },
       (updatedOrder) {
-        final updatedOrders =
-            currentState.orders
-                .map(
-                  (order) {
-                    if (order.id ==
-                        updatedOrder.id) {
-                      return updatedOrder;
-                    }
+        final updatedOrders = currentState.orders.map((order) {
+          if (order.id == updatedOrder.id) {
+            return updatedOrder;
+          }
 
-                    return order;
-                  },
-                )
-                .toList();
+          return order;
+        }).toList();
 
-        final filteredOrders =
-            _filterOrders(
-          updatedOrders,
-          currentState.searchQuery,
+        final updatedPage = AdminOrdersPage(
+          orders: updatedOrders,
+          currentPage: currentState.currentPage,
+          itemsPerPage: currentState.itemsPerPage,
+          totalOrders: currentState.totalItems,
+          totalPages: currentState.totalPages,
         );
-
-        int page =
-            currentState.currentPage;
-
-        final totalPages =
-            filteredOrders.isEmpty
-                ? 1
-                : (filteredOrders.length /
-                        currentState.itemsPerPage)
-                    .ceil();
-
-        if (page > totalPages) {
-          page = totalPages;
-        }
 
         emit(
           AdminOrdersLoaded(
-            orders: updatedOrders,
-            filteredOrders:
-                filteredOrders,
-            searchQuery:
-                currentState.searchQuery,
-            currentPage: page,
-            itemsPerPage:
-                currentState.itemsPerPage,
+            pageData: updatedPage,
+            searchQuery: currentState.searchQuery,
           ),
         );
       },
@@ -385,76 +271,28 @@ class AdminOrdersCubit
   // DELETE ORDER
   // ============================================================
 
-  Future<void> deleteOrder(
-    String orderId,
-  ) async {
+  Future<void> deleteOrder(String orderId) async {
     final currentState = state;
 
-    if (currentState
-        is! AdminOrdersLoaded) {
+    if (currentState is! AdminOrdersLoaded) {
       return;
     }
 
-    emit(
-      currentState.copyWith(
-        deletingOrderId: orderId,
-      ),
-    );
+    emit(currentState.copyWith(deletingOrderId: orderId));
 
-    final result =
-        await deleteAdminOrder(
-      orderId: orderId,
-    );
+    final result = await deleteAdminOrder(orderId: orderId);
 
     result.fold(
       (failure) {
-        emit(
-          currentState.copyWith(
-            clearDeletingOrderId: true,
-          ),
-        );
+        emit(currentState.copyWith(clearDeletingOrderId: true));
+
+        emit(AdminOrdersError(message: failure.message));
       },
-      (_) {
-        final updatedOrders =
-            currentState.orders
-                .where(
-                  (order) =>
-                      order.id != orderId,
-                )
-                .toList();
+      (_) async {
+        // Reload current page from server so pagination stays correct.
+        final currentPage = currentState.currentPage;
 
-        final filteredOrders =
-            _filterOrders(
-          updatedOrders,
-          currentState.searchQuery,
-        );
-
-        int page =
-            currentState.currentPage;
-
-        final totalPages =
-            filteredOrders.isEmpty
-                ? 1
-                : (filteredOrders.length /
-                        currentState.itemsPerPage)
-                    .ceil();
-
-        if (page > totalPages) {
-          page = totalPages;
-        }
-
-        emit(
-          AdminOrdersLoaded(
-            orders: updatedOrders,
-            filteredOrders:
-                filteredOrders,
-            searchQuery:
-                currentState.searchQuery,
-            currentPage: page,
-            itemsPerPage:
-                currentState.itemsPerPage,
-          ),
-        );
+        await loadOrders(page: currentPage);
       },
     );
   }
@@ -463,17 +301,9 @@ class AdminOrdersCubit
   // GET SINGLE ORDER
   // ============================================================
 
-  Future<OrderEntity?> getOrder(
-    String orderId,
-  ) async {
-    final result =
-        await getAdminOrder(
-      orderId: orderId,
-    );
+  Future<OrderEntity?> getOrder(String orderId) async {
+    final result = await getAdminOrder(orderId: orderId);
 
-    return result.fold(
-      (_) => null,
-      (order) => order,
-    );
+    return result.fold((_) => null, (order) => order);
   }
 }

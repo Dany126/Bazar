@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:e_commerce/features/admin/presentation/cubit/admin_categories_cubit.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_categories_state.dart';
 import 'package:e_commerce/features/home/data/models/category_model.dart';
@@ -256,17 +258,21 @@ class _AddCategorySheetState extends State<AddCategorySheet> {
   }
 
   Widget _buildSelectedImage(XFile image) {
-    return FutureBuilder<List<int>>(
+    return FutureBuilder<Uint8List>(
       future: image.readAsBytes(),
       builder: (context, snapshot) {
-        if (!snapshot.hasData) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError || !snapshot.hasData) {
+          return _buildImagePlaceholder();
         }
 
         return ClipRRect(
           borderRadius: BorderRadius.circular(14),
           child: Image.memory(
-            snapshot.data! as dynamic,
+            snapshot.data!,
             fit: BoxFit.cover,
             width: double.infinity,
             height: double.infinity,

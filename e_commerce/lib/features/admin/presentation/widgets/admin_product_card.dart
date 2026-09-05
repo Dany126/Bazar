@@ -20,7 +20,6 @@ class AdminProductCard extends StatelessWidget {
   final VoidCallback? onDelete;
 
   @override
-
   Widget build(BuildContext context) {
     final String imageUrl = fixImageUrl(product.thumbnailUrl);
 
@@ -34,129 +33,145 @@ class AdminProductCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Stack(
-            children: [
-              SizedBox(
-                height: 220,
-                width: double.infinity,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: imageUrl.isEmpty
-                      ? const _ProductImagePlaceholder()
-                      : CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          },
-                          errorWidget: (context, url, error) {
-                            debugPrint(
-                              'ADMIN PRODUCT IMAGE ERROR\n'
-                              'URL: $imageUrl\n'
-                              'ERROR: $error',
-                            );
+          // FIX: Wrapped the image Stack in Expanded instead of giving
+          // it a fixed SizedBox(height: 220). This card sits inside a
+          // fixed-height GridView cell (see admin_products_view.dart),
+          // so a fixed image height + the text block below it could
+          // together exceed the cell's actual height, causing a
+          // RenderFlex overflow. Expanded lets the image take exactly
+          // the remaining space in the cell instead of forcing its own
+          // height and pushing the text past the bottom.
+          Expanded(
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: imageUrl.isEmpty
+                        ? const _ProductImagePlaceholder()
+                        : CachedNetworkImage(
+                            imageUrl: imageUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (context, url) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            },
+                            errorWidget: (context, url, error) {
+                              debugPrint(
+                                'ADMIN PRODUCT IMAGE ERROR\n'
+                                'URL: $imageUrl\n'
+                                'ERROR: $error',
+                              );
 
-                            return const _ProductImagePlaceholder();
+                              return const _ProductImagePlaceholder();
+                            },
+                          ),
+                  ),
+                ),
+
+                // Admin actions
+                Positioned(
+                  top: 5,
+                  right: 8,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(100),
+                    child: BackdropFilter(
+                      filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                      child: Container(
+                        height: 32,
+                        width: 32,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withValues(alpha: 0.75),
+                          shape: BoxShape.circle,
+                        ),
+                        child: PopupMenuButton<String>(
+                          padding: EdgeInsets.zero,
+                          tooltip: 'Product actions',
+                          icon: const Icon(Icons.more_vert, size: 20),
+                          onSelected: (value) {
+                            switch (value) {
+                              case 'edit':
+                                onEdit?.call();
+                                break;
+
+                              case 'delete':
+                                onDelete?.call();
+                                break;
+                            }
+                          },
+                          itemBuilder: (context) {
+                            return const [
+                              PopupMenuItem<String>(
+                                value: 'edit',
+                                child: Row(
+                                  children: [
+                                    Icon(Icons.edit_outlined, size: 20),
+                                    SizedBox(width: 10),
+                                    Text('Edit'),
+                                  ],
+                                ),
+                              ),
+                              PopupMenuItem<String>(
+                                value: 'delete',
+                                child: Row(
+                                  children: [
+                                    Icon(
+                                      Icons.delete_outline,
+                                      size: 20,
+                                      color: Colors.red,
+                                    ),
+                                    SizedBox(width: 10),
+                                    Text('Delete'),
+                                  ],
+                                ),
+                              ),
+                            ];
                           },
                         ),
-                ),
-              ),
-
-              // Admin actions
-              Positioned(
-                top: 5,
-                right: 8,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(100),
-                  child: BackdropFilter(
-                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                    child: Container(
-                      height: 32,
-                      width: 32,
-                      alignment: Alignment.center,
-                      decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.75),
-                        shape: BoxShape.circle,
-                      ),
-                      child: PopupMenuButton<String>(
-                        padding: EdgeInsets.zero,
-                        tooltip: 'Product actions',
-                        icon: const Icon(Icons.more_vert, size: 20),
-                        onSelected: (value) {
-                          switch (value) {
-                            case 'edit':
-                              onEdit?.call();
-                              break;
-
-                            case 'delete':
-                              onDelete?.call();
-                              break;
-                          }
-                        },
-                        itemBuilder: (context) {
-                          return const [
-                            PopupMenuItem<String>(
-                              value: 'edit',
-                              child: Row(
-                                children: [
-                                  Icon(Icons.edit_outlined, size: 20),
-                                  SizedBox(width: 10),
-                                  Text('Edit'),
-                                ],
-                              ),
-                            ),
-                            PopupMenuItem<String>(
-                              value: 'delete',
-                              child: Row(
-                                children: [
-                                  Icon(
-                                    Icons.delete_outline,
-                                    size: 20,
-                                    color: Colors.red,
-                                  ),
-                                  SizedBox(width: 10),
-                                  Text('Delete'),
-                                ],
-                              ),
-                            ),
-                          ];
-                        },
                       ),
                     ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 8),
+          // FIX: Wrapped the text block itself in a Flexible as a
+          // second safety net. Even with the image now flexible, long
+          // product names/prices combined with fixed paddings could
+          // still overflow on very small cell heights - Flexible lets
+          // this block shrink instead of forcing the Column past its
+          // available height.
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const SizedBox(height: 8),
 
-                Text(
-                  product.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppStyles.textStylesRegular12(context),
-                ),
+                  Text(
+                    product.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppStyles.textStylesRegular12(context),
+                  ),
 
-                const SizedBox(height: 4),
+                  const SizedBox(height: 4),
 
-                Text(
-                  '\$${product.price.toStringAsFixed(2)}',
-                  style: AppStyles.textStylesRegular12(
-                    context,
-                  ).copyWith(fontWeight: FontWeight.bold),
-                ),
+                  Text(
+                    '\$${product.price.toStringAsFixed(2)}',
+                    style: AppStyles.textStylesRegular12(
+                      context,
+                    ).copyWith(fontWeight: FontWeight.bold),
+                  ),
 
-                const SizedBox(height: 8),
-              ],
+                  const SizedBox(height: 8),
+                ],
+              ),
             ),
           ),
         ],

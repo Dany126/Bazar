@@ -1,22 +1,26 @@
 import 'package:e_commerce/features/order/domin/entity/order_entity.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+
 import 'package:e_commerce/core/services/get_it_services.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_orders_cubit.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_orders_state.dart';
-
 
 class AdminOrdersView extends StatelessWidget {
   const AdminOrdersView({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
+    return BlocProvider<AdminOrdersCubit>(
       create: (_) => getIt<AdminOrdersCubit>()..loadOrders(),
       child: const _AdminOrdersBody(),
     );
   }
 }
+
+// ============================================================
+// BODY
+// ============================================================
 
 class _AdminOrdersBody extends StatefulWidget {
   const _AdminOrdersBody();
@@ -50,15 +54,23 @@ class _AdminOrdersBodyState extends State<_AdminOrdersBody> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             _buildHeader(),
+
             const SizedBox(height: 24),
+
             _buildSearch(),
+
             const SizedBox(height: 24),
+
             const Expanded(child: _OrdersContent()),
           ],
         ),
       ),
     );
   }
+
+  // ============================================================
+  // HEADER
+  // ============================================================
 
   Widget _buildHeader() {
     return const Column(
@@ -77,10 +89,18 @@ class _AdminOrdersBodyState extends State<_AdminOrdersBody> {
     );
   }
 
+  // ============================================================
+  // SEARCH
+  // ============================================================
+
   Widget _buildSearch() {
     return TextField(
       controller: _searchController,
-      onChanged: context.read<AdminOrdersCubit>().searchOrders,
+      onChanged: (value) {
+        context.read<AdminOrdersCubit>().searchOrders(value);
+
+        setState(() {});
+      },
       decoration: InputDecoration(
         hintText: 'Search orders...',
         prefixIcon: const Icon(Icons.search),
@@ -90,6 +110,7 @@ class _AdminOrdersBodyState extends State<_AdminOrdersBody> {
                 icon: const Icon(Icons.clear),
                 onPressed: () {
                   _searchController.clear();
+
                   context.read<AdminOrdersCubit>().clearSearch();
 
                   setState(() {});
@@ -101,111 +122,111 @@ class _AdminOrdersBodyState extends State<_AdminOrdersBody> {
   }
 }
 
-class _OrdersContent
-    extends StatelessWidget {
+// ============================================================
+// ORDERS CONTENT
+// ============================================================
+
+class _OrdersContent extends StatelessWidget {
   const _OrdersContent();
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-    return BlocBuilder<
-        AdminOrdersCubit,
-        AdminOrdersState>(
-      builder: (
-        context,
-        state,
-      ) {
-        if (state
-            is AdminOrdersLoading) {
-          return const Center(
-            child:
-                CircularProgressIndicator(),
+  Widget build(BuildContext context) {
+    return BlocBuilder<AdminOrdersCubit, AdminOrdersState>(
+      builder: (context, state) {
+        // ======================================================
+        // INITIAL
+        // ======================================================
+
+        if (state is AdminOrdersInitial) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        // ======================================================
+        // FIRST LOAD
+        // ======================================================
+
+        if (state is AdminOrdersLoading) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        // ======================================================
+        // PAGE LOADING
+        // ======================================================
+
+        if (state is AdminOrdersLoadingPage) {
+          return Column(
+            children: [
+              Expanded(
+                child: _buildOrdersList(
+                  context,
+                  state.previousPage.orders,
+                  searchQuery: state.searchQuery,
+                  updatingOrderId: state.updatingOrderId,
+                  deletingOrderId: state.deletingOrderId,
+                ),
+              ),
+
+              const SizedBox(height: 16),
+
+              const SizedBox(
+                height: 50,
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ],
           );
         }
 
-        if (state
-            is AdminOrdersError) {
-          return _ErrorView(
-            message: state.message,
-          );
+        // ======================================================
+        // ERROR
+        // ======================================================
+
+        if (state is AdminOrdersError) {
+          return _ErrorView(message: state.message);
         }
 
-        if (state
-            is AdminOrdersLoaded) {
-          if (state.filteredOrders
-              .isEmpty) {
+        // ======================================================
+        // LOADED
+        // ======================================================
+
+        if (state is AdminOrdersLoaded) {
+          final orders = state.filteredOrders;
+
+          if (orders.isEmpty) {
             return const _EmptyView();
           }
 
           return Column(
             children: [
-              // ==================================================
-              // ORDERS LIST
-              // ==================================================
-
               Expanded(
                 child: RefreshIndicator(
-                  onRefresh: context
-                      .read<
-                          AdminOrdersCubit>()
-                      .loadOrders,
-                  child:
-                      ListView.separated(
-                    physics:
-                        const AlwaysScrollableScrollPhysics(),
-                    itemCount:
-                        state.paginatedOrders
-                            .length,
-                    separatorBuilder:
-                        (_, __) =>
-                            const SizedBox(
-                      height: 12,
-                    ),
-                    itemBuilder:
-                        (
-                      context,
-                      index,
-                    ) {
-                      final order =
-                          state.paginatedOrders[
-                              index];
+                  onRefresh: context.read<AdminOrdersCubit>().refreshOrders,
+                  child: ListView.separated(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: orders.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final order = orders[index];
 
                       return _OrderCard(
                         order: order,
-                        isUpdating:
-                            state.updatingOrderId ==
-                                order.id,
-                        isDeleting:
-                            state.deletingOrderId ==
-                                order.id,
+                        isUpdating: state.updatingOrderId == order.id,
+                        isDeleting: state.deletingOrderId == order.id,
                       );
                     },
                   ),
                 ),
               ),
 
-              const SizedBox(
-                height: 16,
-              ),
-
-              // ==================================================
-              // PAGINATION
-              // ==================================================
+              const SizedBox(height: 16),
 
               _OrdersPagination(
-                currentPage:
-                    state.currentPage,
-                totalPages:
-                    state.totalPages,
-                totalItems:
-                    state.totalItems,
-                itemsPerPage:
-                    state.itemsPerPage,
-                hasPreviousPage:
-                    state.hasPreviousPage,
-                hasNextPage:
-                    state.hasNextPage,
+                currentPage: state.currentPage,
+                totalPages: state.totalPages,
+                totalItems: state.totalItems,
+                itemsPerPage: state.itemsPerPage,
+
+                hasPreviousPage: state.hasPreviousPage,
+                hasNextPage: state.hasNextPage,
               ),
             ],
           );
@@ -215,10 +236,53 @@ class _OrdersContent
       },
     );
   }
+
+  Widget _buildOrdersList(
+    BuildContext context,
+    List<OrderEntity> orders, {
+    required String searchQuery,
+    required String? updatingOrderId,
+    required String? deletingOrderId,
+  }) {
+    final query = searchQuery.trim().toLowerCase();
+
+    final filtered = query.isEmpty
+        ? orders
+        : orders.where((order) {
+            return order.id.toLowerCase().contains(query) ||
+                order.orderStatus.toLowerCase().contains(query) ||
+                order.paymentStatus.toLowerCase().contains(query) ||
+                order.paymentMethod.toLowerCase().contains(query);
+          }).toList();
+
+    if (filtered.isEmpty) {
+      return const _EmptyView();
+    }
+
+    return ListView.separated(
+      physics: const AlwaysScrollableScrollPhysics(),
+      itemCount: filtered.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 12),
+      itemBuilder: (context, index) {
+        final order = filtered[index];
+
+        return _OrderCard(
+          order: order,
+          isUpdating: updatingOrderId == order.id,
+          isDeleting: deletingOrderId == order.id,
+        );
+      },
+    );
+  }
 }
+
+// ============================================================
+// ORDER CARD
+// ============================================================
 
 class _OrderCard extends StatelessWidget {
   final OrderEntity order;
+
   final bool isUpdating;
   final bool isDeleting;
 
@@ -260,7 +324,9 @@ class _OrderCard extends StatelessWidget {
             return Row(
               children: [
                 Expanded(child: _OrderInformation(order: order)),
+
                 const SizedBox(width: 24),
+
                 _OrderActions(
                   order: order,
                   isUpdating: isUpdating,
@@ -274,6 +340,10 @@ class _OrderCard extends StatelessWidget {
     );
   }
 }
+
+// ============================================================
+// ORDER INFORMATION
+// ============================================================
 
 class _OrderInformation extends StatelessWidget {
   final OrderEntity order;
@@ -291,20 +361,51 @@ class _OrderInformation extends StatelessWidget {
           overflow: TextOverflow.ellipsis,
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
         ),
+
         const SizedBox(height: 10),
+
         Wrap(
           spacing: 20,
-          runSpacing: 8,
+          runSpacing: 12,
           children: [
-            _InfoItem(label: 'Total', value: '${order.totalPrice}'),
-            _InfoItem(label: 'Payment', value: order.paymentStatus),
-            _InfoItem(label: 'Status', value: order.orderStatus),
+            _InfoItem(
+              label: 'Total',
+              value: '\$${order.totalPrice.toStringAsFixed(2)}',
+            ),
+
+            _InfoItem(
+              label: 'Payment',
+              value: _formatStatus(order.paymentStatus),
+            ),
+
+            _InfoItem(
+              label: 'Method',
+              value: _formatStatus(order.paymentMethod),
+            ),
+
+            _InfoItem(label: 'Status', value: _formatStatus(order.orderStatus)),
           ],
         ),
       ],
     );
   }
+
+  String _formatStatus(String value) {
+    return value
+        .split('_')
+        .map(
+          (word) => word.isEmpty
+              ? word
+              : '${word[0].toUpperCase()}'
+                    '${word.substring(1)}',
+        )
+        .join(' ');
+  }
 }
+
+// ============================================================
+// INFO ITEM
+// ============================================================
 
 class _InfoItem extends StatelessWidget {
   final String label;
@@ -325,8 +426,13 @@ class _InfoItem extends StatelessWidget {
   }
 }
 
+// ============================================================
+// ACTIONS
+// ============================================================
+
 class _OrderActions extends StatelessWidget {
   final OrderEntity order;
+
   final bool isUpdating;
   final bool isDeleting;
 
@@ -349,7 +455,9 @@ class _OrderActions extends StatelessWidget {
           )
         else
           _StatusDropdown(order: order),
+
         const SizedBox(width: 8),
+
         if (isDeleting)
           const SizedBox(
             width: 24,
@@ -372,7 +480,10 @@ class _OrderActions extends StatelessWidget {
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Delete order?'),
-          content: Text('Are you sure you want to delete order #${order.id}?'),
+          content: Text(
+            'Are you sure you want to delete '
+            'order #${order.id}?',
+          ),
           actions: [
             TextButton(
               onPressed: () {
@@ -399,6 +510,10 @@ class _OrderActions extends StatelessWidget {
   }
 }
 
+// ============================================================
+// STATUS DROPDOWN
+// ============================================================
+
 class _StatusDropdown extends StatelessWidget {
   final OrderEntity order;
 
@@ -407,8 +522,9 @@ class _StatusDropdown extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     const statuses = [
-      'placed',
+      'pending',
       'confirmed',
+      'processing',
       'shipped',
       'delivered',
       'cancelled',
@@ -420,7 +536,7 @@ class _StatusDropdown extends StatelessWidget {
 
     return DropdownButton<String>(
       value: currentStatus,
-      hint: Text(order.orderStatus),
+      hint: Text(_formatStatus(order.orderStatus)),
       underline: const SizedBox.shrink(),
       items: statuses.map((status) {
         return DropdownMenuItem<String>(
@@ -447,11 +563,16 @@ class _StatusDropdown extends StatelessWidget {
         .map(
           (word) => word.isEmpty
               ? word
-              : '${word[0].toUpperCase()}${word.substring(1)}',
+              : '${word[0].toUpperCase()}'
+                    '${word.substring(1)}',
         )
         .join(' ');
   }
 }
+
+// ============================================================
+// EMPTY
+// ============================================================
 
 class _EmptyView extends StatelessWidget {
   const _EmptyView();
@@ -479,6 +600,10 @@ class _EmptyView extends StatelessWidget {
   }
 }
 
+// ============================================================
+// ERROR
+// ============================================================
+
 class _ErrorView extends StatelessWidget {
   final String message;
 
@@ -491,19 +616,30 @@ class _ErrorView extends StatelessWidget {
         mainAxisSize: MainAxisSize.min,
         children: [
           const Icon(Icons.error_outline, size: 60),
+
           const SizedBox(height: 16),
+
           Text(message, textAlign: TextAlign.center),
+
           const SizedBox(height: 16),
+
           FilledButton(
-            onPressed: context.read<AdminOrdersCubit>().loadOrders,
+            onPressed: () {
+              context.read<AdminOrdersCubit>().loadOrders();
+            },
             child: const Text('Retry'),
           ),
         ],
       ),
     );
   }
-}class _OrdersPagination
-    extends StatelessWidget {
+}
+
+// ============================================================
+// PAGINATION
+// ============================================================
+
+class _OrdersPagination extends StatelessWidget {
   final int currentPage;
   final int totalPages;
   final int totalItems;
@@ -522,76 +658,62 @@ class _ErrorView extends StatelessWidget {
   });
 
   @override
-  Widget build(
-    BuildContext context,
-  ) {
-    final cubit =
-        context.read<AdminOrdersCubit>();
+  Widget build(BuildContext context) {
+    final cubit = context.read<AdminOrdersCubit>();
 
-    final startItem =
-        ((currentPage - 1) *
-                itemsPerPage) +
-            1;
+    final state = context.watch<AdminOrdersCubit>().state;
 
-    final endItem =
-        (currentPage * itemsPerPage)
-            .clamp(0, totalItems);
+    final bool isLoading = state is AdminOrdersLoadingPage;
+
+    final int startItem = totalItems == 0
+        ? 0
+        : ((currentPage - 1) * itemsPerPage) + 1;
+
+    final int endItem = totalItems == 0
+        ? 0
+        : ((currentPage * itemsPerPage) > totalItems
+              ? totalItems
+              : currentPage * itemsPerPage);
 
     return Container(
-      padding:
-          const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 12,
-      ),
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius:
-            BorderRadius.circular(12),
-        border: Border.all(
-          color: Colors.grey.shade200,
-        ),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.grey.shade200),
       ),
       child: LayoutBuilder(
-        builder:
-            (context, constraints) {
-          final isSmall =
-              constraints.maxWidth < 700;
+        builder: (context, constraints) {
+          final bool isSmall = constraints.maxWidth < 600;
 
           if (isSmall) {
             return Column(
               children: [
-                _buildItemsInfo(
-                  startItem,
-                  endItem,
-                  totalItems,
+                Text(
+                  totalItems == 0
+                      ? 'No orders'
+                      : 'Showing $startItem-$endItem of $totalItems orders',
+                  style: const TextStyle(color: Colors.grey, fontSize: 13),
                 ),
-
-                const SizedBox(
-                  height: 12,
-                ),
-
-                _buildPageControls(
-                  context,
-                  cubit,
-                ),
+                const SizedBox(height: 12),
+                _buildControls(context, cubit, isLoading),
               ],
             );
           }
 
           return Row(
             children: [
-              _buildItemsInfo(
-                startItem,
-                endItem,
-                totalItems,
+              Text(
+                totalItems == 0
+                    ? 'No orders'
+                    : 'Showing $startItem-$endItem of $totalItems orders',
+                style: const TextStyle(color: Colors.grey, fontSize: 13),
               ),
 
               const Spacer(),
 
-              _buildPageControls(
-                context,
-                cubit,
-              ),
+              _buildControls(context, cubit, isLoading),
             ],
           );
         },
@@ -599,210 +721,72 @@ class _ErrorView extends StatelessWidget {
     );
   }
 
-  Widget _buildItemsInfo(
-    int startItem,
-    int endItem,
-    int totalItems,
-  ) {
-    return Text(
-      'Showing $startItem-$endItem of $totalItems orders',
-      style: const TextStyle(
-        color: Colors.grey,
-        fontSize: 13,
-      ),
-    );
-  }
-
-  Widget _buildPageControls(
+  Widget _buildControls(
     BuildContext context,
     AdminOrdersCubit cubit,
+    bool isLoading,
   ) {
     return Row(
-      mainAxisSize:
-          MainAxisSize.min,
+      mainAxisSize: MainAxisSize.min,
       children: [
         // FIRST PAGE
         IconButton(
           tooltip: 'First page',
-          onPressed: hasPreviousPage
-              ? cubit.firstPage
-              : null,
-          icon: const Icon(
-            Icons.first_page,
-          ),
+          onPressed: !isLoading && hasPreviousPage ? cubit.firstPage : null,
+          icon: const Icon(Icons.first_page),
         ),
 
-        // PREVIOUS
+        // PREVIOUS PAGE
         IconButton(
           tooltip: 'Previous page',
-          onPressed: hasPreviousPage
-              ? cubit.previousPage
-              : null,
-          icon: const Icon(
-            Icons.chevron_left,
+          onPressed: !isLoading && hasPreviousPage ? cubit.previousPage : null,
+          icon: const Icon(Icons.chevron_left),
+        ),
+
+        const SizedBox(width: 8),
+
+        // PAGE NUMBER
+        Container(
+          constraints: const BoxConstraints(minWidth: 42, minHeight: 38),
+          padding: const EdgeInsets.symmetric(horizontal: 10),
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: Theme.of(context).colorScheme.primary,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            '$currentPage / $totalPages',
+            style: const TextStyle(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ),
 
-        const SizedBox(
-          width: 4,
-        ),
+        const SizedBox(width: 8),
 
-        // PAGE NUMBERS
-        ..._buildPageNumbers(
-          context,
-          cubit,
-        ),
-
-        const SizedBox(
-          width: 4,
-        ),
-
-        // NEXT
+        // NEXT PAGE
         IconButton(
           tooltip: 'Next page',
-          onPressed: hasNextPage
-              ? cubit.nextPage
-              : null,
-          icon: const Icon(
-            Icons.chevron_right,
-          ),
+          onPressed: !isLoading && hasNextPage ? cubit.nextPage : null,
+          icon: isLoading
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : const Icon(Icons.chevron_right),
         ),
 
         // LAST PAGE
         IconButton(
           tooltip: 'Last page',
-          onPressed: hasNextPage
+          onPressed: !isLoading && currentPage < totalPages
               ? cubit.lastPage
               : null,
-          icon: const Icon(
-            Icons.last_page,
-          ),
+          icon: const Icon(Icons.last_page),
         ),
       ],
     );
-  }
-
-  List<Widget> _buildPageNumbers(
-    BuildContext context,
-    AdminOrdersCubit cubit,
-  ) {
-    final pages = <int>[];
-
-    if (totalPages <= 7) {
-      for (
-        int i = 1;
-        i <= totalPages;
-        i++
-      ) {
-        pages.add(i);
-      }
-    } else {
-      pages.add(1);
-
-      if (currentPage > 4) {
-        pages.add(-1);
-      }
-
-      final start =
-          currentPage <= 4
-              ? 2
-              : currentPage - 1;
-
-      final end =
-          currentPage >=
-                  totalPages - 3
-              ? totalPages - 1
-              : currentPage + 1;
-
-      for (
-        int i = start;
-        i <= end;
-        i++
-      ) {
-        if (!pages.contains(i)) {
-          pages.add(i);
-        }
-      }
-
-      if (currentPage <
-          totalPages - 3) {
-        pages.add(-1);
-      }
-
-      if (!pages.contains(
-        totalPages,
-      )) {
-        pages.add(totalPages);
-      }
-    }
-
-    return pages.map(
-      (page) {
-        if (page == -1) {
-          return const Padding(
-            padding:
-                EdgeInsets.symmetric(
-              horizontal: 4,
-            ),
-            child: Text(
-              '...',
-              style: TextStyle(
-                color: Colors.grey,
-              ),
-            ),
-          );
-        }
-
-        final isSelected =
-            page == currentPage;
-
-        return Padding(
-          padding:
-              const EdgeInsets.symmetric(
-            horizontal: 2,
-          ),
-          child: InkWell(
-            onTap: isSelected
-                ? null
-                : () => cubit.goToPage(
-                      page,
-                    ),
-            borderRadius:
-                BorderRadius.circular(
-              8,
-            ),
-            child: Container(
-              width: 38,
-              height: 38,
-              alignment:
-                  Alignment.center,
-              decoration: BoxDecoration(
-                color: isSelected
-                    ? Theme.of(
-                        context,
-                      ).colorScheme.primary
-                    : Colors.transparent,
-                borderRadius:
-                    BorderRadius.circular(
-                  8,
-                ),
-              ),
-              child: Text(
-                '$page',
-                style: TextStyle(
-                  color: isSelected
-                      ? Colors.white
-                      : Colors.black87,
-                  fontWeight:
-                      isSelected
-                          ? FontWeight.bold
-                          : FontWeight.normal,
-                ),
-              ),
-            ),
-          ),
-        );
-      },
-    ).toList();
   }
 }

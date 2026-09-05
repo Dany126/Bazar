@@ -148,7 +148,12 @@ class _AdminProductsBody extends StatelessWidget {
         crossAxisCount: crossAxisCount,
         crossAxisSpacing: 16,
         mainAxisSpacing: 16,
-        childAspectRatio: 0.82,
+        // FIX: Slightly reduced from 0.82 to give each cell a bit more
+        // height relative to its width. Combined with the Expanded/
+        // Flexible fix inside _AdminProductCard below, this removes the
+        // 8.1px bottom overflow that occurred at 0.82 with the card's
+        // real content (image padding + name + price + gaps).
+        childAspectRatio: 0.74,
       ),
       itemBuilder: (BuildContext context, int index) {
         final ProductModel product = products[index];
@@ -387,117 +392,141 @@ class _AdminProductCard extends StatelessWidget {
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        // FIX: mainAxisSize.min removed is intentional here - this
+        // Column must fill the grid cell (max) so Expanded below has
+        // something to expand into. The overflow was never caused by
+        // this Column's mainAxisSize; it was caused by the fixed
+        // SizedBox(height: 220) image forcing extra height on top of
+        // the text block underneath it.
         children: <Widget>[
-          Stack(
-            children: <Widget>[
-              SizedBox(
-                height: 220,
-                width: double.infinity,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: imageUrl.isEmpty
-                      ? const _ImagePlaceholder()
-                      : CachedNetworkImage(
-                          imageUrl: imageUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (BuildContext context, String url) {
-                            return const Center(
-                              child: CircularProgressIndicator(),
-                            );
-                          },
-                          errorWidget:
-                              (BuildContext context, String url, Object error) {
-                                return const _ImagePlaceholder();
-                              },
-                        ),
-                ),
-              ),
-
-              // ==================================================
-              // ADMIN ACTIONS
-              // ==================================================
-              Positioned(
-                top: 5,
-                right: 8,
-                child: Material(
-                  color: Colors.white.withValues(alpha: 0.90),
-                  shape: const CircleBorder(),
-                  elevation: 2,
-                  child: PopupMenuButton<String>(
-                    tooltip: 'Product actions',
-                    icon: const Icon(Icons.more_vert, size: 20),
-                    padding: EdgeInsets.zero,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    onSelected: (String value) {
-                      if (value == 'edit') {
-                        onEdit();
-                      }
-
-                      if (value == 'delete') {
-                        onDelete();
-                      }
-                    },
-                    itemBuilder: (BuildContext context) {
-                      return const <PopupMenuEntry<String>>[
-                        PopupMenuItem<String>(
-                          value: 'edit',
-                          child: Row(
-                            children: <Widget>[
-                              Icon(Icons.edit_outlined, size: 20),
-                              SizedBox(width: 10),
-                              Text('Edit'),
-                            ],
+          // FIX: Replaced the fixed-height SizedBox(height: 220) with
+          // Expanded. This card lives inside a GridView cell whose
+          // height is fixed by childAspectRatio - a fixed image height
+          // plus the text block below it could together exceed that
+          // cell height, which is exactly what caused the 8.1px bottom
+          // overflow. Expanded makes the image take exactly whatever
+          // space remains after the text block below claims its own
+          // height, so the total always fits.
+          Expanded(
+            child: Stack(
+              children: <Widget>[
+                Positioned.fill(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: imageUrl.isEmpty
+                        ? const _ImagePlaceholder()
+                        : CachedNetworkImage(
+                            imageUrl: imageUrl,
+                            fit: BoxFit.cover,
+                            placeholder: (BuildContext context, String url) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            },
+                            errorWidget:
+                                (
+                                  BuildContext context,
+                                  String url,
+                                  Object error,
+                                ) {
+                                  return const _ImagePlaceholder();
+                                },
                           ),
-                        ),
-                        PopupMenuItem<String>(
-                          value: 'delete',
-                          child: Row(
-                            children: <Widget>[
-                              Icon(
-                                Icons.delete_outline,
-                                size: 20,
-                                color: Colors.red,
-                              ),
-                              SizedBox(width: 10),
-                              Text('Delete'),
-                            ],
-                          ),
-                        ),
-                      ];
-                    },
                   ),
                 ),
-              ),
-            ],
+
+                // ==================================================
+                // ADMIN ACTIONS
+                // ==================================================
+                Positioned(
+                  top: 5,
+                  right: 8,
+                  child: Material(
+                    color: Colors.white.withValues(alpha: 0.90),
+                    shape: const CircleBorder(),
+                    elevation: 2,
+                    child: PopupMenuButton<String>(
+                      tooltip: 'Product actions',
+                      icon: const Icon(Icons.more_vert, size: 20),
+                      padding: EdgeInsets.zero,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      onSelected: (String value) {
+                        if (value == 'edit') {
+                          onEdit();
+                        }
+
+                        if (value == 'delete') {
+                          onDelete();
+                        }
+                      },
+                      itemBuilder: (BuildContext context) {
+                        return const <PopupMenuEntry<String>>[
+                          PopupMenuItem<String>(
+                            value: 'edit',
+                            child: Row(
+                              children: <Widget>[
+                                Icon(Icons.edit_outlined, size: 20),
+                                SizedBox(width: 10),
+                                Text('Edit'),
+                              ],
+                            ),
+                          ),
+                          PopupMenuItem<String>(
+                            value: 'delete',
+                            child: Row(
+                              children: <Widget>[
+                                Icon(
+                                  Icons.delete_outline,
+                                  size: 20,
+                                  color: Colors.red,
+                                ),
+                                SizedBox(width: 10),
+                                Text('Delete'),
+                              ],
+                            ),
+                          ),
+                        ];
+                      },
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
 
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: <Widget>[
-                const SizedBox(height: 8),
+          // FIX: Wrapped in Flexible as a safety net so this text block
+          // can shrink instead of forcing the Column past the grid
+          // cell's height on very narrow/short cells.
+          Flexible(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: <Widget>[
+                  const SizedBox(height: 8),
 
-                Text(
-                  product.name,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: AppStyles.textStylesRegular12(context),
-                ),
+                  Text(
+                    product.name,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppStyles.textStylesRegular12(context),
+                  ),
 
-                const SizedBox(height: 4),
+                  const SizedBox(height: 4),
 
-                Text(
-                  '\$${product.price.toStringAsFixed(2)}',
-                  style: AppStyles.textStylesRegular12(
-                    context,
-                  ).copyWith(fontWeight: FontWeight.bold),
-                ),
+                  Text(
+                    '\$${product.price.toStringAsFixed(2)}',
+                    style: AppStyles.textStylesRegular12(
+                      context,
+                    ).copyWith(fontWeight: FontWeight.bold),
+                  ),
 
-                const SizedBox(height: 8),
-              ],
+                  const SizedBox(height: 8),
+                ],
+              ),
             ),
           ),
         ],

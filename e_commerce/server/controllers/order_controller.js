@@ -138,27 +138,54 @@ export const createOrder = async (req, res) => {
 };
 
 export const getAllOrders = async (req, res) => {
+  
   try {
+    res.set("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+res.set("Pragma", "no-cache");
+res.set("Expires", "0");
+res.set("Surrogate-Control", "no-store");
     const query = { ...req.params, ...req.query };
-    const { filter, limits, skip, sortBy } = apiFeatures(query);
-    const orders = await Order.find(filter)
-      .limit(limits)
-      .skip(skip)
-      .sort(sortBy)
-      .populate("products.product");
-    if (!orders) {
-      return res.status(400).json({
-        status: "Failed",
-        message: "No order found",
-      });
-    }
+
+    const { filter, limits, skip, sortBy } =
+      apiFeatures(query);
+
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 10;
+
+    const [orders, totalOrders] = await Promise.all([
+      Order.find(filter)
+        .limit(limits)
+        .skip(skip)
+        .sort(sortBy)
+        .populate("products.product"),
+
+      Order.countDocuments(filter),
+    ]);
+
+    const totalPages =
+      totalOrders === 0
+        ? 1
+        : Math.ceil(totalOrders / limit);
+
     return res.status(200).json({
       status: "Success",
+
       orders,
+
       noOfOrders: orders.length,
+
+      pagination: {
+        currentPage: page,
+        itemsPerPage: limit,
+        totalOrders,
+        totalPages,
+        hasPreviousPage: page > 1,
+        hasNextPage: page < totalPages,
+      },
     });
   } catch (err) {
     console.log(err);
+
     return res.status(500).json({
       status: "Failed",
       message: "Internal Server Error",
