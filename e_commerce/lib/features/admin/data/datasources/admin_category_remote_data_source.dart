@@ -3,7 +3,6 @@ import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/features/home/data/models/category_model.dart';
 import 'package:e_commerce/features/home/data/models/product_model.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as path;
 
 abstract class AdminCategoriesRemoteDataSource {
   Future<List<CategoryModel>> getAllCategories();
@@ -19,7 +18,9 @@ abstract class AdminCategoriesRemoteDataSource {
     XFile? image,
   });
 
-  Future<void> deleteCategory({required String id});
+  Future<void> deleteCategory({
+    required String id,
+  });
 
   Future<List<ProductModel>> getProductsByCategory({
     required String categoryId,
@@ -30,7 +31,9 @@ class AdminCategoriesRemoteDataSourceImpl
     implements AdminCategoriesRemoteDataSource {
   final Dio dio;
 
-  const AdminCategoriesRemoteDataSourceImpl({required this.dio});
+  const AdminCategoriesRemoteDataSourceImpl({
+    required this.dio,
+  });
 
   // ============================================================
   // GET ALL CATEGORIES
@@ -38,7 +41,9 @@ class AdminCategoriesRemoteDataSourceImpl
 
   @override
   Future<List<CategoryModel>> getAllCategories() async {
-    final response = await dio.get('$kBaseUrl/category');
+    final response = await dio.get(
+      '$kBaseUrl/category',
+    );
 
     final data = response.data;
 
@@ -47,8 +52,11 @@ class AdminCategoriesRemoteDataSourceImpl
 
       if (categories is List) {
         return categories
+            .whereType<Map>()
             .map(
-              (item) => CategoryModel.fromJson(Map<String, dynamic>.from(item)),
+              (item) => CategoryModel.fromJson(
+                Map<String, dynamic>.from(item),
+              ),
             )
             .toList();
       }
@@ -57,8 +65,11 @@ class AdminCategoriesRemoteDataSourceImpl
 
       if (responseData is List) {
         return responseData
+            .whereType<Map>()
             .map(
-              (item) => CategoryModel.fromJson(Map<String, dynamic>.from(item)),
+              (item) => CategoryModel.fromJson(
+                Map<String, dynamic>.from(item),
+              ),
             )
             .toList();
       }
@@ -66,8 +77,11 @@ class AdminCategoriesRemoteDataSourceImpl
 
     if (data is List) {
       return data
+          .whereType<Map>()
           .map(
-            (item) => CategoryModel.fromJson(Map<String, dynamic>.from(item)),
+            (item) => CategoryModel.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
           )
           .toList();
     }
@@ -83,7 +97,9 @@ class AdminCategoriesRemoteDataSourceImpl
   Future<List<ProductModel>> getProductsByCategory({
     required String categoryId,
   }) async {
-    final response = await dio.get('$kBaseUrl/category/$categoryId/product');
+    final response = await dio.get(
+      '$kBaseUrl/category/$categoryId/product',
+    );
 
     final data = response.data;
 
@@ -92,8 +108,11 @@ class AdminCategoriesRemoteDataSourceImpl
 
       if (products is List) {
         return products
+            .whereType<Map>()
             .map(
-              (item) => ProductModel.fromJson(Map<String, dynamic>.from(item)),
+              (item) => ProductModel.fromJson(
+                Map<String, dynamic>.from(item),
+              ),
             )
             .toList();
       }
@@ -102,8 +121,11 @@ class AdminCategoriesRemoteDataSourceImpl
 
       if (responseData is List) {
         return responseData
+            .whereType<Map>()
             .map(
-              (item) => ProductModel.fromJson(Map<String, dynamic>.from(item)),
+              (item) => ProductModel.fromJson(
+                Map<String, dynamic>.from(item),
+              ),
             )
             .toList();
       }
@@ -111,7 +133,12 @@ class AdminCategoriesRemoteDataSourceImpl
 
     if (data is List) {
       return data
-          .map((item) => ProductModel.fromJson(Map<String, dynamic>.from(item)))
+          .whereType<Map>()
+          .map(
+            (item) => ProductModel.fromJson(
+              Map<String, dynamic>.from(item),
+            ),
+          )
           .toList();
     }
 
@@ -127,14 +154,31 @@ class AdminCategoriesRemoteDataSourceImpl
     required String name,
     required XFile image,
   }) async {
-    final multipartImage = await MultipartFile.fromFile(
-      image.path,
-      filename: path.basename(image.path),
+    final bytes = await image.readAsBytes();
+
+    if (bytes.isEmpty) {
+      throw Exception('Selected category image is empty');
+    }
+
+    final multipartImage = MultipartFile.fromBytes(
+      bytes,
+      filename: image.name,
     );
 
-    final formData = FormData.fromMap({'name': name, 'image': multipartImage});
+    final formData = FormData();
 
-    final response = await dio.post('$kBaseUrl/category', data: formData);
+    formData.fields.add(
+      MapEntry('name', name),
+    );
+
+    formData.files.add(
+      MapEntry('image', multipartImage),
+    );
+
+    final response = await dio.post(
+      '$kBaseUrl/category',
+      data: formData,
+    );
 
     return _parseCategoryResponse(response.data);
   }
@@ -149,20 +193,33 @@ class AdminCategoriesRemoteDataSourceImpl
     required String name,
     XFile? image,
   }) async {
-    final Map<String, dynamic> fields = {'name': name};
+    final formData = FormData();
+
+    formData.fields.add(
+      MapEntry('name', name),
+    );
 
     if (image != null) {
-      final multipartImage = await MultipartFile.fromFile(
-        image.path,
-        filename: path.basename(image.path),
+      final bytes = await image.readAsBytes();
+
+      if (bytes.isEmpty) {
+        throw Exception('Selected category image is empty');
+      }
+
+      final multipartImage = MultipartFile.fromBytes(
+        bytes,
+        filename: image.name,
       );
 
-      fields['image'] = multipartImage;
+      formData.files.add(
+        MapEntry('image', multipartImage),
+      );
     }
 
-    final formData = FormData.fromMap(fields);
-
-    final response = await dio.patch('$kBaseUrl/category/$id', data: formData);
+    final response = await dio.patch(
+      '$kBaseUrl/category/$id',
+      data: formData,
+    );
 
     return _parseCategoryResponse(response.data);
   }
@@ -172,12 +229,16 @@ class AdminCategoriesRemoteDataSourceImpl
   // ============================================================
 
   @override
-  Future<void> deleteCategory({required String id}) async {
-    await dio.delete('$kBaseUrl/category/$id');
+  Future<void> deleteCategory({
+    required String id,
+  }) async {
+    await dio.delete(
+      '$kBaseUrl/category/$id',
+    );
   }
 
   // ============================================================
-  // CATEGORY RESPONSE
+  // PARSE CATEGORY RESPONSE
   // ============================================================
 
   CategoryModel _parseCategoryResponse(dynamic data) {
@@ -185,13 +246,17 @@ class AdminCategoriesRemoteDataSourceImpl
       final category = data['category'];
 
       if (category is Map) {
-        return CategoryModel.fromJson(Map<String, dynamic>.from(category));
+        return CategoryModel.fromJson(
+          Map<String, dynamic>.from(category),
+        );
       }
 
       final responseData = data['data'];
 
       if (responseData is Map) {
-        return CategoryModel.fromJson(Map<String, dynamic>.from(responseData));
+        return CategoryModel.fromJson(
+          Map<String, dynamic>.from(responseData),
+        );
       }
 
       return CategoryModel.fromJson(data);
