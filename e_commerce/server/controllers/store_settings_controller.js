@@ -19,26 +19,73 @@ const DEFAULT_SETTINGS = {
   acceptOrders: true,
 };
 
+// ============================================================
+// GET EXISTING SETTINGS
+// ============================================================
+
 const getSettingsDocument = async () => {
   let settings = await StoreSettings.findOne();
 
   if (!settings) {
-    settings = await StoreSettings.create(DEFAULT_SETTINGS);
+    console.log(
+      "No store settings document found. Creating default settings..."
+    );
+
+    settings = await StoreSettings.create(
+      DEFAULT_SETTINGS
+    );
   }
 
   return settings;
 };
 
+// ============================================================
+// GET SETTINGS
+// ============================================================
+
 export const getStoreSettings = async (req, res) => {
   try {
-    const settings = await getSettingsDocument();
+    console.log(
+      "=============================================="
+    );
+
+    console.log("GET /api/admin/settings");
+
+    const settings =
+      await getSettingsDocument();
+
+    console.log("SETTINGS FROM DATABASE:");
+    console.log(settings.toObject());
+
+    console.log(
+      "=============================================="
+    );
+
+    // Prevent browser from caching settings.
+    res.setHeader(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate"
+    );
+
+    res.setHeader(
+      "Pragma",
+      "no-cache"
+    );
+
+    res.setHeader(
+      "Expires",
+      "0"
+    );
 
     return res.status(200).json({
       status: "Success",
-      settings,
+      settings: settings.toObject(),
     });
-  } catch (err) {
-    console.error("Get store settings error:", err);
+  } catch (error) {
+    console.error(
+      "GET STORE SETTINGS ERROR:",
+      error
+    );
 
     return res.status(500).json({
       status: "Failed",
@@ -47,8 +94,47 @@ export const getStoreSettings = async (req, res) => {
   }
 };
 
-export const updateStoreSettings = async (req, res) => {
+// ============================================================
+// UPDATE SETTINGS
+// ============================================================
+
+export const updateStoreSettings = async (
+  req,
+  res
+) => {
   try {
+    console.log("");
+    console.log(
+      "=============================================="
+    );
+    console.log(
+      "PATCH /api/admin/settings"
+    );
+    console.log(
+      "=============================================="
+    );
+
+    console.log("REQUEST BODY:");
+    console.log(req.body);
+
+    // --------------------------------------------------------
+    // Make sure body exists
+    // --------------------------------------------------------
+
+    if (
+      !req.body ||
+      typeof req.body !== "object"
+    ) {
+      return res.status(400).json({
+        status: "Failed",
+        message: "Request body is required",
+      });
+    }
+
+    // --------------------------------------------------------
+    // Allowed fields
+    // --------------------------------------------------------
+
     const allowedFields = [
       "storeName",
       "description",
@@ -76,6 +162,13 @@ export const updateStoreSettings = async (req, res) => {
       }
     }
 
+    console.log("FIELDS TO UPDATE:");
+    console.log(updates);
+
+    // --------------------------------------------------------
+    // Store name
+    // --------------------------------------------------------
+
     if (
       updates.storeName !== undefined &&
       typeof updates.storeName !== "string"
@@ -85,6 +178,10 @@ export const updateStoreSettings = async (req, res) => {
         message: "storeName must be a string",
       });
     }
+
+    // --------------------------------------------------------
+    // Numeric fields
+    // --------------------------------------------------------
 
     const numericFields = [
       "taxRate",
@@ -96,12 +193,18 @@ export const updateStoreSettings = async (req, res) => {
 
     for (const field of numericFields) {
       if (updates[field] !== undefined) {
-        const value = Number(updates[field]);
+        const value = Number(
+          updates[field]
+        );
 
-        if (!Number.isFinite(value) || value < 0) {
+        if (
+          !Number.isFinite(value) ||
+          value < 0
+        ) {
           return res.status(400).json({
             status: "Failed",
-            message: `${field} must be a valid positive number`,
+            message:
+              `${field} must be a valid non-negative number`,
           });
         }
 
@@ -109,15 +212,24 @@ export const updateStoreSettings = async (req, res) => {
       }
     }
 
+    // --------------------------------------------------------
+    // Tax validation
+    // --------------------------------------------------------
+
     if (
       updates.taxRate !== undefined &&
       updates.taxRate > 100
     ) {
       return res.status(400).json({
         status: "Failed",
-        message: "taxRate cannot be greater than 100",
+        message:
+          "taxRate cannot be greater than 100",
       });
     }
+
+    // --------------------------------------------------------
+    // Boolean fields
+    // --------------------------------------------------------
 
     const booleanFields = [
       "storeEnabled",
@@ -131,34 +243,138 @@ export const updateStoreSettings = async (req, res) => {
       ) {
         return res.status(400).json({
           status: "Failed",
-          message: `${field} must be a boolean`,
+          message:
+            `${field} must be a boolean`,
         });
       }
     }
 
-    let settings = await StoreSettings.findOne();
+    // --------------------------------------------------------
+    // If store disabled, don't accept orders
+    // --------------------------------------------------------
+
+    if (
+      updates.storeEnabled === false
+    ) {
+      updates.acceptOrders = false;
+    }
+
+    // --------------------------------------------------------
+    // Find existing settings
+    // --------------------------------------------------------
+
+    let settings =
+      await StoreSettings.findOne();
+
+    // --------------------------------------------------------
+    // First save
+    // --------------------------------------------------------
 
     if (!settings) {
-      settings = await StoreSettings.create({
-        ...DEFAULT_SETTINGS,
-        ...updates,
-      });
-    } else {
-      Object.assign(settings, updates);
+      console.log(
+        "No existing settings. Creating document..."
+      );
+
+      settings =
+        await StoreSettings.create({
+          ...DEFAULT_SETTINGS,
+          ...updates,
+        });
+    }
+
+    // --------------------------------------------------------
+    // Existing settings
+    // --------------------------------------------------------
+
+    else {
+      console.log(
+        "Existing settings found."
+      );
+
+      console.log(
+        "MongoDB document ID:",
+        settings._id.toString()
+      );
+
+      Object.assign(
+        settings,
+        updates
+      );
+
+      console.log(
+        "Saving document..."
+      );
+
       await settings.save();
     }
 
+    // --------------------------------------------------------
+    // Read AGAIN from MongoDB
+    // --------------------------------------------------------
+
+    const savedSettings =
+      await StoreSettings.findById(
+        settings._id
+      );
+
+    if (!savedSettings) {
+      throw new Error(
+        "Settings disappeared after save"
+      );
+    }
+
+    console.log(
+      "=============================================="
+    );
+
+    console.log(
+      "STORE SETTINGS SAVED SUCCESSFULLY"
+    );
+
+    console.log(
+      "DATABASE ID:",
+      savedSettings._id.toString()
+    );
+
+    console.log(
+      "DATABASE DATA:"
+    );
+
+    console.log(
+      savedSettings.toObject()
+    );
+
+    console.log(
+      "=============================================="
+    );
+
     return res.status(200).json({
       status: "Success",
-      message: "Store settings updated successfully",
-      settings,
+      message:
+        "Store settings updated successfully",
+      settings:
+        savedSettings.toObject(),
     });
-  } catch (err) {
-    console.error("Update store settings error:", err);
+  } catch (error) {
+    console.error(
+      "=============================================="
+    );
+
+    console.error(
+      "UPDATE STORE SETTINGS ERROR"
+    );
+
+    console.error(error);
+
+    console.error(
+      "=============================================="
+    );
 
     return res.status(500).json({
       status: "Failed",
-      message: "Internal Server Error",
+      message:
+        error.message ||
+        "Internal Server Error",
     });
   }
 };

@@ -29,14 +29,14 @@ class AdminStoreSettingsLoaded extends AdminStoreSettingsState {
   }
 }
 
-class AdminStoreSettingsFailure extends AdminStoreSettingsState {
-  final String message;
-
-  const AdminStoreSettingsFailure(this.message);
-}
-
 class AdminStoreSettingsSaved extends AdminStoreSettingsState {
   final AdminStoreSettings settings;
 
   const AdminStoreSettingsSaved({required this.settings});
+}
+
+class AdminStoreSettingsFailure extends AdminStoreSettingsState {
+  final String message;
+
+  const AdminStoreSettingsFailure(this.message);
 }

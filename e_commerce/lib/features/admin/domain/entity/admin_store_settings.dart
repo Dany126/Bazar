@@ -45,7 +45,7 @@ class AdminStoreSettings {
         return value.toDouble();
       }
 
-      return double.tryParse('$value') ?? 0;
+      return double.tryParse(value?.toString() ?? '') ?? 0;
     }
 
     int intValue(dynamic value) {
@@ -53,7 +53,7 @@ class AdminStoreSettings {
         return value.toInt();
       }
 
-      return int.tryParse('$value') ?? 0;
+      return int.tryParse(value?.toString() ?? '') ?? 0;
     }
 
     bool boolValue(dynamic value) {
@@ -61,19 +61,23 @@ class AdminStoreSettings {
         return value;
       }
 
-      return value == true || value == 'true';
+      if (value is String) {
+        return value.toLowerCase() == 'true';
+      }
+
+      return false;
     }
 
     return AdminStoreSettings(
-      storeName: '${json['storeName'] ?? ''}',
-      description: '${json['description'] ?? ''}',
-      email: '${json['email'] ?? ''}',
-      phone: '${json['phone'] ?? ''}',
-      address: '${json['address'] ?? ''}',
-      city: '${json['city'] ?? ''}',
-      country: '${json['country'] ?? ''}',
-      postalCode: '${json['postalCode'] ?? ''}',
-      currency: '${json['currency'] ?? 'EGP'}',
+      storeName: json['storeName']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
+      address: json['address']?.toString() ?? '',
+      city: json['city']?.toString() ?? '',
+      country: json['country']?.toString() ?? '',
+      postalCode: json['postalCode']?.toString() ?? '',
+      currency: json['currency']?.toString() ?? 'EGP',
       taxRate: doubleValue(json['taxRate']),
       shippingFee: doubleValue(json['shippingFee']),
       freeShippingThreshold: doubleValue(json['freeShippingThreshold']),

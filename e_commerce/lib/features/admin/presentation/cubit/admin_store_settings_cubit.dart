@@ -23,36 +23,61 @@ class AdminStoreSettingsCubit extends Cubit<AdminStoreSettingsState> {
         emit(AdminStoreSettingsFailure(failure.message));
       },
       (settings) {
-        emit(AdminStoreSettingsLoaded(settings: settings));
+        emit(AdminStoreSettingsLoaded(settings: settings, saving: false));
       },
     );
   }
 
   Future<void> updateSettings(AdminStoreSettings settings) async {
-    final currentState = state;
+    final oldState = state;
 
-    if (currentState is AdminStoreSettingsLoaded) {
-      emit(currentState.copyWith(saving: true));
+    AdminStoreSettings? oldSettings;
+
+    if (oldState is AdminStoreSettingsLoaded) {
+      oldSettings = oldState.settings;
+
+      emit(AdminStoreSettingsLoaded(settings: oldState.settings, saving: true));
     }
+
+    print('');
+    print('==============================================');
+    print('ADMIN STORE SETTINGS - SAVE');
+    print('==============================================');
+    print('DATA BEING SENT:');
+    print(settings.toJson());
+    print('==============================================');
 
     final result = await updateStoreSettingsUseCase(settings: settings);
 
     result.fold(
       (failure) {
-        if (currentState is AdminStoreSettingsLoaded) {
-          emit(currentState.copyWith(saving: false));
-        }
+        print('');
+        print('==============================================');
+        print('ADMIN STORE SETTINGS - SAVE FAILED');
+        print('==============================================');
+        print(failure.message);
+        print('==============================================');
 
-        emit(AdminStoreSettingsFailure(failure.message));
-
-        if (currentState is AdminStoreSettingsLoaded) {
-          emit(currentState);
+        if (oldSettings != null) {
+          emit(AdminStoreSettingsLoaded(settings: oldSettings, saving: false));
+        } else {
+          emit(AdminStoreSettingsFailure(failure.message));
         }
       },
       (updatedSettings) {
+        print('');
+        print('==============================================');
+        print('ADMIN STORE SETTINGS - SAVE SUCCESS');
+        print('==============================================');
+        print('SERVER RETURNED:');
+        print(updatedSettings.toJson());
+        print('==============================================');
+
         emit(AdminStoreSettingsSaved(settings: updatedSettings));
 
-        emit(AdminStoreSettingsLoaded(settings: updatedSettings));
+        emit(
+          AdminStoreSettingsLoaded(settings: updatedSettings, saving: false),
+        );
       },
     );
   }
