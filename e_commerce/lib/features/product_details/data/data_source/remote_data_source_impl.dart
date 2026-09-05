@@ -84,7 +84,7 @@ class ProductDetailsRemoteDataSourceImpl
         queryParameters: {'page': 1, 'limit': 100},
       );
 
-      return result.fold(
+      return await result.fold(
         (failure) {
           return false;
         },

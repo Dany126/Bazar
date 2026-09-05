@@ -147,7 +147,7 @@ class GetProductsCubit extends Cubit<GetProductsState> {
         isFavourite: isFavourite,
       );
 
-      return result.fold(
+      return await result.fold(
         (failure) {
           emit(GetProductsFailure(message: failure.toString()));
 

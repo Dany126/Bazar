@@ -88,7 +88,7 @@ class AdminProductRemoteDataSourceImpl implements AdminProductRemoteDataSource {
 
       final result = await apiService.post('$kBaseUrl/product', data: formData);
 
-      return result.fold((failure) => Left(failure), (data) {
+      return await result.fold((failure) => Left(failure), (data) {
         final productJson = data['product'] ?? data['data'] ?? data;
 
         if (productJson is! Map<String, dynamic>) {
@@ -184,7 +184,7 @@ class AdminProductRemoteDataSourceImpl implements AdminProductRemoteDataSource {
         data: formData,
       );
 
-      return result.fold((failure) => Left(failure), (responseData) {
+      return await result.fold((failure) => Left(failure), (responseData) {
         /*
            * Backend now returns both:
            *
@@ -227,7 +227,10 @@ class AdminProductRemoteDataSourceImpl implements AdminProductRemoteDataSource {
     try {
       final result = await apiService.delete('$kBaseUrl/product/$id');
 
-      return result.fold((failure) => Left(failure), (_) => const Right(unit));
+      return await result.fold(
+        (failure) => Left(failure),
+        (_) => const Right(unit),
+      );
     } on DioException catch (e) {
       return Left(
         ServerFailure(
