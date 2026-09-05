@@ -52,6 +52,7 @@ export const getAllVariants = async (req, res) => {
     return res.status(200).json({
       status: "Success",
       variants,
+      noOfVariants: variants.length,
     });
   } catch (err) {
     console.log(err);
