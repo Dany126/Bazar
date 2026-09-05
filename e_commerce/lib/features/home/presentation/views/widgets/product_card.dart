@@ -17,121 +17,155 @@ class ProductCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        clipBehavior: Clip.hardEdge,
-        decoration: BoxDecoration(
-          color: AppColors.kCardBackgroundColor,
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Stack(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final cardWidth = constraints.maxWidth;
+
+        final imageAspectRatio = cardWidth < 180
+            ? 0.95
+            : cardWidth < 240
+            ? 1.0
+            : 1.08;
+
+        final imagePadding = cardWidth < 180
+            ? 8.0
+            : cardWidth < 240
+            ? 12.0
+            : 16.0;
+
+        final favoriteSize = cardWidth < 180 ? 22.0 : 26.0;
+
+        return GestureDetector(
+          onTap: onTap,
+          child: Container(
+            clipBehavior: Clip.hardEdge,
+            decoration: BoxDecoration(
+              color: AppColors.kCardBackgroundColor,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                SizedBox(
-                  height: 220,
-                  width: double.infinity,
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: CachedNetworkImage(
-                      imageUrl: fixImageUrl(product.thumbnailUrl),
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) {
-                        return const Center(child: CircularProgressIndicator());
-                      },
-                      errorWidget: (context, url, error) {
-                        return const Icon(Icons.error, color: Colors.red);
-                      },
-                    ),
-                  ),
-                ),
-
-                // ==================================================
-                // FAVOURITE BUTTON
-                // ==================================================
-                Positioned(
-                  top: 5,
-                  right: 8,
-                  child: ValueListenableBuilder<Map<String, bool>>(
-                    valueListenable: GetProductsCubit.favoriteProductIds,
-                    builder: (context, favoriteStates, child) {
-                      final bool isFavorite =
-                          favoriteStates[product.id] ?? product.isFavorite;
-
-                      return GestureDetector(
-                        onTap: () {
-                          context.read<GetProductsCubit>().changeToIsFavourite(
-                            productId: product.id,
-                            isFavourite: !isFavorite,
-                          );
-                        },
+                Stack(
+                  children: [
+                    AspectRatio(
+                      aspectRatio: imageAspectRatio,
+                      child: Padding(
+                        padding: EdgeInsets.all(imagePadding),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(100),
-                          child: BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
-                            child: Container(
-                              height: 24,
-                              width: 24,
-                              alignment: Alignment.center,
-                              child: AnimatedSwitcher(
-                                duration: const Duration(milliseconds: 200),
-                                child: isFavorite
-                                    ? const Icon(
-                                        Icons.favorite,
-                                        key: ValueKey('favorite'),
-                                        color: Colors.red,
-                                        size: 18,
-                                      )
-                                    : const Icon(
-                                        Icons.favorite_border_outlined,
-                                        key: ValueKey('not_favorite'),
-                                        size: 18,
-                                      ),
-                              ),
-                            ),
+                          borderRadius: BorderRadius.circular(8),
+                          child: CachedNetworkImage(
+                            imageUrl: fixImageUrl(product.thumbnailUrl),
+                            fit: BoxFit.fill,
+                            placeholder: (context, url) {
+                              return const Center(
+                                child: CircularProgressIndicator(),
+                              );
+                            },
+                            errorWidget: (context, url, error) {
+                              return const Center(
+                                child: Icon(
+                                  Icons.error_outline,
+                                  color: Colors.red,
+                                ),
+                              );
+                            },
                           ),
                         ),
-                      );
-                    },
+                      ),
+                    ),
+
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: ValueListenableBuilder<Map<String, bool>>(
+                        valueListenable: GetProductsCubit.favoriteProductIds,
+                        builder: (context, favoriteStates, child) {
+                          final isFavorite =
+                              favoriteStates[product.id] ?? product.isFavorite;
+
+                          return GestureDetector(
+                            onTap: () {
+                              context
+                                  .read<GetProductsCubit>()
+                                  .changeToIsFavourite(
+                                    productId: product.id,
+                                    isFavourite: !isFavorite,
+                                  );
+                            },
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(100),
+                              child: BackdropFilter(
+                                filter: ImageFilter.blur(
+                                  sigmaX: 16,
+                                  sigmaY: 16,
+                                ),
+                                child: Container(
+                                  height: favoriteSize,
+                                  width: favoriteSize,
+                                  alignment: Alignment.center,
+                                  child: AnimatedSwitcher(
+                                    duration: const Duration(milliseconds: 200),
+                                    child: isFavorite
+                                        ? Icon(
+                                            Icons.favorite,
+                                            key: const ValueKey('favorite'),
+                                            color: Colors.red,
+                                            size: favoriteSize * 0.7,
+                                          )
+                                        : Icon(
+                                            Icons.favorite_border_outlined,
+                                            key: const ValueKey('not_favorite'),
+                                            size: favoriteSize * 0.7,
+                                          ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+
+                Padding(
+                  padding: EdgeInsets.fromLTRB(
+                    cardWidth < 180 ? 8 : 10,
+                    4,
+                    cardWidth < 180 ? 8 : 10,
+                    10,
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        product.name,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppStyles.textStylesRegular12(context),
+                      ),
+
+                      const SizedBox(height: 4),
+
+                      Text(
+                        '\$${product.price.toStringAsFixed(2)}',
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: AppStyles.textStylesRegular12(
+                          context,
+                        ).copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 4),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const SizedBox(height: 8),
-
-                  Text(
-                    product.name,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                    style: AppStyles.textStylesRegular12(context),
-                  ),
-
-                  const SizedBox(height: 4),
-
-                  Text(
-                    '\$${product.price.toStringAsFixed(2)}',
-                    style: AppStyles.textStylesRegular12(
-                      context,
-                    ).copyWith(fontWeight: FontWeight.bold),
-                  ),
-
-                  const SizedBox(height: 8),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
+          ),
+        );
+      },
     );
   }
 }

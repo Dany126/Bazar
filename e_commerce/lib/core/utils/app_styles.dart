@@ -3,15 +3,25 @@ import 'package:flutter/material.dart';
 
 class AppStyles {
   static double getFontSize(double size, BuildContext context) {
-    final width = MediaQuery.of(context).size.width;
+    final width = MediaQuery.sizeOf(context).width;
 
     if (width < 360) {
-      return size * 0.8;
-    } else if (width < 600) {
-      return size * 1;
-    } else {
-      return size * 1.3;
+      return size * 0.85;
     }
+
+    if (width < 600) {
+      return size;
+    }
+
+    if (width < 900) {
+      return size * 1.05;
+    }
+
+    if (width < 1200) {
+      return size * 1.10;
+    }
+
+    return size * 1.15;
   }
 
   static TextStyle textStylesBold32(BuildContext context) => TextStyle(

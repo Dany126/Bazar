@@ -33,11 +33,14 @@ class CheckoutViewBody extends StatelessWidget {
             barrierDismissible: false,
             builder: (dialogContext) => AlertDialog(
               title: const Text('Success'),
-              content: const Text('Your cash order was created successfully.'),
+              content: Text(
+                'Your ${state.order.paymentMethod == 'card' ? 'card' : 'cash'} order was created successfully.',
+              ),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.of(dialogContext).pop();
+
                     Navigator.of(context).pushReplacement(
                       MaterialPageRoute(
                         builder: (_) => const OrderSuccessView(),
@@ -50,18 +53,21 @@ class CheckoutViewBody extends StatelessWidget {
             ),
           );
         }
+
         if (state is OrderError) {
-          log(state.message.toString());
+          log(state.message);
+
           ScaffoldMessenger.of(
             context,
           ).showSnackBar(SnackBar(content: Text(state.message)));
         }
       },
       child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
         child: CustomScrollView(
           slivers: [
             const SliverToBoxAdapter(child: CustomAppBar(title: 'Checkout')),
+
             SliverToBoxAdapter(
               child: BlocBuilder<CheckoutCubit, CheckoutState>(
                 builder: (context, state) {
@@ -71,6 +77,7 @@ class CheckoutViewBody extends StatelessWidget {
                       child: Center(child: CircularProgressIndicator()),
                     );
                   }
+
                   if (state is CheckoutError) {
                     return Padding(
                       padding: const EdgeInsets.symmetric(vertical: 24),
@@ -80,11 +87,13 @@ class CheckoutViewBody extends StatelessWidget {
                       ),
                     );
                   }
+
                   final loaded = state as CheckoutLoaded;
 
                   return Column(
                     children: [
                       const SizedBox(height: 16),
+
                       _buildOptionCard(
                         context,
                         title: 'Shipping Address',
@@ -93,7 +102,9 @@ class CheckoutViewBody extends StatelessWidget {
                             : '${loaded.selectedAddress!.street}, ${loaded.selectedAddress!.city}',
                         onTap: () => _showAddressPicker(context, loaded),
                       ),
+
                       const SizedBox(height: 16),
+
                       _buildOptionCard(
                         context,
                         title: 'Payment Method',
@@ -109,16 +120,20 @@ class CheckoutViewBody extends StatelessWidget {
                 },
               ),
             ),
+
             SliverFillRemaining(
               hasScrollBody: false,
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                padding: const EdgeInsets.symmetric(horizontal: 16),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
                     CartSummary(cart: cart, showCoupon: false),
+
                     const SizedBox(height: 28),
+
                     _buildPlaceOrderButton(context),
+
                     const SizedBox(height: 16),
                   ],
                 ),
@@ -130,26 +145,24 @@ class CheckoutViewBody extends StatelessWidget {
     );
   }
 
-  // ------------------------------------------------------------
-  // PLACE ORDER
-  // ------------------------------------------------------------
-
   Widget _buildPlaceOrderButton(BuildContext context) {
     return BlocBuilder<CheckoutCubit, CheckoutState>(
       builder: (context, checkoutState) {
         final loaded = checkoutState is CheckoutLoaded ? checkoutState : null;
+
         final canPlaceOrder = loaded?.selectedAddress != null;
+
         final total = cart.subtotal ?? 0.0;
 
         return BlocBuilder<OrderCubit, OrderState>(
           builder: (context, orderState) {
-            final isPlacing = orderState is OrderLoading;
+            final isLoading = orderState is OrderLoading;
 
             return SizedBox(
               width: double.infinity,
               height: 50,
               child: FilledButton(
-                onPressed: canPlaceOrder && !isPlacing
+                onPressed: canPlaceOrder && !isLoading
                     ? () => _placeOrder(context, loaded!)
                     : null,
                 style: FilledButton.styleFrom(
@@ -159,7 +172,7 @@ class CheckoutViewBody extends StatelessWidget {
                     borderRadius: BorderRadius.circular(28),
                   ),
                 ),
-                child: isPlacing
+                child: isLoading
                     ? const SizedBox(
                         width: 20,
                         height: 20,
@@ -200,7 +213,10 @@ class CheckoutViewBody extends StatelessWidget {
 
   Future<void> _placeOrder(BuildContext context, CheckoutLoaded state) async {
     final address = state.selectedAddress;
-    if (address == null) return;
+
+    if (address == null) {
+      return;
+    }
 
     final shippingAddress = {
       'street': address.street,
@@ -215,61 +231,76 @@ class CheckoutViewBody extends StatelessWidget {
             'product': item.productId,
             'variant': item.variantId,
             'quantity': item.quantity,
+
+            // Send price for backend validation.
             if (item.price != null) 'price': item.price,
           },
         )
         .toList();
 
+    // CASH PAYMENT
     if (state.selectedPaymentType == CheckoutPaymentType.cash) {
       context.read<OrderCubit>().createOrder(
         products: products,
-        totalPrice: cart.subtotal ?? 0.0,
+        totalPrice: cart.subtotal ?? 0,
         shippingAddress: shippingAddress,
         paymentMethod: 'cash',
       );
+
       return;
     }
 
-    // card payment: create the order first, THEN request a payment link
-    // for that order's id — the endpoint is /payments/orders/:orderId/pay,
-    // so we need a real id before calling Paymob.
+    // CARD PAYMENT
     if (state.selectedPaymentType == CheckoutPaymentType.card) {
-      await context.read<OrderCubit>().createOrder(
-        products: products,
-        totalPrice: cart.subtotal ?? 0.0,
-        shippingAddress: shippingAddress,
-        paymentMethod: 'card',
-      );
-    }
+      try {
+        /*
+         * Do NOT create the order here.
+         *
+         * We create only a Paymob payment session.
+         */
 
-    final orderState = context.read<OrderCubit>().state;
-    if (orderState is! OrderCreated) {
-      throw Exception('Order was not created');
-    }
+        final paymentData = await getIt<PaymobRemoteDataSource>()
+            .createPaymentSession(
+              products: products,
+              totalPrice: cart.subtotal ?? 0,
+              shippingAddress: shippingAddress,
+            );
 
-    try {
-      final paymentData = await getIt<PaymobRemoteDataSource>().createPayment(
-        orderId: orderState.order.id,
-      );
+        final responseData = paymentData['data'] as Map<String, dynamic>?;
 
-      final responseData = paymentData['data'] as Map<String, dynamic>?;
-      final paymentUrl = responseData?['checkoutUrl'] as String?;
-      log('Payment URL: $paymentUrl');
+        final paymentUrl = responseData?['checkoutUrl'] as String?;
 
-      if (paymentUrl == null) {
-        throw Exception('No payment URL returned from server');
-      }
+        if (paymentUrl == null || paymentUrl.trim().isEmpty) {
+          throw Exception('No payment URL returned from server');
+        }
 
-      final launched = await launchUrl(
-        Uri.parse(paymentUrl),
-        mode: LaunchMode.externalApplication,
-      );
+        log('PAYMOB URL: $paymentUrl');
 
-      if (!launched) {
-        throw Exception('Could not open payment page');
-      }
-    } catch (e) {
-      if (context.mounted) {
+        final launched = await launchUrl(
+          Uri.parse(paymentUrl),
+          mode: LaunchMode.externalApplication,
+        );
+
+        if (!launched) {
+          throw Exception('Could not open Paymob payment page');
+        }
+
+        /*
+         * IMPORTANT:
+         *
+         * There is intentionally NO createOrder()
+         * here.
+         *
+         * The backend creates the order only after
+         * Paymob confirms successful payment.
+         */
+      } catch (e) {
+        log('PAYMENT ERROR: $e');
+
+        if (!context.mounted) {
+          return;
+        }
+
         ScaffoldMessenger.of(
           context,
         ).showSnackBar(SnackBar(content: Text('Payment failed: $e')));
@@ -277,12 +308,9 @@ class CheckoutViewBody extends StatelessWidget {
     }
   }
 
-  // ------------------------------------------------------------
-  // PICKERS
-  // ------------------------------------------------------------
-
   void _showAddressPicker(BuildContext context, CheckoutLoaded state) {
     final cubit = context.read<CheckoutCubit>();
+
     showModalBottomSheet(
       context: context,
       builder: (sheetContext) {
@@ -295,6 +323,7 @@ class CheckoutViewBody extends StatelessWidget {
                   padding: EdgeInsets.all(24),
                   child: Text('No saved addresses yet.'),
                 ),
+
               for (final address in state.addresses)
                 ListTile(
                   title: Text('${address.street}, ${address.city}'),
@@ -306,11 +335,13 @@ class CheckoutViewBody extends StatelessWidget {
                     Navigator.of(sheetContext).pop();
                   },
                 ),
+
               ListTile(
                 leading: const Icon(Icons.add),
                 title: const Text('Add New Address'),
                 onTap: () {
                   Navigator.of(sheetContext).pop();
+
                   Navigator.pushNamed(context, MapView.routeName);
                 },
               ),
@@ -323,6 +354,7 @@ class CheckoutViewBody extends StatelessWidget {
 
   void _showPaymentPicker(BuildContext context, CheckoutLoaded state) {
     final cubit = context.read<CheckoutCubit>();
+
     showModalBottomSheet(
       context: context,
       builder: (sheetContext) {
@@ -341,9 +373,11 @@ class CheckoutViewBody extends StatelessWidget {
                       : null,
                   onTap: () {
                     cubit.selectCashPayment();
+
                     Navigator.of(sheetContext).pop();
                   },
                 ),
+
                 ListTile(
                   leading: const Icon(Icons.credit_card_outlined),
                   title: const Text('Paymob card'),
@@ -353,6 +387,7 @@ class CheckoutViewBody extends StatelessWidget {
                       : null,
                   onTap: () {
                     cubit.selectcardPayment();
+
                     Navigator.of(sheetContext).pop();
                   },
                 ),

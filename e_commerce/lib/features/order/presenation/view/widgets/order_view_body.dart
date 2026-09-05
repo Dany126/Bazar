@@ -39,26 +39,54 @@ class _OrderViewBodyState extends State<OrderViewBody> {
     switch (selectedFilter) {
       case OrderStatus.all:
         return 'No orders yet';
-
       case OrderStatus.processing:
         return 'No processing orders';
-
       case OrderStatus.shipped:
         return 'No shipped orders';
-
       case OrderStatus.delivered:
         return 'No delivered orders';
-
       case OrderStatus.returned:
         return 'No returned orders';
-
       case OrderStatus.cancelled:
         return 'No cancelled orders';
     }
   }
 
+  double _getHorizontalPadding(double width) {
+    if (width < 360) {
+      return 12;
+    }
+
+    if (width < 600) {
+      return 16;
+    }
+
+    if (width < 1000) {
+      return 24;
+    }
+
+    return 32;
+  }
+
+  double _getMaxContentWidth(double width) {
+    if (width < 600) {
+      return double.infinity;
+    }
+
+    if (width < 1200) {
+      return 850;
+    }
+
+    return 1000;
+  }
+
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+
+    final horizontalPadding = _getHorizontalPadding(width);
+    final maxContentWidth = _getMaxContentWidth(width);
+
     return Column(
       children: [
         const SizedBox(height: 12),
@@ -86,24 +114,34 @@ class _OrderViewBodyState extends State<OrderViewBody> {
                   return _buildEmptyState(context);
                 }
 
-                return ListView.separated(
-                  padding: const EdgeInsets.all(16),
+                return ListView.builder(
+                  padding: EdgeInsets.only(
+                    left: horizontalPadding,
+                    right: horizontalPadding,
+                    top: 8,
+                    bottom: 24,
+                  ),
                   itemCount: state.orders.length,
-                  separatorBuilder: (_, __) {
-                    return const SizedBox(height: 12);
-                  },
                   itemBuilder: (context, index) {
                     final order = state.orders[index];
 
-                    return OrderCard(
-                      order: order,
-                      onTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => OrderDetailView(order: order),
+                    return Center(
+                      child: ConstrainedBox(
+                        constraints: BoxConstraints(maxWidth: maxContentWidth),
+                        child: Padding(
+                          padding: const EdgeInsets.only(bottom: 12),
+                          child: OrderCard(
+                            order: order,
+                            onTap: () {
+                              Navigator.of(context).push(
+                                MaterialPageRoute(
+                                  builder: (_) => OrderDetailView(order: order),
+                                ),
+                              );
+                            },
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     );
                   },
                 );
@@ -118,13 +156,23 @@ class _OrderViewBodyState extends State<OrderViewBody> {
   }
 
   Widget _buildEmptyState(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+
+    final imageSize = width < 360
+        ? 110.0
+        : width < 600
+        ? 130.0
+        : 150.0;
+
+    final buttonWidth = width < 600 ? width * 0.75 : 320.0;
+
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Image.asset(Assets.assetsImagesCheckOut, height: 150),
+            Image.asset(Assets.assetsImagesCheckOut, height: imageSize),
 
             const SizedBox(height: 16),
 
@@ -138,7 +186,7 @@ class _OrderViewBodyState extends State<OrderViewBody> {
 
             if (selectedFilter != OrderStatus.all)
               SizedBox(
-                width: MediaQuery.of(context).size.width * 0.6,
+                width: buttonWidth,
                 child: CustomButton(
                   onTap: () {
                     setState(() {
@@ -159,26 +207,37 @@ class _OrderViewBodyState extends State<OrderViewBody> {
   }
 
   Widget _buildErrorState(BuildContext context, String message) {
+    final width = MediaQuery.sizeOf(context).width;
+
+    final buttonWidth = width < 600 ? width * 0.75 : 320.0;
+
     return Center(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 24),
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.error_outline, size: 60, color: Colors.red),
+            Icon(
+              Icons.error_outline,
+              size: width < 600 ? 52 : 60,
+              color: Colors.red,
+            ),
 
             const SizedBox(height: 16),
 
-            Text(
-              message,
-              style: AppStyles.textStylesRegular16(context),
-              textAlign: TextAlign.center,
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 600),
+              child: Text(
+                message,
+                style: AppStyles.textStylesRegular16(context),
+                textAlign: TextAlign.center,
+              ),
             ),
 
             const SizedBox(height: 20),
 
             SizedBox(
-              width: MediaQuery.of(context).size.width * 0.6,
+              width: buttonWidth,
               child: CustomButton(
                 onTap: () {
                   context.read<OrderCubit>().getMyOrders(

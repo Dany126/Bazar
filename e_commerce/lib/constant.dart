@@ -4,43 +4,72 @@ import 'package:e_commerce/features/home/domain/entity/product_entity.dart';
 import 'package:e_commerce/features/order/domin/entity/order_entity.dart';
 import 'package:e_commerce/features/order/domin/entity/order_product_entity.dart';
 
+/// ===============================================================
+/// API CONFIGURATION
+/// ===============================================================
+
 const String kBaseUrl = kIsWeb
-    ? "http://localhost:5000/api"
-    : "http://10.0.2.2:5000/api";
-const String kGetAllGategories = "$kBaseUrl/category";
-const String kGetAllProducts = "$kBaseUrl/product";
-const String kGetProductByCategory = "$kBaseUrl/category";
-const String kGetNewProductByCategory = "$kBaseUrl/product";
-const String kGetBestSellerProductByCategory = "$kBaseUrl/product";
-const String kRefreshTokenUrl = "$kBaseUrl/user/refresh";
+    ? 'http://localhost:5000/api'
+    : 'http://192.168.1.2:5000/api';
 
-// // Categoty
-// POST /http://localhost:5000/api/category
-// GET  /http://localhost:5000/api/category
-// GET  /http://localhost:5000/api/category/:id
-// PATCH  /http://localhost:5000/api/category/:id
-// DELETE  /http://localhost:5000/api/category:id
+const String kGetAllGategories = '$kBaseUrl/category';
+const String kGetAllProducts = '$kBaseUrl/product';
+const String kGetProductByCategory = '$kBaseUrl/category';
+const String kGetNewProductByCategory = '$kBaseUrl/product';
+const String kGetBestSellerProductByCategory = '$kBaseUrl/product';
+const String kRefreshTokenUrl = '$kBaseUrl/user/refresh';
 
-// // Order
-// POST /http://localhost:5000/api/order
-// GET  /http://localhost:5000/api/order
-// GET  /http://localhost:5000/api/order/:id
-// PATCH  /http://localhost:5000/api/order/:id
-// DELETE  /http://localhost:5000/api/order:id
+/// ===============================================================
+/// CATEGORY ENDPOINTS
+/// ===============================================================
+///
+/// POST   /api/category
+/// GET    /api/category
+/// GET    /api/category/:id
+/// PATCH  /api/category/:id
+/// DELETE /api/category/:id
+///
+/// ===============================================================
+/// ORDER ENDPOINTS
+/// ===============================================================
+///
+/// POST   /api/order
+/// GET    /api/order
+/// GET    /api/order/:id
+/// PATCH  /api/order/:id
+/// DELETE /api/order/:id
+///
+/// ===============================================================
+/// PRODUCT ENDPOINTS
+/// ===============================================================
+///
+/// POST   /api/product
+/// GET    /api/product
+/// GET    /api/product/:id
+/// GET    /api/category/:categoryId/product
+/// PATCH  /api/product/:id
+/// DELETE /api/product/:id
+///
+/// ===============================================================
+/// FAKE PRODUCT DATA
+/// ===============================================================
+///
+/// Used only while products are loading, for Skeletonizer.
+/// IMPORTANT:
+/// Do NOT use:
+///     [] as List<String>
+///
+/// Use:
+///     <String>[]
+///
+/// because [] is initially List<dynamic>.
+///
 
-// // Product
-// POST /http://localhost:5000/api/product
-// GET  /http://localhost:5000/api/product
-// GET  /http://localhost:5000/api/product/:id
-// GET /http://localhost:5000/api/category/:categoryId/product
-// PATCH  /http://localhost:5000/api/product/:id
-// DELETE  /http://localhost:5000/api/product:id
-
-List<ProductEntity> kFakeProducts = [
+final List<ProductEntity> kFakeProducts = [
   ProductEntity(
     id: '',
     name: '',
-    images: [] as List<String>,
+    images: <String>[],
     price: 0,
     rating: 0,
     stock: 0,
@@ -50,11 +79,29 @@ List<ProductEntity> kFakeProducts = [
   ),
 ];
 
-List<CategoryEntity> kCategories = [
+/// ===============================================================
+/// FAKE CATEGORY DATA
+/// ===============================================================
+///
+/// Used for loading/skeleton states if needed.
+///
+
+final List<CategoryEntity> kCategories = [
   CategoryEntity(id: '', name: '', imageUrl: ''),
 ];
 
+/// ===============================================================
+/// FAKE ORDERS
+/// ===============================================================
+///
+/// Used by UI/demo screens that still depend on local order data.
+///
+
 final List<OrderEntity> kOrders = [
+  // =============================================================
+  // ORDER 1
+  // =============================================================
+
   OrderEntity(
     id: 'ORD-100001',
     user: 'user_1',
@@ -63,7 +110,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_001',
           name: 'Wireless Headphones',
-          images: [] as List<String>,
+          images: <String>[],
           price: 75.0,
           rating: 4.7,
           stock: 35,
@@ -78,11 +125,12 @@ final List<OrderEntity> kOrders = [
         quantity: 2,
         price: 75.0,
       ),
+
       OrderProductEntity(
         product: ProductEntity(
           id: 'prod_002',
           name: 'Smart Watch',
-         images:[] as List<String>,
+          images: <String>[],
           price: 50.0,
           rating: 4.5,
           stock: 20,
@@ -104,6 +152,9 @@ final List<OrderEntity> kOrders = [
     orderStatus: 'processing',
   ),
 
+  // =============================================================
+  // ORDER 2
+  // =============================================================
   OrderEntity(
     id: 'ORD-100002',
     user: 'user_1',
@@ -112,7 +163,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_003',
           name: 'Running Shoes',
-         images:[] as List<String>,
+          images: <String>[],
           price: 80.0,
           rating: 4.8,
           stock: 15,
@@ -123,11 +174,12 @@ final List<OrderEntity> kOrders = [
         quantity: 1,
         price: 80.0,
       ),
+
       OrderProductEntity(
         product: ProductEntity(
           id: 'prod_004',
           name: 'Sports T-Shirt',
-         images:[] as List<String>,
+          images: <String>[],
           price: 35.0,
           rating: 4.4,
           stock: 40,
@@ -149,6 +201,9 @@ final List<OrderEntity> kOrders = [
     orderStatus: 'confirmed',
   ),
 
+  // =============================================================
+  // ORDER 3
+  // =============================================================
   OrderEntity(
     id: 'ORD-100003',
     user: 'user_1',
@@ -157,7 +212,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_005',
           name: 'Leather Backpack',
-         images:[] as List<String>,
+          images: <String>[],
           price: 95.0,
           rating: 4.6,
           stock: 18,
@@ -175,6 +230,9 @@ final List<OrderEntity> kOrders = [
     orderStatus: 'shipped',
   ),
 
+  // =============================================================
+  // ORDER 4
+  // =============================================================
   OrderEntity(
     id: 'ORD-100004',
     user: 'user_1',
@@ -183,7 +241,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_006',
           name: 'Cotton Hoodie',
-         images:[] as List<String>,
+          images: <String>[],
           price: 60.0,
           rating: 4.3,
           stock: 25,
@@ -198,11 +256,12 @@ final List<OrderEntity> kOrders = [
         quantity: 1,
         price: 60.0,
       ),
+
       OrderProductEntity(
         product: ProductEntity(
           id: 'prod_007',
           name: 'Baseball Cap',
-         images:[] as List<String>,
+          images: <String>[],
           price: 20.0,
           rating: 4.2,
           stock: 50,
@@ -224,6 +283,9 @@ final List<OrderEntity> kOrders = [
     orderStatus: 'delivered',
   ),
 
+  // =============================================================
+  // ORDER 5
+  // =============================================================
   OrderEntity(
     id: 'ORD-100005',
     user: 'user_1',
@@ -232,7 +294,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_008',
           name: 'Mechanical Keyboard',
-         images:[] as List<String>,
+          images: <String>[],
           price: 120.0,
           rating: 4.9,
           stock: 12,
@@ -254,6 +316,9 @@ final List<OrderEntity> kOrders = [
     orderStatus: 'cancelled',
   ),
 
+  // =============================================================
+  // ORDER 6
+  // =============================================================
   OrderEntity(
     id: 'ORD-100006',
     user: 'user_1',
@@ -262,7 +327,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_009',
           name: 'Coffee Maker',
-         images:[] as List<String>,
+          images: <String>[],
           price: 110.0,
           rating: 4.5,
           stock: 10,
@@ -277,11 +342,12 @@ final List<OrderEntity> kOrders = [
         quantity: 1,
         price: 110.0,
       ),
+
       OrderProductEntity(
         product: ProductEntity(
           id: 'prod_010',
           name: 'Coffee Mug',
-         images:[] as List<String>,
+          images: <String>[],
           price: 15.0,
           rating: 4.1,
           stock: 100,
@@ -303,6 +369,9 @@ final List<OrderEntity> kOrders = [
     orderStatus: 'delivered',
   ),
 
+  // =============================================================
+  // ORDER 7
+  // =============================================================
   OrderEntity(
     id: 'ORD-100007',
     user: 'user_1',
@@ -311,7 +380,7 @@ final List<OrderEntity> kOrders = [
         product: ProductEntity(
           id: 'prod_011',
           name: 'Sunglasses',
-         images:[] as List<String>,
+          images: <String>[],
           price: 45.0,
           rating: 4.4,
           stock: 30,
@@ -333,5 +402,10 @@ final List<OrderEntity> kOrders = [
     orderStatus: 'pending',
   ),
 ];
-// ADMIN@gmail.com
-// Admin123!
+
+/// ===============================================================
+/// ADMIN CREDENTIALS
+/// ===============================================================
+///
+/// ADMIN@gmail.com
+/// Admin123!

@@ -115,7 +115,7 @@ class _MapViewBodyState extends State<MapViewBody> {
                         child: CustomButton(
                           onTap: isReady
                               ? () {
-                                  Navigator.of(context).push(
+                                  Navigator.of(context).pushReplacement(
                                     MaterialPageRoute(
                                       builder: (_) => BlocProvider.value(
                                         value: context.read<AddressCubit>(),

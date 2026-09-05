@@ -8,37 +8,59 @@ class ProductListView extends StatelessWidget {
 
   final List<ProductEntity> products;
 
+  double _getCardWidth(double screenWidth) {
+    if (screenWidth < 360) {
+      return 145;
+    }
+
+    if (screenWidth < 600) {
+      return 165;
+    }
+
+    if (screenWidth < 900) {
+      return 200;
+    }
+
+    if (screenWidth < 1200) {
+      return 220;
+    }
+
+    return 240;
+  }
+
   @override
   Widget build(BuildContext context) {
-    final screenHeight = MediaQuery.of(context).size.height;
-    // single derived value, clamped — can never produce min > max
-    final listHeight = (screenHeight * 0.3).clamp(280.0, 380.0);
+    final screenWidth = MediaQuery.sizeOf(context).width;
 
-    final screenWidth = MediaQuery.of(context).size.width;
-    final cardWidth = (screenWidth * 0.42).clamp(150.0, 190.0);
+    final cardWidth = _getCardWidth(screenWidth);
+
+    // Keep the same visual proportions as ProductCard.
+    // ProductCard image is approximately square + text section.
+    final cardHeight = cardWidth + 78;
 
     return SizedBox(
-      height: listHeight,
-      child: ListView.builder(
+      height: cardHeight,
+      child: ListView.separated(
         scrollDirection: Axis.horizontal,
         physics: const BouncingScrollPhysics(),
-
+        padding: EdgeInsets.zero,
         itemCount: products.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 12),
         itemBuilder: (context, index) {
-          return Padding(
-            padding: const EdgeInsets.only(right: 12),
-            child: SizedBox(
-              width: cardWidth,
-              child: ProductCard(
-                product: products[index],
-                onTap: () {
-                  Navigator.pushNamed(
-                    context,
-                    ProductDetailsView.routeName,
-                    arguments: products[index].id,
-                  );
-                },
-              ),
+          final product = products[index];
+
+          return SizedBox(
+            width: cardWidth,
+            height: cardHeight,
+            child: ProductCard(
+              product: product,
+              onTap: () {
+                Navigator.pushNamed(
+                  context,
+                  ProductDetailsView.routeName,
+                  arguments: product.id,
+                );
+              },
             ),
           );
         },

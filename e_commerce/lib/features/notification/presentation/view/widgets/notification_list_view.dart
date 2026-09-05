@@ -5,15 +5,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class NotificationListView extends StatelessWidget {
-  final List<NotificationEntity> notifications;
-
-  final void Function(String id) onDelete;
-
   const NotificationListView({
     super.key,
     required this.notifications,
     required this.onDelete,
   });
+
+  final List<NotificationEntity> notifications;
+  final void Function(String id) onDelete;
 
   @override
   Widget build(BuildContext context) {
@@ -29,19 +28,30 @@ class NotificationListView extends StatelessWidget {
 
           confirmDismiss: (_) async {
             onDelete(notification.id);
-
             return false;
           },
 
-          background: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            alignment: Alignment.centerRight,
-            padding: const EdgeInsets.only(right: 20),
-            decoration: BoxDecoration(
-              color: Colors.red,
-              borderRadius: BorderRadius.circular(10),
-            ),
-            child: const Icon(Icons.delete, color: Colors.white),
+          background: Builder(
+            builder: (context) {
+              final width = MediaQuery.sizeOf(context).width;
+
+              final margin = width < 600
+                  ? 12.0
+                  : width < 1000
+                  ? 20.0
+                  : 24.0;
+
+              return Container(
+                margin: EdgeInsets.symmetric(horizontal: margin, vertical: 6),
+                alignment: Alignment.centerRight,
+                padding: const EdgeInsets.only(right: 20),
+                decoration: BoxDecoration(
+                  color: Colors.red,
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: const Icon(Icons.delete, color: Colors.white),
+              );
+            },
           ),
 
           child: NotificationItem(

@@ -1,6 +1,7 @@
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:cookie_jar/cookie_jar.dart';
 import 'package:dio/dio.dart';
+import 'package:e_commerce/core/services/api_config.dart';
 import 'package:e_commerce/features/admin/data/datasources/admin_users_remote_data_source.dart';
 import 'package:e_commerce/features/admin/data/repositories/admin_users_repository_impl.dart';
 import 'package:e_commerce/features/admin/domain/repositories/admin_users_repository.dart';
@@ -189,8 +190,19 @@ import 'package:e_commerce/features/admin/domain/usecases/get_all_admin_orders.d
 import 'package:e_commerce/features/admin/domain/usecases/update_admin_order.dart';
 // ==========================================================
 // ==========================================================
-import 'package:dio/browser.dart';
-import 'package:flutter/foundation.dart';
+// FIX: Removed `import 'package:dio/browser.dart';`
+//
+// This import pulls in BrowserHttpClientAdapter, which depends on
+// package:web -> dart:js_interop. That library only exists on the
+// web compile target. Because this import was unconditional (not
+// behind a platform-specific conditional import), the Android build
+// tried to compile it too and failed with hundreds of
+// "dart:js_interop is not available on this platform" errors.
+//
+// Dio() already auto-selects the correct adapter per platform
+// (IOHttpClientAdapter on Android/iOS/desktop, BrowserHttpClientAdapter
+// on web) without needing to reference BrowserHttpClientAdapter here.
+
 // ==========================================================
 import 'package:e_commerce/features/admin/data/datasources/admin_store_settings_remote_data_source.dart';
 import 'package:e_commerce/features/admin/data/repositories/admin_store_settings_repository_impl.dart';
@@ -245,7 +257,7 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
   getIt.registerLazySingleton<Dio>(() {
     final dio = Dio(
       BaseOptions(
-        baseUrl: kBaseUrl,
+        baseUrl: ApiConfig.baseUrl,
         connectTimeout: const Duration(seconds: 15),
         receiveTimeout: const Duration(seconds: 15),
         headers: {
@@ -255,11 +267,12 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
       ),
     );
 
-    if (kIsWeb) {
-      final adapter = HttpClientAdapter() as BrowserHttpClientAdapter;
-      adapter.withCredentials = true;
-      dio.httpClientAdapter = adapter;
-    }
+    // FIX: Removed the `if (kIsWeb) { ... BrowserHttpClientAdapter ... }`
+    // block. kIsWeb is a runtime check - it does NOT stop the compiler
+    // from needing to compile BrowserHttpClientAdapter for every
+    // platform, which is what broke the Android build. Dio() already
+    // picks the correct adapter automatically per platform, so this
+    // block was unnecessary as well as unsafe to compile unconditionally.
 
     dio.interceptors.add(DioErrorInterceptor());
 
