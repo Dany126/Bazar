@@ -101,42 +101,113 @@ class _AdminOrdersBodyState extends State<_AdminOrdersBody> {
   }
 }
 
-class _OrdersContent extends StatelessWidget {
+class _OrdersContent
+    extends StatelessWidget {
   const _OrdersContent();
 
   @override
-  Widget build(BuildContext context) {
-    return BlocBuilder<AdminOrdersCubit, AdminOrdersState>(
-      builder: (context, state) {
-        if (state is AdminOrdersLoading) {
-          return const Center(child: CircularProgressIndicator());
+  Widget build(
+    BuildContext context,
+  ) {
+    return BlocBuilder<
+        AdminOrdersCubit,
+        AdminOrdersState>(
+      builder: (
+        context,
+        state,
+      ) {
+        if (state
+            is AdminOrdersLoading) {
+          return const Center(
+            child:
+                CircularProgressIndicator(),
+          );
         }
 
-        if (state is AdminOrdersError) {
-          return _ErrorView(message: state.message);
+        if (state
+            is AdminOrdersError) {
+          return _ErrorView(
+            message: state.message,
+          );
         }
 
-        if (state is AdminOrdersLoaded) {
-          if (state.filteredOrders.isEmpty) {
+        if (state
+            is AdminOrdersLoaded) {
+          if (state.filteredOrders
+              .isEmpty) {
             return const _EmptyView();
           }
 
-          return RefreshIndicator(
-            onRefresh: context.read<AdminOrdersCubit>().loadOrders,
-            child: ListView.separated(
-              physics: const AlwaysScrollableScrollPhysics(),
-              itemCount: state.filteredOrders.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 12),
-              itemBuilder: (context, index) {
-                final order = state.filteredOrders[index];
+          return Column(
+            children: [
+              // ==================================================
+              // ORDERS LIST
+              // ==================================================
 
-                return _OrderCard(
-                  order: order,
-                  isUpdating: state.updatingOrderId == order.id,
-                  isDeleting: state.deletingOrderId == order.id,
-                );
-              },
-            ),
+              Expanded(
+                child: RefreshIndicator(
+                  onRefresh: context
+                      .read<
+                          AdminOrdersCubit>()
+                      .loadOrders,
+                  child:
+                      ListView.separated(
+                    physics:
+                        const AlwaysScrollableScrollPhysics(),
+                    itemCount:
+                        state.paginatedOrders
+                            .length,
+                    separatorBuilder:
+                        (_, __) =>
+                            const SizedBox(
+                      height: 12,
+                    ),
+                    itemBuilder:
+                        (
+                      context,
+                      index,
+                    ) {
+                      final order =
+                          state.paginatedOrders[
+                              index];
+
+                      return _OrderCard(
+                        order: order,
+                        isUpdating:
+                            state.updatingOrderId ==
+                                order.id,
+                        isDeleting:
+                            state.deletingOrderId ==
+                                order.id,
+                      );
+                    },
+                  ),
+                ),
+              ),
+
+              const SizedBox(
+                height: 16,
+              ),
+
+              // ==================================================
+              // PAGINATION
+              // ==================================================
+
+              _OrdersPagination(
+                currentPage:
+                    state.currentPage,
+                totalPages:
+                    state.totalPages,
+                totalItems:
+                    state.totalItems,
+                itemsPerPage:
+                    state.itemsPerPage,
+                hasPreviousPage:
+                    state.hasPreviousPage,
+                hasNextPage:
+                    state.hasNextPage,
+              ),
+            ],
           );
         }
 
@@ -430,5 +501,308 @@ class _ErrorView extends StatelessWidget {
         ],
       ),
     );
+  }
+}class _OrdersPagination
+    extends StatelessWidget {
+  final int currentPage;
+  final int totalPages;
+  final int totalItems;
+  final int itemsPerPage;
+
+  final bool hasPreviousPage;
+  final bool hasNextPage;
+
+  const _OrdersPagination({
+    required this.currentPage,
+    required this.totalPages,
+    required this.totalItems,
+    required this.itemsPerPage,
+    required this.hasPreviousPage,
+    required this.hasNextPage,
+  });
+
+  @override
+  Widget build(
+    BuildContext context,
+  ) {
+    final cubit =
+        context.read<AdminOrdersCubit>();
+
+    final startItem =
+        ((currentPage - 1) *
+                itemsPerPage) +
+            1;
+
+    final endItem =
+        (currentPage * itemsPerPage)
+            .clamp(0, totalItems);
+
+    return Container(
+      padding:
+          const EdgeInsets.symmetric(
+        horizontal: 16,
+        vertical: 12,
+      ),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius:
+            BorderRadius.circular(12),
+        border: Border.all(
+          color: Colors.grey.shade200,
+        ),
+      ),
+      child: LayoutBuilder(
+        builder:
+            (context, constraints) {
+          final isSmall =
+              constraints.maxWidth < 700;
+
+          if (isSmall) {
+            return Column(
+              children: [
+                _buildItemsInfo(
+                  startItem,
+                  endItem,
+                  totalItems,
+                ),
+
+                const SizedBox(
+                  height: 12,
+                ),
+
+                _buildPageControls(
+                  context,
+                  cubit,
+                ),
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              _buildItemsInfo(
+                startItem,
+                endItem,
+                totalItems,
+              ),
+
+              const Spacer(),
+
+              _buildPageControls(
+                context,
+                cubit,
+              ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  Widget _buildItemsInfo(
+    int startItem,
+    int endItem,
+    int totalItems,
+  ) {
+    return Text(
+      'Showing $startItem-$endItem of $totalItems orders',
+      style: const TextStyle(
+        color: Colors.grey,
+        fontSize: 13,
+      ),
+    );
+  }
+
+  Widget _buildPageControls(
+    BuildContext context,
+    AdminOrdersCubit cubit,
+  ) {
+    return Row(
+      mainAxisSize:
+          MainAxisSize.min,
+      children: [
+        // FIRST PAGE
+        IconButton(
+          tooltip: 'First page',
+          onPressed: hasPreviousPage
+              ? cubit.firstPage
+              : null,
+          icon: const Icon(
+            Icons.first_page,
+          ),
+        ),
+
+        // PREVIOUS
+        IconButton(
+          tooltip: 'Previous page',
+          onPressed: hasPreviousPage
+              ? cubit.previousPage
+              : null,
+          icon: const Icon(
+            Icons.chevron_left,
+          ),
+        ),
+
+        const SizedBox(
+          width: 4,
+        ),
+
+        // PAGE NUMBERS
+        ..._buildPageNumbers(
+          context,
+          cubit,
+        ),
+
+        const SizedBox(
+          width: 4,
+        ),
+
+        // NEXT
+        IconButton(
+          tooltip: 'Next page',
+          onPressed: hasNextPage
+              ? cubit.nextPage
+              : null,
+          icon: const Icon(
+            Icons.chevron_right,
+          ),
+        ),
+
+        // LAST PAGE
+        IconButton(
+          tooltip: 'Last page',
+          onPressed: hasNextPage
+              ? cubit.lastPage
+              : null,
+          icon: const Icon(
+            Icons.last_page,
+          ),
+        ),
+      ],
+    );
+  }
+
+  List<Widget> _buildPageNumbers(
+    BuildContext context,
+    AdminOrdersCubit cubit,
+  ) {
+    final pages = <int>[];
+
+    if (totalPages <= 7) {
+      for (
+        int i = 1;
+        i <= totalPages;
+        i++
+      ) {
+        pages.add(i);
+      }
+    } else {
+      pages.add(1);
+
+      if (currentPage > 4) {
+        pages.add(-1);
+      }
+
+      final start =
+          currentPage <= 4
+              ? 2
+              : currentPage - 1;
+
+      final end =
+          currentPage >=
+                  totalPages - 3
+              ? totalPages - 1
+              : currentPage + 1;
+
+      for (
+        int i = start;
+        i <= end;
+        i++
+      ) {
+        if (!pages.contains(i)) {
+          pages.add(i);
+        }
+      }
+
+      if (currentPage <
+          totalPages - 3) {
+        pages.add(-1);
+      }
+
+      if (!pages.contains(
+        totalPages,
+      )) {
+        pages.add(totalPages);
+      }
+    }
+
+    return pages.map(
+      (page) {
+        if (page == -1) {
+          return const Padding(
+            padding:
+                EdgeInsets.symmetric(
+              horizontal: 4,
+            ),
+            child: Text(
+              '...',
+              style: TextStyle(
+                color: Colors.grey,
+              ),
+            ),
+          );
+        }
+
+        final isSelected =
+            page == currentPage;
+
+        return Padding(
+          padding:
+              const EdgeInsets.symmetric(
+            horizontal: 2,
+          ),
+          child: InkWell(
+            onTap: isSelected
+                ? null
+                : () => cubit.goToPage(
+                      page,
+                    ),
+            borderRadius:
+                BorderRadius.circular(
+              8,
+            ),
+            child: Container(
+              width: 38,
+              height: 38,
+              alignment:
+                  Alignment.center,
+              decoration: BoxDecoration(
+                color: isSelected
+                    ? Theme.of(
+                        context,
+                      ).colorScheme.primary
+                    : Colors.transparent,
+                borderRadius:
+                    BorderRadius.circular(
+                  8,
+                ),
+              ),
+              child: Text(
+                '$page',
+                style: TextStyle(
+                  color: isSelected
+                      ? Colors.white
+                      : Colors.black87,
+                  fontWeight:
+                      isSelected
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                ),
+              ),
+            ),
+          ),
+        );
+      },
+    ).toList();
   }
 }

@@ -15,9 +15,15 @@ class AdminOrdersLoading extends AdminOrdersState {
 class AdminOrdersLoaded extends AdminOrdersState {
   final List<OrderEntity> orders;
   final List<OrderEntity> filteredOrders;
+
   final String searchQuery;
+
   final String? updatingOrderId;
   final String? deletingOrderId;
+
+  // Pagination
+  final int currentPage;
+  final int itemsPerPage;
 
   const AdminOrdersLoaded({
     required this.orders,
@@ -25,7 +31,47 @@ class AdminOrdersLoaded extends AdminOrdersState {
     this.searchQuery = '',
     this.updatingOrderId,
     this.deletingOrderId,
+    this.currentPage = 1,
+    this.itemsPerPage = 10,
   });
+
+  int get totalItems => filteredOrders.length;
+
+  int get totalPages {
+    if (filteredOrders.isEmpty) {
+      return 1;
+    }
+
+    return (filteredOrders.length / itemsPerPage).ceil();
+  }
+
+  List<OrderEntity> get paginatedOrders {
+    if (filteredOrders.isEmpty) {
+      return const [];
+    }
+
+    final startIndex =
+        (currentPage - 1) * itemsPerPage;
+
+    if (startIndex >= filteredOrders.length) {
+      return const [];
+    }
+
+    final endIndex =
+        (startIndex + itemsPerPage)
+            .clamp(0, filteredOrders.length);
+
+    return filteredOrders.sublist(
+      startIndex,
+      endIndex,
+    );
+  }
+
+  bool get hasPreviousPage =>
+      currentPage > 1;
+
+  bool get hasNextPage =>
+      currentPage < totalPages;
 
   AdminOrdersLoaded copyWith({
     List<OrderEntity>? orders,
@@ -33,19 +79,29 @@ class AdminOrdersLoaded extends AdminOrdersState {
     String? searchQuery,
     String? updatingOrderId,
     String? deletingOrderId,
+    int? currentPage,
+    int? itemsPerPage,
     bool clearUpdatingOrderId = false,
     bool clearDeletingOrderId = false,
   }) {
     return AdminOrdersLoaded(
       orders: orders ?? this.orders,
-      filteredOrders: filteredOrders ?? this.filteredOrders,
-      searchQuery: searchQuery ?? this.searchQuery,
+      filteredOrders:
+          filteredOrders ?? this.filteredOrders,
+      searchQuery:
+          searchQuery ?? this.searchQuery,
       updatingOrderId: clearUpdatingOrderId
           ? null
-          : updatingOrderId ?? this.updatingOrderId,
+          : updatingOrderId ??
+              this.updatingOrderId,
       deletingOrderId: clearDeletingOrderId
           ? null
-          : deletingOrderId ?? this.deletingOrderId,
+          : deletingOrderId ??
+              this.deletingOrderId,
+      currentPage:
+          currentPage ?? this.currentPage,
+      itemsPerPage:
+          itemsPerPage ?? this.itemsPerPage,
     );
   }
 }
@@ -53,5 +109,7 @@ class AdminOrdersLoaded extends AdminOrdersState {
 class AdminOrdersError extends AdminOrdersState {
   final String message;
 
-  const AdminOrdersError({required this.message});
+  const AdminOrdersError({
+    required this.message,
+  });
 }
