@@ -18,14 +18,20 @@ class CategoriesPanel extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xffE8EAF0)),
+        border: Border.all(
+          color: const Color(0xffE8EAF0),
+        ),
       ),
-      child: BlocBuilder<AdminCategoriesCubit, AdminCategoriesState>(
+      child: BlocBuilder<
+          AdminCategoriesCubit,
+          AdminCategoriesState>(
         builder: (context, state) {
           if (state is AdminCategoriesLoading) {
             return const SizedBox(
               height: 180,
-              child: Center(child: CircularProgressIndicator()),
+              child: Center(
+                child: CircularProgressIndicator(),
+              ),
             );
           }
 
@@ -33,18 +39,23 @@ class CategoriesPanel extends StatelessWidget {
             return _ErrorView(
               message: state.message,
               onRetry: () {
-                context.read<AdminCategoriesCubit>().loadCategories();
+                context
+                    .read<AdminCategoriesCubit>()
+                    .loadCategories();
               },
             );
           }
 
           if (state is! AdminCategoriesLoaded) {
-            return const _EmptyView(message: 'No categories');
+            return const _EmptyView(
+              message: 'No categories',
+            );
           }
 
           return Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
             children: [
               _buildHeader(context),
 
@@ -53,21 +64,31 @@ class CategoriesPanel extends StatelessWidget {
               if (state.categories.isEmpty)
                 const SizedBox(
                   height: 120,
-                  child: _EmptyView(message: 'No categories found'),
+                  child: _EmptyView(
+                    message: 'No categories found',
+                  ),
                 )
               else
                 ListView.separated(
                   shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
+                  physics:
+                      const NeverScrollableScrollPhysics(),
                   padding: EdgeInsets.zero,
-                  itemCount: state.categories.length,
+                  itemCount:
+                      state.categories.length,
                   separatorBuilder: (_, __) {
-                    return const SizedBox(height: 10);
+                    return const SizedBox(
+                      height: 10,
+                    );
                   },
-                  itemBuilder: (context, index) {
-                    final category = state.categories[index];
+                  itemBuilder:
+                      (context, index) {
+                    final category =
+                        state.categories[index];
 
-                    final isSelected = state.selectedCategoryId == category.id;
+                    final isSelected =
+                        state.selectedCategoryId ==
+                            category.id;
 
                     return _CategoryItem(
                       category: category,
@@ -82,16 +103,17 @@ class CategoriesPanel extends StatelessWidget {
     );
   }
 
-  Widget _buildHeader(BuildContext context) {
+  Widget _buildHeader(
+    BuildContext context,
+  ) {
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = constraints.maxWidth;
 
-        // Small screens:
-        // Put the button below the title.
         if (width < 450) {
           return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment:
+                CrossAxisAlignment.start,
             children: [
               const Text(
                 'Categories',
@@ -101,20 +123,17 @@ class CategoriesPanel extends StatelessWidget {
                   color: Color(0xff20222F),
                 ),
               ),
-
               const SizedBox(height: 12),
-
               SizedBox(
                 width: double.infinity,
-                child: _addCategoryButton(context),
+                child:
+                    _addCategoryButton(context),
               ),
             ],
           );
         }
 
-        // Normal / desktop layout.
         return Row(
-          mainAxisSize: MainAxisSize.max,
           children: [
             const Expanded(
               child: Text(
@@ -126,9 +145,7 @@ class CategoriesPanel extends StatelessWidget {
                 ),
               ),
             ),
-
             const SizedBox(width: 12),
-
             _addCategoryButton(context),
           ],
         );
@@ -136,23 +153,39 @@ class CategoriesPanel extends StatelessWidget {
     );
   }
 
-  Widget _addCategoryButton(BuildContext context) {
+  Widget _addCategoryButton(
+    BuildContext context,
+  ) {
     return ElevatedButton.icon(
       onPressed: () {
         _showAddCategorySheet(context);
       },
-      icon: const Icon(Icons.add, size: 18),
+      icon: const Icon(
+        Icons.add,
+        size: 18,
+      ),
       label: const Text('Add Category'),
       style: ElevatedButton.styleFrom(
         elevation: 0,
-        backgroundColor: AppColors.kPrimaryColor,
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        backgroundColor:
+            AppColors.kPrimaryColor,
+        padding:
+            const EdgeInsets.symmetric(
+          horizontal: 14,
+          vertical: 10,
+        ),
+        shape:
+            RoundedRectangleBorder(
+          borderRadius:
+              BorderRadius.circular(10),
+        ),
       ),
     );
   }
 
-  void _showAddCategorySheet(BuildContext context) {
+  void _showAddCategorySheet(
+    BuildContext context,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -160,7 +193,8 @@ class CategoriesPanel extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (_) {
         return BlocProvider.value(
-          value: context.read<AdminCategoriesCubit>(),
+          value: context
+              .read<AdminCategoriesCubit>(),
           child: const AddCategorySheet(),
         );
       },
@@ -168,12 +202,17 @@ class CategoriesPanel extends StatelessWidget {
   }
 }
 
-// ============================================================
-// CATEGORY ITEM
-// ============================================================
+/*
+|--------------------------------------------------------------------------
+| CATEGORY ITEM
+|--------------------------------------------------------------------------
+*/
 
 class _CategoryItem extends StatelessWidget {
-  const _CategoryItem({required this.category, required this.selected});
+  const _CategoryItem({
+    required this.category,
+    required this.selected,
+  });
 
   final CategoryModel category;
   final bool selected;
@@ -186,24 +225,52 @@ class _CategoryItem extends StatelessWidget {
           category: category,
           selected: selected,
           onTap: () {
-            context.read<AdminCategoriesCubit>().selectCategory(category);
+            context
+                .read<AdminCategoriesCubit>()
+                .selectCategory(category);
           },
         ),
 
         Positioned(
           top: 6,
           right: 6,
-          child: _EditButton(
-            onTap: () {
-              _showEditCategorySheet(context, category);
-            },
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _CategoryActionButton(
+                icon: Icons.edit_outlined,
+                tooltip: 'Edit category',
+                onTap: () {
+                  _showEditCategorySheet(
+                    context,
+                    category,
+                  );
+                },
+              ),
+
+              const SizedBox(width: 6),
+
+              _CategoryActionButton(
+                icon: Icons.delete_outline,
+                tooltip: 'Delete category',
+                onTap: () {
+                  _confirmDeleteCategory(
+                    context,
+                    category,
+                  );
+                },
+              ),
+            ],
           ),
         ),
       ],
     );
   }
 
-  void _showEditCategorySheet(BuildContext context, CategoryModel category) {
+  void _showEditCategorySheet(
+    BuildContext context,
+    CategoryModel category,
+  ) {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
@@ -211,47 +278,127 @@ class _CategoryItem extends StatelessWidget {
       backgroundColor: Colors.transparent,
       builder: (_) {
         return BlocProvider.value(
-          value: context.read<AdminCategoriesCubit>(),
-          child: AddCategorySheet(category: category),
+          value: context
+              .read<AdminCategoriesCubit>(),
+          child: AddCategorySheet(
+            category: category,
+          ),
         );
       },
     );
   }
+
+  Future<void> _confirmDeleteCategory(
+    BuildContext context,
+    CategoryModel category,
+  ) async {
+    final confirmed =
+        await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title:
+              const Text('Delete category?'),
+          content: Text(
+            'Are you sure you want to delete '
+            '"${category.name}"?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  false,
+                );
+              },
+              child:
+                  const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () {
+                Navigator.pop(
+                  dialogContext,
+                  true,
+                );
+              },
+              child:
+                  const Text('Delete'),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true ||
+        !context.mounted) {
+      return;
+    }
+
+    await context
+        .read<AdminCategoriesCubit>()
+        .deleteCategory(
+          id: category.id,
+        );
+  }
 }
 
-// ============================================================
-// EDIT BUTTON
-// ============================================================
+/*
+|--------------------------------------------------------------------------
+| CATEGORY ACTION BUTTON
+|--------------------------------------------------------------------------
+*/
 
-class _EditButton extends StatelessWidget {
-  const _EditButton({required this.onTap});
+class _CategoryActionButton
+    extends StatelessWidget {
+  const _CategoryActionButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onTap,
+  });
 
+  final IconData icon;
+  final String tooltip;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      shape: const CircleBorder(),
-      elevation: 2,
-      child: InkWell(
-        customBorder: const CircleBorder(),
-        onTap: onTap,
-        child: const Padding(
-          padding: EdgeInsets.all(7),
-          child: Icon(Icons.edit_outlined, size: 17, color: Color(0xff555A6F)),
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: Colors.white,
+        shape: const CircleBorder(),
+        elevation: 2,
+        child: InkWell(
+          customBorder:
+              const CircleBorder(),
+          onTap: onTap,
+          child: Padding(
+            padding:
+                const EdgeInsets.all(7),
+            child: Icon(
+              icon,
+              size: 17,
+              color:
+                  const Color(0xff555A6F),
+            ),
+          ),
         ),
       ),
     );
   }
 }
 
-// ============================================================
-// EMPTY VIEW
-// ============================================================
+/*
+|--------------------------------------------------------------------------
+| EMPTY
+|--------------------------------------------------------------------------
+*/
 
-class _EmptyView extends StatelessWidget {
-  const _EmptyView({required this.message});
+class _EmptyView
+    extends StatelessWidget {
+  const _EmptyView({
+    required this.message,
+  });
 
   final String message;
 
@@ -259,23 +406,32 @@ class _EmptyView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding:
+            const EdgeInsets.all(20),
         child: Text(
           message,
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Color(0xff777B8C)),
+          style: const TextStyle(
+            color: Color(0xff777B8C),
+          ),
         ),
       ),
     );
   }
 }
 
-// ============================================================
-// ERROR VIEW
-// ============================================================
+/*
+|--------------------------------------------------------------------------
+| ERROR
+|--------------------------------------------------------------------------
+*/
 
-class _ErrorView extends StatelessWidget {
-  const _ErrorView({required this.message, required this.onRetry});
+class _ErrorView
+    extends StatelessWidget {
+  const _ErrorView({
+    required this.message,
+    required this.onRetry,
+  });
 
   final String message;
   final VoidCallback onRetry;
@@ -284,23 +440,36 @@ class _ErrorView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding:
+            const EdgeInsets.all(20),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisSize:
+              MainAxisSize.min,
           children: [
-            const Icon(Icons.error_outline, size: 42, color: Colors.redAccent),
+            const Icon(
+              Icons.error_outline,
+              size: 42,
+              color: Colors.redAccent,
+            ),
 
             const SizedBox(height: 12),
 
             Text(
               message,
-              textAlign: TextAlign.center,
-              style: const TextStyle(color: Colors.red),
+              textAlign:
+                  TextAlign.center,
+              style: const TextStyle(
+                color: Colors.red,
+              ),
             ),
 
             const SizedBox(height: 16),
 
-            OutlinedButton(onPressed: onRetry, child: const Text('Retry')),
+            OutlinedButton(
+              onPressed: onRetry,
+              child:
+                  const Text('Retry'),
+            ),
           ],
         ),
       ),

@@ -25,19 +25,25 @@ class ProductDetailsModel extends ProductDetailsEntity {
 
     final variants = variantsRaw is List
         ? variantsRaw
-              .whereType<Map<String, dynamic>>()
-              .map((v) => VariantModel.fromJson(v))
-              .toList()
+            .whereType<Map<String, dynamic>>()
+            .map((v) => VariantModel.fromJson(v))
+            .toList()
         : <VariantModel>[];
 
-    final productId = json['_id']?.toString() ?? json['id']?.toString() ?? '';
+    final productId =
+        json['_id']?.toString() ?? json['id']?.toString() ?? '';
 
     return ProductDetailsModel(
       id: productId,
       name: json['name']?.toString() ?? '',
       price: _toDouble(json['price']),
       images: _parseImages(json['image']),
-      avgRating: _toDouble(json['avg_rating']),
+
+      // IMPORTANT:
+      // Never allow NaN, infinity, negative rating,
+      // or rating greater than 5 to reach the UI.
+      avgRating: _toRating(json['avg_rating']),
+
       ratingsQuantity: _toInt(json['ratingsQuantity']),
       stock: _toInt(json['stock']),
       soldCount: _toInt(json['soldCount']),
@@ -45,8 +51,6 @@ class ProductDetailsModel extends ProductDetailsEntity {
       description: json['description']?.toString(),
       reviews: _parseReviews(json['reviews']),
       variants: variants,
-
-      // ⭐ IMPORTANT
       isFavorite: _getFavoriteState(
         productId,
         json['isFavorite'],
@@ -60,30 +64,48 @@ class ProductDetailsModel extends ProductDetailsEntity {
     required Map<String, dynamic> product,
     required List<dynamic> variantsJson,
   }) {
-    final variantMaps = variantsJson.whereType<Map<String, dynamic>>().toList();
+    final variantMaps =
+        variantsJson.whereType<Map<String, dynamic>>().toList();
 
-    final variants = variantMaps.map((v) => VariantModel.fromJson(v)).toList();
+    final variants =
+        variantMaps.map((v) => VariantModel.fromJson(v)).toList();
 
-    final firstVariant = variantMaps.isNotEmpty ? variantMaps.first : null;
+    final firstVariant =
+        variantMaps.isNotEmpty ? variantMaps.first : null;
 
     final productId =
-        product['_id']?.toString() ?? product['id']?.toString() ?? '';
+        product['_id']?.toString() ??
+        product['id']?.toString() ??
+        '';
 
     return ProductDetailsModel(
       id: productId,
       name: product['name']?.toString() ?? '',
-      price: _toDouble(firstVariant?['price'] ?? product['price']),
+      price: _toDouble(
+        firstVariant?['price'] ?? product['price'],
+      ),
       images: _parseImages(product['image']),
-      avgRating: _toDouble(product['avg_rating']),
-      ratingsQuantity: _toInt(product['ratingsQuantity']),
-      stock: _toInt(firstVariant?['stock'] ?? product['stock']),
-      soldCount: _toInt(firstVariant?['soldCount'] ?? product['soldCount']),
-      categoryId: _parseCategoryId(product['category']),
+
+      // IMPORTANT:
+      // Same protection here because this factory can also
+      // create ProductDetailsModel objects.
+      avgRating: _toRating(product['avg_rating']),
+
+      ratingsQuantity: _toInt(
+        product['ratingsQuantity'],
+      ),
+      stock: _toInt(
+        firstVariant?['stock'] ?? product['stock'],
+      ),
+      soldCount: _toInt(
+        firstVariant?['soldCount'] ?? product['soldCount'],
+      ),
+      categoryId: _parseCategoryId(
+        product['category'],
+      ),
       description: product['description']?.toString(),
       reviews: _parseReviews(product['reviews']),
       variants: variants,
-
-      // ⭐ IMPORTANT
       isFavorite: _getFavoriteState(
         productId,
         product['isFavorite'],
@@ -93,21 +115,14 @@ class ProductDetailsModel extends ProductDetailsEntity {
     );
   }
 
-  /// Gets the favorite state.
-  ///
-  /// Priority:
-  /// 1. Shared favorite state
-  /// 2. Backend isFavorite
-  /// 3. Backend isFavourite
-  /// 4. Backend isInWishlist
-  /// 5. false
   static bool _getFavoriteState(
     String productId,
     dynamic isFavorite,
     dynamic isFavourite,
     dynamic isInWishlist,
   ) {
-    final sharedState = GetProductsCubit.favoriteProductIds.value;
+    final sharedState =
+        GetProductsCubit.favoriteProductIds.value;
 
     if (sharedState.containsKey(productId)) {
       return sharedState[productId] == true;
@@ -128,16 +143,55 @@ class ProductDetailsModel extends ProductDetailsEntity {
     return false;
   }
 
+  /// Converts a normal number/string to double.
+  ///
+  /// This method protects the application from:
+  /// - null
+  /// - invalid strings
+  /// - NaN
+  /// - infinity
   static double _toDouble(dynamic value) {
     if (value == null) {
-      return 0;
+      return 0.0;
     }
+
+    double result;
 
     if (value is num) {
-      return value.toDouble();
+      result = value.toDouble();
+    } else {
+      result = double.tryParse(
+            value.toString().trim(),
+          ) ??
+          0.0;
     }
 
-    return double.tryParse(value.toString()) ?? 0;
+    if (!result.isFinite) {
+      return 0.0;
+    }
+
+    return result;
+  }
+
+  /// Converts avg_rating to a valid product rating.
+  ///
+  /// Rating must always be between 0 and 5.
+  static double _toRating(dynamic value) {
+    final rating = _toDouble(value);
+
+    if (!rating.isFinite) {
+      return 0.0;
+    }
+
+    if (rating <= 0) {
+      return 0.0;
+    }
+
+    if (rating >= 5) {
+      return 5.0;
+    }
+
+    return rating;
   }
 
   static int _toInt(dynamic value) {
@@ -153,7 +207,10 @@ class ProductDetailsModel extends ProductDetailsEntity {
       return value.toInt();
     }
 
-    return int.tryParse(value.toString()) ?? 0;
+    return int.tryParse(
+          value.toString().trim(),
+        ) ??
+        0;
   }
 
   static List<String> _parseImages(dynamic value) {
@@ -163,7 +220,8 @@ class ProductDetailsModel extends ProductDetailsEntity {
 
     return value
         .where((image) => image != null)
-        .map((image) => image.toString())
+        .map((image) => image.toString().trim())
+        .where((image) => image.isNotEmpty)
         .toList();
   }
 
@@ -174,7 +232,9 @@ class ProductDetailsModel extends ProductDetailsEntity {
 
     return value
         .whereType<Map<String, dynamic>>()
-        .map((review) => ReviewModel.fromJson(review))
+        .map(
+          (review) => ReviewModel.fromJson(review),
+        )
         .toList();
   }
 
@@ -184,7 +244,9 @@ class ProductDetailsModel extends ProductDetailsEntity {
     }
 
     if (category is Map<String, dynamic>) {
-      return category['_id']?.toString() ?? category['id']?.toString() ?? '';
+      return category['_id']?.toString() ??
+          category['id']?.toString() ??
+          '';
     }
 
     return '';

@@ -113,9 +113,6 @@ Future<void> main() async {
   );
 }
 
-// void main() {
-//   runApp(const DashboardDemoApp());
-// }
 
 class Bazar extends StatefulWidget {
   const Bazar({super.key});

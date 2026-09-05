@@ -762,30 +762,56 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
   // ==========================================================
   // ADMIN
   // ==========================================================
+// ==========================================================
+// ADMIN DASHBOARD
+// ==========================================================
 
-  // ==========================================================
-  // ADMIN DASHBOARD
-  // ==========================================================
+getIt.registerLazySingleton<
+    AdminDashboardRemoteDataSource>(
+  () =>
+      AdminDashboardRemoteDataSourceImpl(
+    apiService: getIt<ApiService>(),
+  ),
+);
 
-  getIt.registerLazySingleton<AdminDashboardRemoteDataSource>(
-    () => AdminDashboardRemoteDataSourceImpl(apiService: getIt<ApiService>()),
-  );
+getIt.registerLazySingleton<
+    AdminDashboardRepository>(
+  () =>
+      AdminDashboardRepositoryImpl(
+    remoteDataSource:
+        getIt<AdminDashboardRemoteDataSource>(),
+  ),
+);
 
-  getIt.registerLazySingleton<AdminDashboardRepository>(
-    () => AdminDashboardRepositoryImpl(
-      remoteDataSource: getIt<AdminDashboardRemoteDataSource>(),
-    ),
-  );
+getIt.registerLazySingleton<
+    GetAdminDashboardDataUseCase>(
+  () =>
+      GetAdminDashboardDataUseCase(
+    getIt<AdminDashboardRepository>(),
+  ),
+);
 
-  getIt.registerLazySingleton<GetAdminDashboardDataUseCase>(
-    () => GetAdminDashboardDataUseCase(getIt<AdminDashboardRepository>()),
-  );
+getIt.registerFactory<
+    AdminDashboardCubit>(
+  () => AdminDashboardCubit(
+    getAdminDashboardDataUseCase:
+        getIt<
+            GetAdminDashboardDataUseCase>(),
+  ),
+);
 
-  getIt.registerFactory<AdminDashboardCubit>(
-    () => AdminDashboardCubit(
-      getAdminDashboardDataUseCase: getIt<GetAdminDashboardDataUseCase>(),
-    ),
-  );
+// ==========================================================
+// ADMIN EARNINGS
+// ==========================================================
+
+getIt.registerFactory<
+    AdminEarningsCubit>(
+  () => AdminEarningsCubit(
+    getDashboardData:
+        getIt<
+            GetAdminDashboardDataUseCase>(),
+  ),
+);
 
   // ==========================================================
   // ADMIN PRODUCTS
