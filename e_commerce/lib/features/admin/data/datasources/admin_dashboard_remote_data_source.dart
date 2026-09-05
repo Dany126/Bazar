@@ -3,12 +3,11 @@ import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/error/failure.dart';
 import 'package:e_commerce/core/services/api_services.dart';
 import 'package:e_commerce/features/admin/domain/entity/admin_dashboard_data.dart';
-import 'package:e_commerce/features/home/data/models/category_model.dart';
-import 'package:e_commerce/features/home/data/models/product_model.dart';
-import 'package:e_commerce/features/order/data/model/order_model.dart';
 
 abstract class AdminDashboardRemoteDataSource {
-  Future<Either<Failure, AdminDashboardData>> getDashboardData();
+  Future<Either<Failure, AdminDashboardData>> getDashboardData({
+    String period = 'month',
+  });
 }
 
 class AdminDashboardRemoteDataSourceImpl
@@ -18,140 +17,257 @@ class AdminDashboardRemoteDataSourceImpl
   AdminDashboardRemoteDataSourceImpl({required this.apiService});
 
   @override
-  Future<Either<Failure, AdminDashboardData>> getDashboardData() async {
-    final categoryResult = await apiService.get('$kBaseUrl/category');
-    final productsResult = await apiService.get('$kBaseUrl/product');
-    final ordersResult = await apiService.get('$kBaseUrl/order');
-
-    if (categoryResult.isLeft()) {
-      return categoryResult.fold(
-        (failure) => Left(failure),
-        (_) => Left(ServerFailure(message: 'Failed to fetch categories')),
-      );
-    }
-    if (productsResult.isLeft()) {
-      return productsResult.fold(
-        (failure) => Left(failure),
-        (_) => Left(ServerFailure(message: 'Failed to fetch products')),
-      );
-    }
-    if (ordersResult.isLeft()) {
-      return ordersResult.fold(
-        (failure) => Left(failure),
-        (_) => Left(ServerFailure(message: 'Failed to fetch orders')),
-      );
-    }
-
-    final categoriesJson =
-        (categoryResult.getOrElse(() => {'categories': []})['categories']
-            as List?) ??
-        [];
-    final productsJson =
-        (productsResult.getOrElse(() => {'products': []})['products']
-            as List?) ??
-        [];
-    final ordersJson =
-        (ordersResult.getOrElse(() => {'orders': []})['orders'] as List?) ?? [];
-
-    final categories = categoriesJson
-        .whereType<Map<String, dynamic>>()
-        .map(CategoryModel.fromJson)
-        .toList();
-
-    final products = productsJson
-        .whereType<Map<String, dynamic>>()
-        .map(ProductModel.fromJson)
-        .toList();
-
-    final orders = ordersJson
-        .whereType<Map<String, dynamic>>()
-        .map(OrderModel.fromJson)
-        .toList();
-
-    final totalRevenue = orders.fold<double>(
-      0,
-      (sum, order) => sum + order.totalPrice,
-    );
-    final totalOrders = orders.length;
-    final totalProducts = products.length;
-    final totalCategories = categories.length;
-    final totalVisitors = totalProducts == 0
-        ? 0
-        : totalProducts * 14 + totalOrders * 8;
-    final conversionRate = totalVisitors == 0
-        ? 0.0
-        : (totalOrders / totalVisitors) * 100;
-
-    final categoryBreakdown = categories.isEmpty
-        ? const <AdminCategoryBreakdown>[]
-        : categories.map((category) {
-            final count = products.where((product) {
-              if (product.category.id.isEmpty) {
-                return false;
-              }
-              return product.category.id == category.id ||
-                  product.category.name == category.name;
-            }).length;
-            final percent = totalProducts == 0
-                ? 0.0
-                : (count / totalProducts) * 100;
-            return AdminCategoryBreakdown(
-              name: category.name,
-              percent: percent,
-            );
-          }).toList();
-
-    final recentOrders = orders
-        .take(4)
-        .map(
-          (order) => AdminRecentOrder(
-            id: '#${order.id.substring(0, order.id.length > 6 ? 6 : order.id.length)}',
-            customer: order.user.isEmpty ? 'Guest' : order.user,
-            total: order.totalPrice,
-            status: _normalizeStatus(order.orderStatus),
-          ),
-        )
-        .toList();
-
-    final lowInventory =
-        products.where((product) => product.stock <= 15).toList()
-          ..sort((a, b) => a.stock.compareTo(b.stock));
-
-    final inventory = lowInventory
-        .take(4)
-        .map(
-          (product) =>
-              AdminInventoryItem(name: product.name, count: product.stock),
-        )
-        .toList();
-
-    final salesTrend = orders.isEmpty
-        ? const [18, 32, 28, 46, 38, 52, 64]
-        : List<int>.generate(7, (index) {
-            final value = orders.length > index
-                ? (orders[index].totalPrice / 12).round()
-                : 24 + index * 8;
-            return value.clamp(10, 95);
-          });
-
-    final dashboard = AdminDashboardData(
-      totalRevenue: totalRevenue,
-      totalOrders: totalOrders,
-      totalProducts: totalProducts,
-      totalCategories: totalCategories,
-      totalVisitors: totalVisitors,
-      conversionRate: conversionRate,
-      categoryBreakdown: categoryBreakdown,
-      recentOrders: recentOrders,
-      lowInventory: inventory,
-      salesTrend: salesTrend,
+  Future<Either<Failure, AdminDashboardData>> getDashboardData({
+    String period = 'month',
+  }) async {
+    final result = await apiService.get(
+      '$kBaseUrl/admin/dashboard?period=$period',
     );
 
-    return Right(dashboard);
+    return result.fold((failure) => Left(failure), (json) {
+      try {
+        if (json is! Map) {
+          return Left(ServerFailure(message: 'Invalid dashboard response'));
+        }
+
+        final response = Map<String, dynamic>.from(json);
+
+        final raw = response['data'];
+
+        if (raw is! Map) {
+          return Left(ServerFailure(message: 'Dashboard data is missing'));
+        }
+
+        return Right(_parseDashboard(Map<String, dynamic>.from(raw)));
+      } catch (e) {
+        return Left(
+          ServerFailure(message: 'Failed to parse dashboard data: $e'),
+        );
+      }
+    });
   }
 
-  String _normalizeStatus(String status) {
-    if (status.isEmpty) return 'Pending';
-    return status[0].toUpperCase() + status.substring(1);
+  AdminDashboardData _parseDashboard(Map<String, dynamic> json) {
+    final revenue = _map(json['revenue']);
+    final orders = _map(json['orders']);
+    final products = _map(json['products']);
+    final categories = _map(json['categories']);
+    final customers = _map(json['customers']);
+    final visitors = _map(json['visitors']);
+    final conversion = _map(json['conversionRate']);
+    final changes = _map(json['changes']);
+    final store = _map(json['store']);
+
+    final period = json['period']?.toString() ?? 'month';
+
+    final revenueChart = _parseRevenueChart(json['revenueChart']);
+
+    final categoryBreakdown = _parseCategories(json['categoryBreakdown']);
+
+    final lowInventory = _parseInventory(json['lowInventory']);
+
+    return AdminDashboardData(
+      period: period,
+
+      // ----------------------------------------------------------
+      // REVENUE
+      // ----------------------------------------------------------
+      totalRevenue: _double(revenue['total']),
+
+      periodRevenue: _double(revenue['total']),
+
+      // ----------------------------------------------------------
+      // ORDERS
+      // ----------------------------------------------------------
+      totalOrders: _int(orders['total']),
+
+      periodOrders: _int(orders['total']),
+
+      // ----------------------------------------------------------
+      // SUMMARY
+      // ----------------------------------------------------------
+      totalProducts: _int(products['total']),
+
+      totalCategories: _int(categories['total']),
+
+      totalUsers: _int(customers['total']),
+
+      totalVisitors: _int(visitors['total']),
+
+      // ----------------------------------------------------------
+      // CONVERSION
+      // ----------------------------------------------------------
+      conversionRate: _nullableDouble(conversion['rate']),
+
+      // ----------------------------------------------------------
+      // INVENTORY
+      // ----------------------------------------------------------
+      lowStockAlerts: _int(
+        json['lowStockAlerts'],
+        fallback: lowInventory.length,
+      ),
+
+      // ----------------------------------------------------------
+      // CHANGES
+      // ----------------------------------------------------------
+      changes: AdminDashboardChanges(
+        revenue: _nullableDouble(changes['revenue'] ?? revenue['change']),
+
+        orders: _nullableDouble(changes['orders'] ?? orders['change']),
+
+        visitors: _nullableDouble(changes['visitors'] ?? visitors['change']),
+
+        conversionRate: _nullableDouble(
+          changes['conversionRate'] ?? conversion['change'],
+        ),
+      ),
+
+      // ----------------------------------------------------------
+      // STORE
+      // ----------------------------------------------------------
+      store: AdminDashboardStore(
+        name: store['name']?.toString() ?? store['storeName']?.toString() ?? '',
+
+        currency: store['currency']?.toString() ?? 'EGP',
+
+        storeEnabled: store['storeEnabled'] == true,
+
+        acceptOrders: store['acceptOrders'] == true,
+
+        lowStockThreshold: _int(
+          json['lowStockThreshold'] ?? store['lowStockThreshold'],
+        ),
+      ),
+
+      // ----------------------------------------------------------
+      // OTHER DASHBOARD SECTIONS
+      // ----------------------------------------------------------
+      categoryBreakdown: categoryBreakdown,
+
+      revenueChart: revenueChart,
+
+      lowInventory: lowInventory,
+    );
+  }
+
+  // ============================================================
+  // CATEGORIES
+  // ============================================================
+
+  List<AdminCategoryBreakdown> _parseCategories(dynamic value) {
+    if (value is! List) {
+      return [];
+    }
+
+    return value.whereType<Map>().map((item) {
+      final map = Map<String, dynamic>.from(item);
+
+      return AdminCategoryBreakdown(
+        name:
+            map['categoryName']?.toString() ??
+            map['name']?.toString() ??
+            'Uncategorized',
+
+        count: _int(map['count']),
+
+        percent: _double(map['percent']),
+      );
+    }).toList();
+  }
+
+  // ============================================================
+  // REVENUE CHART
+  // ============================================================
+
+  List<AdminRevenuePoint> _parseRevenueChart(dynamic value) {
+    if (value is! List) {
+      return [];
+    }
+
+    return value.whereType<Map>().map((item) {
+      final map = Map<String, dynamic>.from(item);
+
+      return AdminRevenuePoint(
+        label:
+            map['label']?.toString() ??
+            map['date']?.toString() ??
+            map['period']?.toString() ??
+            '',
+
+        revenue: _double(map['revenue']),
+      );
+    }).toList();
+  }
+
+  // ============================================================
+  // INVENTORY
+  // ============================================================
+
+  List<AdminInventoryItem> _parseInventory(dynamic value) {
+    if (value is! List) {
+      return [];
+    }
+
+    return value.whereType<Map>().map((item) {
+      final map = Map<String, dynamic>.from(item);
+
+      return AdminInventoryItem(
+        name: map['name']?.toString() ?? '',
+
+        size: map['size']?.toString(),
+
+        color: map['color']?.toString(),
+
+        count: _int(map['stock']),
+      );
+    }).toList();
+  }
+
+  // ============================================================
+  // HELPERS
+  // ============================================================
+
+  Map<String, dynamic> _map(dynamic value) {
+    if (value is Map) {
+      return Map<String, dynamic>.from(value);
+    }
+
+    return {};
+  }
+
+  double _double(dynamic value, {double fallback = 0}) {
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    if (value == null) {
+      return fallback;
+    }
+
+    return double.tryParse(value.toString()) ?? fallback;
+  }
+
+  double? _nullableDouble(dynamic value) {
+    if (value == null) {
+      return null;
+    }
+
+    if (value is num) {
+      return value.toDouble();
+    }
+
+    return double.tryParse(value.toString());
+  }
+
+  int _int(dynamic value, {int fallback = 0}) {
+    if (value is num) {
+      return value.toInt();
+    }
+
+    if (value == null) {
+      return fallback;
+    }
+
+    return int.tryParse(value.toString()) ?? fallback;
   }
 }

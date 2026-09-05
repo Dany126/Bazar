@@ -8,7 +8,7 @@ class GetAdminDashboardDataUseCase {
 
   const GetAdminDashboardDataUseCase(this.repository);
 
-  Future<Either<Failure, AdminDashboardData>> call() {
-    return repository.getDashboardData();
+  Future<Either<Failure, AdminDashboardData>> call({String period = 'month'}) {
+    return repository.getDashboardData(period: period);
   }
 }

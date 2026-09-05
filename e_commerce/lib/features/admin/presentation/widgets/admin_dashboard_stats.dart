@@ -5,86 +5,151 @@ import 'package:flutter/material.dart';
 class AdminDashboardStats extends StatelessWidget {
   const AdminDashboardStats({super.key, required this.data});
 
-  factory AdminDashboardStats.fromData({required AdminDashboardData data}) {
-    return AdminDashboardStats(data: data);
+  final AdminDashboardData data;
+
+  String _money(double value) {
+    return '${value.toStringAsFixed(2)} ${data.store.currency}';
   }
 
-  final AdminDashboardData data;
+  String _change(double? value) {
+    if (value == null) {
+      return 'No data';
+    }
+
+    final prefix = value > 0 ? '+' : '';
+
+    return '$prefix${value.toStringAsFixed(1)}%';
+  }
+
+  String _conversion(double? value) {
+    if (value == null) {
+      return 'No data';
+    }
+
+    return '${value.toStringAsFixed(2)}%';
+  }
 
   @override
   Widget build(BuildContext context) {
     final stats = [
-      _MetricStat(
-        label: 'Total revenue',
-        value: '\$ ${data.totalRevenue.toStringAsFixed(0)}',
-        change: '+12.5%',
+      // ----------------------------------------------------------
+      // PRIMARY CARDS
+      // ----------------------------------------------------------
+      _Metric(
+        label: 'Revenue',
+        value: _money(data.periodRevenue),
+        change: _change(data.changes.revenue),
         color: const Color(0xFF8E6CEF),
+        primary: true,
       ),
-      _MetricStat(
+
+      _Metric(
         label: 'Orders',
-        value: data.totalOrders.toString(),
-        change: '+8.2%',
+        value: data.periodOrders.toString(),
+        change: _change(data.changes.orders),
         color: const Color(0xFF4EC5A5),
       ),
-      _MetricStat(
-        label: 'Active Products',
-        value: data.totalProducts.toString(),
-        change: '0.0%',
+
+      _Metric(
+        label: 'Visitors',
+        value: data.totalVisitors.toString(),
+        change: _change(data.changes.visitors),
         color: const Color(0xFF1F2937),
       ),
-      _MetricStat(
-        label: 'Low Stock Alerts',
-        value: data.lowInventory.length.toString(),
-        change: '+3 items',
+
+      _Metric(
+        label: 'Conversion rate',
+        value: _conversion(data.conversionRate),
+        change: _change(data.changes.conversionRate),
         color: const Color(0xFFDC2626),
+      ),
+
+      // ----------------------------------------------------------
+      // SECONDARY CARDS
+      // ----------------------------------------------------------
+      _Metric(
+        label: 'Products',
+        value: data.totalProducts.toString(),
+        change: 'No data',
+        color: const Color(0xFF2563EB),
+      ),
+
+      _Metric(
+        label: 'Categories',
+        value: data.totalCategories.toString(),
+        change: 'No data',
+        color: const Color(0xFF7C3AED),
+      ),
+
+      _Metric(
+        label: 'Customers',
+        value: data.totalUsers.toString(),
+        change: 'No data',
+        color: const Color(0xFF0891B2),
+      ),
+
+      _Metric(
+        label: 'Low Inventory',
+        value: data.lowStockAlerts.toString(),
+        change: 'No data',
+        color: const Color(0xFFEA580C),
       ),
     ];
 
     return LayoutBuilder(
       builder: (context, constraints) {
-        final isWide = constraints.maxWidth >= 1200;
-        final isMedium = constraints.maxWidth >= 768;
+        final width = constraints.maxWidth;
 
-        int crossAxisCount = 1;
-        if (isWide) {
-          crossAxisCount = 4;
-        } else if (isMedium) {
-          crossAxisCount = 2;
-        }
+        final columns = width >= 1100
+            ? 4
+            : width >= 600
+            ? 2
+            : 1;
 
-        return GridView.count(
-          crossAxisCount: crossAxisCount,
+        return GridView.builder(
           shrinkWrap: true,
           physics: const NeverScrollableScrollPhysics(),
-          mainAxisSpacing: 16,
-          crossAxisSpacing: 16,
-          childAspectRatio: 1.2,
-          children: stats
-              .map(
-                (stat) => AdminDashboardStatCard(
-                  label: stat.label,
-                  value: stat.value,
-                  change: stat.change,
-                  color: stat.color,
-                ),
-              )
-              .toList(),
+          itemCount: stats.length,
+          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+            crossAxisCount: columns,
+            crossAxisSpacing: 16,
+            mainAxisSpacing: 16,
+            childAspectRatio: width >= 1100
+                ? 1.65
+                : width >= 600
+                ? 1.8
+                : 2.5,
+          ),
+          itemBuilder: (context, index) {
+            final stat = stats[index];
+
+            return AdminDashboardStatCard(
+              label: stat.label,
+              value: stat.value,
+              change: stat.change,
+              color: stat.color,
+              isPrimary: stat.primary,
+              comparisonLabel: 'vs previous ${data.period}',
+            );
+          },
         );
       },
     );
   }
 }
 
-class _MetricStat {
-  const _MetricStat({
+class _Metric {
+  const _Metric({
     required this.label,
     required this.value,
     required this.change,
     required this.color,
+    this.primary = false,
   });
 
   final String label;
   final String value;
   final String change;
   final Color color;
+  final bool primary;
 }

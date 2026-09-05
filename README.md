@@ -1,8 +1,8 @@
 # 🛍️ Bazar
 
-**Bazar** is a modern e-commerce mobile application built with **Flutter and Dart**, designed to provide users with a smooth and intuitive online shopping experience.
+**Bazar** is a modern full-stack e-commerce application built with **Flutter, Dart, Node.js, Express, and MongoDB**, designed to provide users with a smooth and intuitive online shopping experience.
 
-The application focuses on clean UI, reusable components, scalable architecture, and a seamless shopping flow from browsing products to completing orders.
+The application focuses on clean UI, reusable components, scalable architecture, secure authentication, and a seamless shopping flow from browsing products to completing orders and payments.
 
 ## ✨ Features
 
@@ -12,14 +12,20 @@ The application focuses on clean UI, reusable components, scalable architecture,
 * 📦 Product Details
 * 🛒 Shopping Cart
 * ❤️ Favorites
-* 🎟️ Coupon Support
 * 💳 Checkout Flow
+* 💰 Online Payments
 * 📋 Order Management
 * 🔔 Notifications
 * 👤 User Profile
 * 📱 Responsive UI
+* 🔐 User Authentication
+* 📦 Product & Variant Management
+* ⭐ Ratings & Reviews
+* 📊 Inventory & Stock Management
 
 ## 🛠️ Technologies
+
+### 📱 Frontend
 
 * **Flutter**
 * **Dart**
@@ -31,9 +37,23 @@ The application focuses on clean UI, reusable components, scalable architecture,
 * **Local Storage**
 * **Responsive & Adaptive UI**
 
+### ⚙️ Backend
+
+* **Node.js**
+* **Express.js**
+* **MongoDB**
+* **Mongoose**
+* **JWT**
+* **Zod**
+* **Firebase**
+* **Paymob**
+* **RESTful APIs**
+
 ## 🏗️ Architecture
 
-The project follows a structured and scalable architecture that separates application responsibilities into different layers:
+The project follows a structured and scalable architecture that separates application responsibilities into different layers.
+
+### 📱 Flutter Architecture
 
 ```text
 lib/
@@ -57,6 +77,23 @@ lib/
 
 This structure helps keep the application **maintainable, testable, and easy to extend**.
 
+### ⚙️ Backend Architecture
+
+```text
+backend/
+├── controllers/
+├── routes/
+├── models/
+├── middlewares/
+├── services/
+├── validators/
+├── utils/
+├── config/
+└── server.js
+```
+
+The backend follows a modular architecture that separates routing, business logic, database models, validation, authentication, and other application responsibilities.
+
 ## 🚀 Getting Started
 
 ### Prerequisites
@@ -65,10 +102,12 @@ Make sure you have installed:
 
 * Flutter SDK
 * Dart SDK
+* Node.js
+* MongoDB
 * Android Studio or VS Code
 * Git
 
-### Installation
+### 📱 Frontend Installation
 
 Clone the repository:
 
@@ -94,11 +133,35 @@ Run the application:
 flutter run
 ```
 
-## 📸 Design
+### ⚙️ Backend Installation
+
+Navigate to the backend directory:
+
 ```bash
-https://www.figma.com/design/UHVWaI7SURpJlL7wx7rdOi/Ecommerce-Mobile-App--Community-?node-id=11-1088&t=3b8IypM18jXCYRZ4-1
+cd server
 ```
 
+Install dependencies:
+
+```bash
+npm install
+```
+
+Create a `.env` file and configure the required environment variables.
+
+Start the development server:
+
+```bash
+npm run dev
+```
+
+## 📸 Design
+
+The application design was created using Figma.
+
+```text
+https://www.figma.com/design/UHVWaI7SURpJlL7wx7rdOi/Ecommerce-Mobile-App--Community-?node-id=11-1088&t=3b8IypM18jXCYRZ4-1
+```
 
 ```text
 Home        Products       Details       Cart
@@ -110,15 +173,21 @@ Home        Products       Details       Cart
 The main goals of Bazar are:
 
 * Build a complete Flutter e-commerce application.
+* Build a scalable and secure backend API.
 * Practice scalable Flutter architecture.
 * Implement state management using BLoC/Cubit.
-* Create reusable and maintainable UI components.
+* Implement secure authentication using JWT.
+* Integrate RESTful APIs between the mobile application and backend.
+* Integrate online payments using Paymob.
+* Create reusable and maintainable components.
 * Provide a smooth and intuitive shopping experience.
 * Apply responsive and adaptive design principles.
 
 ## 📚 What I Learned
 
 While developing Bazar, I improved my experience with:
+
+### 📱 Frontend
 
 * Flutter application architecture.
 * State management using BLoC/Cubit.
@@ -128,11 +197,28 @@ While developing Bazar, I improved my experience with:
 * Responsive and adaptive UI development.
 * Managing complex application states.
 
-## 👨‍💻 Developer
+### ⚙️ Backend
+
+* Building RESTful APIs using Node.js and Express.
+* Designing MongoDB databases using Mongoose.
+* Implementing JWT authentication and authorization.
+* Working with access and refresh tokens.
+* API validation and middleware.
+* E-commerce business logic.
+* Product and inventory management.
+* Cart and order management.
+* Payment integration and webhooks.
+* Firebase integration.
+
+## 👨‍💻 Developers
 
 **Dany Ashraf**
 
 Flutter Developer passionate about building modern, scalable, and user-friendly applications.
+
+**Mohamed Adel**
+
+Backend Developer passionate about building secure, scalable, and reliable RESTful APIs and server-side applications.
 
 ## 🔗 Repository
 

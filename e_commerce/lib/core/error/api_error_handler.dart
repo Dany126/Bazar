@@ -32,9 +32,14 @@ class ApiErrorHandler {
         return const NetworkFailure(message: 'Invalid security certificate');
 
       case DioExceptionType.unknown:
-        return UnknownFailure(
-          message: error.message ?? 'An unexpected error occurred.',
-        );
+  return UnknownFailure(
+    message: [
+      if (error.message != null) 'message: ${error.message}',
+      if (error.error != null) 'error: ${error.error}',
+      'type: ${error.type}',
+      'uri: ${error.requestOptions.uri}',
+    ].join('\n'),
+  );
       case DioExceptionType.transformTimeout:
         return const TimeoutFailure();
     }

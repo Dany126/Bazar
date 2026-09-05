@@ -4,7 +4,13 @@ sealed class SignOutState {
   const SignOutState();
 }
 
-final class SignOutInitial extends SignOutState {}
+final class SignOutInitial extends SignOutState {
+  const SignOutInitial();
+}
+
+final class SignOutLoading extends SignOutState {
+  const SignOutLoading();
+}
 
 final class SignOutSuccess extends SignOutState {
   const SignOutSuccess();
@@ -12,5 +18,6 @@ final class SignOutSuccess extends SignOutState {
 
 final class SignOutFailure extends SignOutState {
   final Failure failure;
+
   const SignOutFailure(this.failure);
 }

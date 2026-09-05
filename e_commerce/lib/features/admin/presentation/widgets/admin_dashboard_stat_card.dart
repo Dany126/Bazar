@@ -8,19 +8,67 @@ class AdminDashboardStatCard extends StatelessWidget {
     required this.value,
     required this.change,
     required this.color,
+    this.comparisonLabel = 'vs previous period',
+    this.isPrimary = false,
   });
 
   final String label;
   final String value;
   final String change;
   final Color color;
+  final bool isPrimary;
+  final String comparisonLabel;
+
+  bool get hasChange => change != 'No data';
+
+  double? get numericChange {
+    if (!hasChange) return null;
+
+    return double.tryParse(change.replaceAll('%', '').replaceAll('+', ''));
+  }
+
+  IconData get changeIcon {
+    final value = numericChange;
+
+    if (value == null) {
+      return Icons.remove_rounded;
+    }
+
+    if (value > 0) {
+      return Icons.trending_up_rounded;
+    }
+
+    if (value < 0) {
+      return Icons.trending_down_rounded;
+    }
+
+    return Icons.remove_rounded;
+  }
+
+  Color get changeColor {
+    if (!hasChange) {
+      return isPrimary ? Colors.white54 : AppColors.kSecondaryTextColor;
+    }
+
+    final value = numericChange ?? 0;
+
+    if (value > 0) {
+      return isPrimary ? Colors.greenAccent : const Color(0xFF1DAF73);
+    }
+
+    if (value < 0) {
+      return isPrimary ? Colors.redAccent.shade100 : const Color(0xFFDC2626);
+    }
+
+    return isPrimary ? Colors.white70 : AppColors.kSecondaryTextColor;
+  }
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isPrimary ? const Color(0xFF1E1B3A) : Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
@@ -32,87 +80,95 @@ class AdminDashboardStatCard extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Decorative background circle
-          Positioned(
-            right: -20,
-            bottom: 10,
-            child: Container(
-              width: 120,
-              height: 120,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: color.withValues(alpha: 0.08),
+          if (!isPrimary)
+            Positioned(
+              right: -20,
+              bottom: -10,
+              child: Container(
+                width: 110,
+                height: 110,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: color.withValues(alpha: 0.07),
+                ),
               ),
             ),
-          ),
-          // Content
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        label.toUpperCase(),
-                        style: Theme.of(context).textTheme.labelMedium
-                            ?.copyWith(
-                              color: AppColors.kSecondaryTextColor,
-                              fontSize: 11,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.5,
-                            ),
+                  Expanded(
+                    child: Text(
+                      label.toUpperCase(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: isPrimary
+                            ? Colors.white70
+                            : AppColors.kSecondaryTextColor,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.5,
                       ),
-                    ],
+                    ),
                   ),
+                  const SizedBox(width: 8),
                   Container(
-                    width: 40,
-                    height: 40,
+                    width: 36,
+                    height: 36,
                     decoration: BoxDecoration(
-                      color: color.withValues(alpha: 0.15),
+                      color: isPrimary
+                          ? Colors.white.withValues(alpha: 0.1)
+                          : color.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Icon(
-                      Icons.trending_up_rounded,
-                      color: color,
-                      size: 20,
+                      changeIcon,
+                      color: isPrimary ? Colors.white : color,
+                      size: 18,
                     ),
                   ),
                 ],
               ),
+
               const SizedBox(height: 12),
-              Text(
-                value,
-                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
-                  fontWeight: FontWeight.w700,
-                  height: 1.2,
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  Icon(
-                    Icons.trending_up_rounded,
-                    color: const Color(0xFF1DAF73),
-                    size: 14,
+
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  value,
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 24,
+                    color: isPrimary ? Colors.white : AppColors.kTextColor,
+                    height: 1.2,
                   ),
+                ),
+              ),
+
+              const SizedBox(height: 10),
+
+              Wrap(
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  Icon(changeIcon, color: changeColor, size: 14),
                   const SizedBox(width: 4),
                   Text(
                     change,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: const Color(0xFF1DAF73),
+                      color: changeColor,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    'vs last month',
+                    comparisonLabel,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: AppColors.kSecondaryTextColor,
+                      color: isPrimary
+                          ? Colors.white54
+                          : AppColors.kSecondaryTextColor,
                     ),
                   ),
                 ],

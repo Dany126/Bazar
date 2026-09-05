@@ -27,4 +27,4 @@ categoryRouter
   .route("/:id")
   .get(checkID, getCategory)
   .delete(restrictTo("admin"), checkID, deleteCategory)
-  .patch(restrictTo("admin"), checkID, updateCategory);
+  .patch(restrictTo("admin"), checkID, upload.single("image"), updateCategory);

@@ -65,8 +65,8 @@ Future<void> main() async {
 
   final apiService = getIt<ApiService>();
 
+  await apiService.restoreAccessToken();
   await apiService.restoreSession();
-
   // ==========================================================
   // FCM
   // ==========================================================
@@ -113,9 +113,6 @@ Future<void> main() async {
   );
 }
 
-// void main() {
-//   runApp(const DashboardDemoApp());
-// }
 
 class Bazar extends StatefulWidget {
   const Bazar({super.key});

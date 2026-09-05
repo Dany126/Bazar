@@ -5,6 +5,7 @@ import dotenv from "dotenv";
 dotenv.config({ path: "./.env" });
 
 import path from "path";
+import { dashboardRouter } from "./routes/dashboard_routes.js";
 import { connectToDB } from "./database/index.js";
 import { userRouter } from "./routes/user_routes.js";
 import { categoryRouter } from "./routes/category_routes.js";
@@ -19,7 +20,9 @@ import { addressRouter } from "./routes/address_routes.js";
 import { wishlistRouter } from "./routes/wishlist_routes.js";
 import { paymentRouter } from "./routes/payment_routes.js";
 import { paymobWebhookRouter } from "./routes/paymobwebhook_routes.js";
+import { storeSettingsRouter } from "./routes/store_settings_routes.js";
 
+import { adminTransactionRouter } from "./routes/admin_transaction_routes.js";
 const app = express();
 
 connectToDB;
@@ -31,20 +34,24 @@ app.use(
   }),
   paymobWebhookRouter,
 );
+app.use(
+  cors({
+    origin: true,
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
+
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded());
 app.use(morgan("dev"));
 
+
 app.use("/public", express.static(path.join(import.meta.dirname, "./public")));
 
-app.use(
-  cors({
-    origin: "*",
-    methods: ["POST", "GET", "PUT", "DELETE"],
-    credentials: true,
-  }),
-);
+
 
 //http://localhost:5000/api/user/register
 //http://localhost:5000/api/user/login
@@ -60,7 +67,10 @@ app.use("/api/cart", cartRouter);
 app.use("/api/address", addressRouter);
 app.use("/api/wishlist", wishlistRouter);
 app.use("/api/payments", paymentRouter);
+app.use("/api/admin/dashboard", dashboardRouter);
+app.use("/api/admin/settings", storeSettingsRouter);
 
+app.use("/api/admin/transactions", adminTransactionRouter);
 app.all("*not", (req, res) => {
   return res.status(404).json({
     status: "Failed",

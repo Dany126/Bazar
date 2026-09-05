@@ -10,7 +10,7 @@ class AdminDashboardRepositoryImpl implements AdminDashboardRepository {
   AdminDashboardRepositoryImpl({required this.remoteDataSource});
 
   @override
-  Future<Either<Failure, AdminDashboardData>> getDashboardData() {
-    return remoteDataSource.getDashboardData();
+  Future<Either<Failure, AdminDashboardData>> getDashboardData({String period = 'month'}) {
+    return remoteDataSource.getDashboardData(period: period);
   }
 }
