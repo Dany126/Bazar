@@ -273,351 +273,188 @@
 //     });
 //   }
 // };
-import { Order } from "../models/order_model.js";
-import { Variant } from "../models/product_variants_model.js";
-import { User } from "../models/user_model.js";
-import { apiFeatures } from "../utils/apiFeatures.js";
-import { createNotification } from "./notification_controller.js";
-import { Visitor } from "../models/visitor_model.js";
+/*
+ * ============================================================
+ * CREATE ORDER
+ * ============================================================
+ *
+ * This function is now used for:
+ *
+ * 1. Cash orders
+ * 2. Creating the REAL order after a successful card payment
+ *
+ * It must NEVER trust prices coming from Flutter.
+ */
 
-export const createOrder = async (req, res) => {
-  try {
-    console.log("======================================");
-    console.log("CREATE ORDER START");
-    console.log("USER:", req.user.id);
-    console.log("BODY:", JSON.stringify(req.body, null, 2));
 
-    const { products, shippingAddress, paymentMethod, visitorId } = req.body;
+/*
+ * Example validation loop:
+ */
+for (const item of products) {
 
-    const userId = req.user.id;
-
-    if (!products || products.length <= 0) {
-      return res.status(400).json({
-        status: "Failed",
-        message: "Cannot make order without products",
-      });
-    }
-
-    // Get all variants in one database query
-    const variantIDs = products.map((item) => item.variant);
-
-    console.log("GETTING VARIANTS...");
-
-    const variants = await Variant.find({
-      _id: { $in: variantIDs },
-    }).populate("product");
-
-    console.log("VARIANTS FOUND:", variants.length);
-
-    const variantMap = new Map(
-      variants.map((variant) => [variant._id.toString(), variant]),
+  /*
+   * Find the variant from the database.
+   */
+  const variant =
+    variantMap.get(
+      String(item.variant),
     );
 
-    const orderProducts = [];
-    let totalPrice = 0;
 
-    for (const item of products) {
-      console.log("--------------------------------------");
-      console.log("VALIDATING ITEM");
-      console.log("Product:", item.product);
-      console.log("Variant:", item.variant);
-      console.log("Quantity:", item.quantity);
-
-      const variant = variantMap.get(item.variant.toString());
-
-      if (!variant) {
-        return res.status(404).json({
-          status: "Failed",
-          message: "No Variant Found With This ID!",
-        });
-      }
-
-      // Check that the variant belongs to this product
-      if (!variant.product._id.equals(item.product)) {
-        return res.status(404).json({
-          status: "Failed",
-          message: "No Variant With This ID Found For This Product!",
-        });
-      }
-
-      if (!item.quantity || Number(item.quantity) <= 0) {
-        return res.status(400).json({
-          status: "Failed",
-          message: "Quantity must be greater than 0",
-        });
-      }
-
-      if (variant.stock < Number(item.quantity)) {
-        return res.status(400).json({
-          status: "Failed",
-          message: `Not enough stock. Available stock: ${variant.stock}`,
-        });
-      }
-
-      // Variant price is the final price paid by the customer
-      const expectedPrice = Number(variant.price);
-
-      const clientPrice =
-        item.price !== undefined && item.price !== null
-          ? Number(item.price)
-          : null;
-
-      console.log("STOCK:", variant.stock);
-      console.log("PRODUCT PRICE:", variant.product.price);
-      console.log("VARIANT PRICE:", variant.price);
-      console.log("EXPECTED PRICE:", expectedPrice);
-      console.log("CLIENT PRICE:", clientPrice);
-
-      // Validate the price sent by Flutter
-      if (
-        clientPrice !== null &&
-        Math.abs(clientPrice - expectedPrice) > 0.000001
-      ) {
-        console.log("PRICE MISMATCH");
-
-        return res.status(400).json({
-          status: "Failed",
-          message: `Invalid product price. Expected ${expectedPrice}, received ${clientPrice}`,
-        });
-      }
-
-      // Use the database price instead of trusting the client price
-      orderProducts.push({
-        product: item.product,
-        variant: item.variant,
-        quantity: Number(item.quantity),
-        price: expectedPrice,
-      });
-
-      totalPrice += expectedPrice * Number(item.quantity);
-    }
-
-    console.log("ORDER TOTAL:", totalPrice);
-
-    // Create the order using server-calculated prices
-    const order = await Order.create({
-      user: userId,
-      products: orderProducts,
-      totalPrice,
-      shippingAddress,
-      paymentMethod,
-      paymentStatus: req.body.paymentStatus || "pending",
-      visitorId: visitorId || null,
-    });
-
-    if (!order) {
-      return res.status(400).json({
-        status: "Failed",
-        message: "Failed creating an order",
-      });
-    }
-
-    // Update stock only after the order is successfully created
-    for (const item of orderProducts) {
-      await Variant.findByIdAndUpdate(item.variant, {
-        $inc: {
-          stock: -item.quantity,
-          soldCount: item.quantity,
-        },
-      });
-    }
-
-    // Mark the visitor as converted
-    if (order.visitorId) {
-      const monthKey =
-        `${order.createdAt.getUTCFullYear()}-${String(
-          order.createdAt.getUTCMonth() + 1,
-        ).padStart(2, "0")}`;
-
-      await Visitor.findOneAndUpdate(
-        {
-          visitorId: order.visitorId,
-          monthKey,
-        },
-        {
-          $set: {
-            converted: true,
-            lastSeenAt: order.createdAt,
-          },
-          $setOnInsert: {
-            visitorId: order.visitorId,
-            monthKey,
-            converted: true,
-          },
-        },
-        {
-          upsert: true,
-          new: true,
-          setDefaultsOnInsert: true,
-        },
-      );
-    }
-
-    console.log("ORDER CREATED:", order._id);
-    console.log("CREATE ORDER SUCCESS");
-    console.log("======================================");
-
-    return res.status(200).json({
-      status: "Success",
-      message: "Order Placed Successfully",
-      order,
-    });
-  } catch (err) {
-    console.log("CREATE ORDER ERROR:", err);
-
-    return res.status(500).json({
+  if (!variant) {
+    return res.status(404).json({
       status: "Failed",
-      message: "Internal Server Error",
+      message:
+        "Product variant not found",
     });
   }
-};
 
-export const getAllOrders = async (req, res) => {
-  try {
-    res.set(
-      "Cache-Control",
-      "no-store, no-cache, must-revalidate, proxy-revalidate",
-    );
-    res.set("Pragma", "no-cache");
-    res.set("Expires", "0");
-    res.set("Surrogate-Control", "no-store");
 
-    const query = { ...req.params, ...req.query };
-
-    const { filter, limits, skip, sortBy } = apiFeatures(query);
-
-    const page = Number(query.page) || 1;
-    const limit = Number(query.limit) || 10;
-
-    const [orders, totalOrders] = await Promise.all([
-      Order.find(filter)
-        .limit(limits)
-        .skip(skip)
-        .sort(sortBy)
-        .populate("products.product"),
-
-      Order.countDocuments(filter),
-    ]);
-
-    const totalPages =
-      totalOrders === 0 ? 1 : Math.ceil(totalOrders / limit);
-
-    return res.status(200).json({
-      status: "Success",
-      orders,
-      noOfOrders: orders.length,
-      pagination: {
-        currentPage: page,
-        itemsPerPage: limit,
-        totalOrders,
-        totalPages,
-        hasPreviousPage: page > 1,
-        hasNextPage: page < totalPages,
-      },
-    });
-  } catch (err) {
-    console.log(err);
-
-    return res.status(500).json({
+  /*
+   * Make sure the variant belongs to the product.
+   */
+  if (
+    !variant.product ||
+    variant.product._id.toString() !==
+      String(item.product)
+  ) {
+    return res.status(400).json({
       status: "Failed",
-      message: "Internal Server Error",
+      message:
+        "Variant does not belong to this product",
     });
   }
-};
 
-export const getOrder = async (req, res) => {
-  try {
-    const { id } = req.params;
 
-    const order = await Order.findById(id);
+  /*
+   * Validate quantity.
+   */
+  const quantity =
+    Number(item.quantity);
 
-    if (!order) {
-      return res.status(404).json({
-        status: "Failed",
-        message: "No Order Found With This ID",
-      });
-    }
 
-    return res.status(200).json({
-      status: "Success",
-      order,
-    });
-  } catch (err) {
-    console.log(err);
-
-    return res.status(500).json({
+  if (
+    !Number.isInteger(quantity) ||
+    quantity <= 0
+  ) {
+    return res.status(400).json({
       status: "Failed",
-      message: "Internal Server Error",
+      message:
+        "Invalid product quantity",
     });
   }
-};
 
-export const updateOrder = async (req, res) => {
-  try {
-    const { id } = req.params;
 
-    const updatedOrder = await Order.findByIdAndUpdate(id, req.body, {
-      returnDocument: "after",
-    });
-
-    if (!updatedOrder) {
-      return res.status(404).json({
-        status: "Failed",
-        message: "No Order Found With This ID",
-      });
-    }
-
-    if (req.body?.orderStatus) {
-      const user = await User.findById(updatedOrder.user);
-
-      if (user) {
-        await createNotification({
-          title: "Order Status Changed",
-          body: `Order Status is ${req.body.orderStatus}`,
-          fcm_token: user.fcm_token,
-          userId: user.id,
-          type: "ORDER",
-        });
-      }
-    }
-
-    return res.status(200).json({
-      status: "Success",
-      updatedOrder,
-    });
-  } catch (err) {
-    console.log(err);
-
-    return res.status(500).json({
+  /*
+   * Check stock.
+   */
+  if (
+    variant.stock <
+    quantity
+  ) {
+    return res.status(400).json({
       status: "Failed",
-      message: "Internal Server Error",
+      message:
+        `Not enough stock for ${variant.product.name}. Available stock: ${variant.stock}`,
     });
   }
-};
 
-export const deleteOrder = async (req, res) => {
-  try {
-    const { id } = req.params;
 
-    const order = await Order.findByIdAndDelete(id);
+  /*
+   * ========================================================
+   * IMPORTANT PRICE FIX
+   * ========================================================
+   *
+   * Variant.price is the FINAL selling price.
+   *
+   * Do NOT do:
+   *
+   * product.price + variant.price
+   *
+   * because that was causing:
+   *
+   * Product = 100
+   * Variant = 500
+   * Expected = 600
+   *
+   * while your app correctly charges 500.
+   */
+  const expectedPrice =
+    Number(variant.price);
 
-    if (!order) {
-      return res.status(404).json({
-        status: "Failed",
-        message: "No Order Found With This ID",
-      });
-    }
 
-    return res.status(200).json({
-      status: "Success",
-      message: "Order Deleted Successfully",
-    });
-  } catch (err) {
-    console.log(err);
-
-    return res.status(500).json({
+  if (
+    !Number.isFinite(
+      expectedPrice,
+    ) ||
+    expectedPrice < 0
+  ) {
+    return res.status(400).json({
       status: "Failed",
-      message: "Internal Server Error",
+      message:
+        "Invalid variant price",
     });
   }
-};
+
+
+  /*
+   * Optional client price validation.
+   *
+   * Even if Flutter sends the wrong price, we NEVER use it
+   * to calculate the actual order total.
+   */
+  const clientPrice =
+    item.price !== undefined &&
+    item.price !== null
+      ? Number(item.price)
+      : null;
+
+
+  if (
+    clientPrice !== null &&
+    Math.abs(
+      clientPrice -
+        expectedPrice,
+    ) > 0.000001
+  ) {
+    return res.status(400).json({
+      status: "Failed",
+      message:
+        `Price mismatch for ${variant.product.name}`,
+    });
+  }
+
+
+  /*
+   * Store the SERVER price.
+   */
+  orderProducts.push({
+    product:
+      item.product,
+
+    variant:
+      item.variant,
+
+    quantity,
+
+    price:
+      expectedPrice,
+  });
+
+
+  /*
+   * Calculate total using server price.
+   */
+  totalPrice +=
+    expectedPrice *
+    quantity;
+}
+
+
+/*
+ * Round total.
+ */
+totalPrice =
+  Number(
+    totalPrice.toFixed(2),
+  );

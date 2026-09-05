@@ -11,6 +11,7 @@ import 'package:e_commerce/features/admin/domain/usecases/get_all_admin_categori
 import 'package:e_commerce/features/admin/domain/usecases/update_admin_category.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_earnings_cubit.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_orders_cubit.dart';
+import 'package:e_commerce/features/payment/domain/use_case/get_paymob_payment_status_use_case.dart';
 import 'package:get_it/get_it.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/network/dio_error_interceptor.dart';
@@ -1062,4 +1063,37 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
   );
   // =================================================
   // =================================================
+  /*
+ * ============================================================
+ * PAYMOB
+ * ============================================================
+ */
+
+  /*
+ * Remote data source
+ */
+  getIt.registerLazySingleton<PaymobRemoteDataSource>(
+    () => PaymobRemoteDataSource(getIt<ApiService>()),
+  );
+
+  /*
+ * Repository
+ */
+  getIt.registerLazySingleton<PaymobRepository>(
+    () => PaymobRepositoryImpl(getIt<PaymobRemoteDataSource>()),
+  );
+
+  /*
+ * Create payment session
+ */
+  getIt.registerLazySingleton<CreatePaymobPaymentUseCase>(
+    () => CreatePaymobPaymentUseCase(getIt<PaymobRepository>()),
+  );
+
+  /*
+ * Check payment status
+ */
+  getIt.registerLazySingleton<GetPaymobPaymentStatusUseCase>(
+    () => GetPaymobPaymentStatusUseCase(getIt<PaymobRepository>()),
+  );
 }
