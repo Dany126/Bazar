@@ -273,188 +273,468 @@
 //     });
 //   }
 // };
+import { Order } from "../models/order_model.js";
+import { Variant } from "../models/product_variants_model.js";
+import { User } from "../models/user_model.js";
+import { apiFeatures } from "../utils/apiFeatures.js";
+import { createNotification } from "./notification_controller.js";
+import { Visitor } from "../models/visitor_model.js";
+
 /*
  * ============================================================
  * CREATE ORDER
  * ============================================================
  *
- * This function is now used for:
+ * Used for:
+ * 1. CASH orders
+ * 2. Creating the REAL order after successful CARD payment
  *
- * 1. Cash orders
- * 2. Creating the REAL order after a successful card payment
- *
- * It must NEVER trust prices coming from Flutter.
+ * Prices are ALWAYS taken from the database.
  */
+export const createOrder = async (req, res) => {
+  try {
+    const { products, shippingAddress, paymentMethod } = req.body;
+    const userId = req.user.id;
 
+    if (!products || !Array.isArray(products) || products.length === 0) {
+      return res.status(400).json({
+        status: "Failed",
+        message: "Cannot make order without products",
+      });
+    }
 
-/*
- * Example validation loop:
- */
-for (const item of products) {
+    if (!paymentMethod) {
+      return res.status(400).json({
+        status: "Failed",
+        message: "Payment method is required",
+      });
+    }
 
-  /*
-   * Find the variant from the database.
-   */
-  const variant =
-    variantMap.get(
-      String(item.variant),
+    if (!["cash", "card"].includes(paymentMethod)) {
+      return res.status(400).json({
+        status: "Failed",
+        message: "Invalid payment method",
+      });
+    }
+
+    /*
+     * Get all variants in one query.
+     */
+    const variantIds = products.map((item) => item.variant);
+
+    const variants = await Variant.find({
+      _id: { $in: variantIds },
+    }).populate("product");
+
+    const variantMap = new Map(
+      variants.map((variant) => [
+        variant._id.toString(),
+        variant,
+      ]),
     );
 
+    const orderProducts = [];
+    let totalPrice = 0;
 
-  if (!variant) {
-    return res.status(404).json({
+    /*
+     * Validate every product.
+     */
+    for (const item of products) {
+      const variant = variantMap.get(
+        String(item.variant),
+      );
+
+      if (!variant) {
+        return res.status(404).json({
+          status: "Failed",
+          message: "Product variant not found",
+        });
+      }
+
+      /*
+       * Make sure this variant belongs to the
+       * product sent by Flutter.
+       */
+      if (
+        !variant.product ||
+        variant.product._id.toString() !==
+          String(item.product)
+      ) {
+        return res.status(400).json({
+          status: "Failed",
+          message: "Variant does not belong to this product",
+        });
+      }
+
+      /*
+       * Validate quantity.
+       */
+      const quantity = Number(item.quantity);
+
+      if (
+        !Number.isInteger(quantity) ||
+        quantity <= 0
+      ) {
+        return res.status(400).json({
+          status: "Failed",
+          message: "Invalid product quantity",
+        });
+      }
+
+      /*
+       * Validate stock.
+       */
+      if (variant.stock < quantity) {
+        return res.status(400).json({
+          status: "Failed",
+          message:
+            `Not enough stock for ${variant.product.name}. ` +
+            `Available stock: ${variant.stock}`,
+        });
+      }
+
+      /*
+       * IMPORTANT:
+       *
+       * Variant.price is the actual customer price.
+       *
+       * Do NOT use:
+       * product.price + variant.price
+       */
+      const price = Number(variant.price);
+
+      if (!Number.isFinite(price) || price < 0) {
+        return res.status(400).json({
+          status: "Failed",
+          message: "Invalid variant price",
+        });
+      }
+
+      orderProducts.push({
+        product: variant.product._id,
+        variant: variant._id,
+        quantity,
+        price,
+      });
+
+      totalPrice += price * quantity;
+    }
+
+    totalPrice = Number(totalPrice.toFixed(2));
+
+    /*
+     * Decrease stock and increase sold count.
+     */
+    for (const item of orderProducts) {
+      const updatedVariant =
+        await Variant.findOneAndUpdate(
+          {
+            _id: item.variant,
+            stock: { $gte: item.quantity },
+          },
+          {
+            $inc: {
+              stock: -item.quantity,
+              soldCount: item.quantity,
+            },
+          },
+          {
+            new: true,
+          },
+        );
+
+      /*
+       * This protects against two users buying
+       * the last item simultaneously.
+       */
+      if (!updatedVariant) {
+        return res.status(400).json({
+          status: "Failed",
+          message:
+            "Some products are no longer available in the requested quantity",
+        });
+      }
+    }
+
+    /*
+     * Create order.
+     */
+    const order = await Order.create({
+      user: userId,
+      products: orderProducts,
+      totalPrice,
+      shippingAddress,
+      paymentMethod,
+      paymentStatus:
+        paymentMethod === "cash"
+          ? "pending"
+          : "paid",
+      orderStatus: "pending",
+    });
+
+    if (!order) {
+      return res.status(400).json({
+        status: "Failed",
+        message: "Failed creating an order",
+      });
+    }
+
+    /*
+     * Mark visitor as converted.
+     */
+    if (order.visitorId) {
+      const monthKey =
+        `${order.createdAt.getUTCFullYear()}-` +
+        `${String(
+          order.createdAt.getUTCMonth() + 1,
+        ).padStart(2, "0")}`;
+
+      await Visitor.findOneAndUpdate(
+        {
+          visitorId: order.visitorId,
+          monthKey,
+        },
+        {
+          $set: {
+            converted: true,
+            lastSeenAt: order.createdAt,
+          },
+          $setOnInsert: {
+            visitorId: order.visitorId,
+            monthKey,
+            converted: true,
+          },
+        },
+        {
+          upsert: true,
+          new: true,
+          setDefaultsOnInsert: true,
+        },
+      );
+    }
+
+    return res.status(200).json({
+      status: "Success",
+      message: "Order Placed Successfully",
+      order,
+    });
+  } catch (error) {
+    console.error("CREATE ORDER ERROR:", error);
+
+    return res.status(500).json({
       status: "Failed",
       message:
-        "Product variant not found",
+        error.message || "Internal Server Error",
     });
   }
-
-
-  /*
-   * Make sure the variant belongs to the product.
-   */
-  if (
-    !variant.product ||
-    variant.product._id.toString() !==
-      String(item.product)
-  ) {
-    return res.status(400).json({
-      status: "Failed",
-      message:
-        "Variant does not belong to this product",
-    });
-  }
-
-
-  /*
-   * Validate quantity.
-   */
-  const quantity =
-    Number(item.quantity);
-
-
-  if (
-    !Number.isInteger(quantity) ||
-    quantity <= 0
-  ) {
-    return res.status(400).json({
-      status: "Failed",
-      message:
-        "Invalid product quantity",
-    });
-  }
-
-
-  /*
-   * Check stock.
-   */
-  if (
-    variant.stock <
-    quantity
-  ) {
-    return res.status(400).json({
-      status: "Failed",
-      message:
-        `Not enough stock for ${variant.product.name}. Available stock: ${variant.stock}`,
-    });
-  }
-
-
-  /*
-   * ========================================================
-   * IMPORTANT PRICE FIX
-   * ========================================================
-   *
-   * Variant.price is the FINAL selling price.
-   *
-   * Do NOT do:
-   *
-   * product.price + variant.price
-   *
-   * because that was causing:
-   *
-   * Product = 100
-   * Variant = 500
-   * Expected = 600
-   *
-   * while your app correctly charges 500.
-   */
-  const expectedPrice =
-    Number(variant.price);
-
-
-  if (
-    !Number.isFinite(
-      expectedPrice,
-    ) ||
-    expectedPrice < 0
-  ) {
-    return res.status(400).json({
-      status: "Failed",
-      message:
-        "Invalid variant price",
-    });
-  }
-
-
-  /*
-   * Optional client price validation.
-   *
-   * Even if Flutter sends the wrong price, we NEVER use it
-   * to calculate the actual order total.
-   */
-  const clientPrice =
-    item.price !== undefined &&
-    item.price !== null
-      ? Number(item.price)
-      : null;
-
-
-  if (
-    clientPrice !== null &&
-    Math.abs(
-      clientPrice -
-        expectedPrice,
-    ) > 0.000001
-  ) {
-    return res.status(400).json({
-      status: "Failed",
-      message:
-        `Price mismatch for ${variant.product.name}`,
-    });
-  }
-
-
-  /*
-   * Store the SERVER price.
-   */
-  orderProducts.push({
-    product:
-      item.product,
-
-    variant:
-      item.variant,
-
-    quantity,
-
-    price:
-      expectedPrice,
-  });
-
-
-  /*
-   * Calculate total using server price.
-   */
-  totalPrice +=
-    expectedPrice *
-    quantity;
-}
-
+};
 
 /*
- * Round total.
+ * ============================================================
+ * GET ALL ORDERS
+ * ============================================================
  */
-totalPrice =
-  Number(
-    totalPrice.toFixed(2),
-  );
+export const getAllOrders = async (req, res) => {
+  try {
+    res.set(
+      "Cache-Control",
+      "no-store, no-cache, must-revalidate, proxy-revalidate",
+    );
+    res.set("Pragma", "no-cache");
+    res.set("Expires", "0");
+    res.set("Surrogate-Control", "no-store");
+
+    const query = {
+      ...req.params,
+      ...req.query,
+    };
+
+    const {
+      filter,
+      limits,
+      skip,
+      sortBy,
+    } = apiFeatures(query);
+
+    const page = Number(query.page) || 1;
+    const limit = Number(query.limit) || 10;
+
+    const [orders, totalOrders] =
+      await Promise.all([
+        Order.find(filter)
+          .limit(limits)
+          .skip(skip)
+          .sort(sortBy)
+          .populate("products.product")
+          .populate("products.variant")
+          .populate("user", "-password"),
+
+        Order.countDocuments(filter),
+      ]);
+
+    const totalPages =
+      totalOrders === 0
+        ? 1
+        : Math.ceil(totalOrders / limit);
+
+    return res.status(200).json({
+      status: "Success",
+      orders,
+      noOfOrders: orders.length,
+      pagination: {
+        currentPage: page,
+        itemsPerPage: limit,
+        totalOrders,
+        totalPages,
+        hasPreviousPage: page > 1,
+        hasNextPage: page < totalPages,
+      },
+    });
+  } catch (error) {
+    console.error("GET ALL ORDERS ERROR:", error);
+
+    return res.status(500).json({
+      status: "Failed",
+      message:
+        error.message || "Internal Server Error",
+    });
+  }
+};
+
+/*
+ * ============================================================
+ * GET ONE ORDER
+ * ============================================================
+ */
+export const getOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const order = await Order.findById(id)
+      .populate("products.product")
+      .populate("products.variant")
+      .populate("user", "-password");
+
+    if (!order) {
+      return res.status(404).json({
+        status: "Failed",
+        message: "No Order Found With This ID",
+      });
+    }
+
+    return res.status(200).json({
+      status: "Success",
+      order,
+    });
+  } catch (error) {
+    console.error("GET ORDER ERROR:", error);
+
+    return res.status(500).json({
+      status: "Failed",
+      message:
+        error.message || "Internal Server Error",
+    });
+  }
+};
+
+/*
+ * ============================================================
+ * UPDATE ORDER
+ * ============================================================
+ */
+export const updateOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const updatedOrder =
+      await Order.findByIdAndUpdate(
+        id,
+        req.body,
+        {
+          new: true,
+          runValidators: true,
+        },
+      );
+
+    if (!updatedOrder) {
+      return res.status(404).json({
+        status: "Failed",
+        message: "No Order Found With This ID",
+      });
+    }
+
+    /*
+     * Send notification when order status changes.
+     */
+    if (req.body?.orderStatus) {
+      const user = await User.findById(
+        updatedOrder.user,
+      );
+
+      if (user) {
+        try {
+          await createNotification({
+            title: "Order Status Changed",
+            body:
+              `Order Status is ${req.body.orderStatus}`,
+            fcm_token: user.fcm_token,
+            userId: user.id,
+            type: "ORDER",
+          });
+        } catch (notificationError) {
+          console.error(
+            "ORDER NOTIFICATION ERROR:",
+            notificationError,
+          );
+        }
+      }
+    }
+
+    return res.status(200).json({
+      status: "Success",
+      updatedOrder,
+    });
+  } catch (error) {
+    console.error("UPDATE ORDER ERROR:", error);
+
+    return res.status(500).json({
+      status: "Failed",
+      message:
+        error.message || "Internal Server Error",
+    });
+  }
+};
+
+/*
+ * ============================================================
+ * DELETE ORDER
+ * ============================================================
+ */
+export const deleteOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const order =
+      await Order.findByIdAndDelete(id);
+
+    if (!order) {
+      return res.status(404).json({
+        status: "Failed",
+        message: "No Order Found With This ID",
+      });
+    }
+
+    return res.status(200).json({
+      status: "Success",
+      message: "Order Deleted Successfully",
+    });
+  } catch (error) {
+    console.error("DELETE ORDER ERROR:", error);
+
+    return res.status(500).json({
+      status: "Failed",
+      message:
+        error.message || "Internal Server Error",
+    });
+  }
+};

@@ -732,21 +732,54 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
   );
 
   // ==========================================================
-  // PAYMOB
+  // PAYMENT
   // ==========================================================
 
+  /*
+ * Remote Data Source
+ *
+ * Talks to:
+ *
+ * /api/payments/create-session
+ * /api/payments/sessions/:id/status
+ */
   getIt.registerLazySingleton<PaymobRemoteDataSource>(
     () => PaymobRemoteDataSource(getIt<ApiService>()),
   );
 
+  /*
+ * Repository
+ *
+ * Connects domain layer to remote data source.
+ */
   getIt.registerLazySingleton<PaymobRepository>(
     () => PaymobRepositoryImpl(getIt<PaymobRemoteDataSource>()),
   );
 
+  /*
+ * Create Payment Session UseCase.
+ *
+ * Checkout uses this when the user chooses CARD.
+ */
   getIt.registerLazySingleton<CreatePaymobPaymentUseCase>(
     () => CreatePaymobPaymentUseCase(getIt<PaymobRepository>()),
   );
 
+  /*
+ * Get Payment Status UseCase.
+ *
+ * Checkout uses this after opening Paymob.
+ *
+ * It checks:
+ *
+ * pending
+ * paid
+ * failed
+ * expired
+ */
+  getIt.registerLazySingleton<GetPaymobPaymentStatusUseCase>(
+    () => GetPaymobPaymentStatusUseCase(getIt<PaymobRepository>()),
+  );
   // ==========================================================
   // CHECKOUT
   // ==========================================================
@@ -1062,38 +1095,4 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
     () => DeleteAdminVariantUseCase(getIt<AdminVariantRepository>()),
   );
   // =================================================
-  // =================================================
-  /*
- * ============================================================
- * PAYMOB
- * ============================================================
- */
-
-  /*
- * Remote data source
- */
-  getIt.registerLazySingleton<PaymobRemoteDataSource>(
-    () => PaymobRemoteDataSource(getIt<ApiService>()),
-  );
-
-  /*
- * Repository
- */
-  getIt.registerLazySingleton<PaymobRepository>(
-    () => PaymobRepositoryImpl(getIt<PaymobRemoteDataSource>()),
-  );
-
-  /*
- * Create payment session
- */
-  getIt.registerLazySingleton<CreatePaymobPaymentUseCase>(
-    () => CreatePaymobPaymentUseCase(getIt<PaymobRepository>()),
-  );
-
-  /*
- * Check payment status
- */
-  getIt.registerLazySingleton<GetPaymobPaymentStatusUseCase>(
-    () => GetPaymobPaymentStatusUseCase(getIt<PaymobRepository>()),
-  );
 }
