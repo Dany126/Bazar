@@ -4,6 +4,7 @@ import 'package:dio/dio.dart';
 import 'package:e_commerce/features/admin/data/datasources/admin_users_remote_data_source.dart';
 import 'package:e_commerce/features/admin/data/repositories/admin_users_repository_impl.dart';
 import 'package:e_commerce/features/admin/domain/repositories/admin_users_repository.dart';
+import 'package:e_commerce/features/admin/domain/usecases/create_admin_product_with_variants.dart';
 import 'package:e_commerce/features/admin/domain/usecases/get_admin_users.dart';
 import 'package:e_commerce/features/admin/domain/usecases/get_all_admin_categories.dart';
 import 'package:e_commerce/features/admin/domain/usecases/update_admin_category.dart';
@@ -827,15 +828,31 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
     () => DeleteAdminProductUseCase(getIt<AdminProductRepository>()),
   );
 
+  getIt.registerLazySingleton<CreateAdminProductWithVariantsUseCase>(
+    () => CreateAdminProductWithVariantsUseCase(
+      createProductUseCase: getIt<CreateAdminProductUseCase>(),
+      createVariantUseCase: getIt<CreateAdminVariantUseCase>(),
+    ),
+  );
   getIt.registerFactory<AdminProductsCubit>(
     () => AdminProductsCubit(
       getAllProductsUseCase: getIt<GetAllAdminProductsUseCase>(),
+
       createProductUseCase: getIt<CreateAdminProductUseCase>(),
+
+      createProductWithVariantsUseCase:
+          getIt<CreateAdminProductWithVariantsUseCase>(),
+
       updateProductUseCase: getIt<UpdateAdminProductUseCase>(),
+
       deleteProductUseCase: getIt<DeleteAdminProductUseCase>(),
+
       createVariantUseCase: getIt<CreateAdminVariantUseCase>(),
+
       getVariantsUseCase: getIt<GetAdminVariantsUseCase>(),
+
       updateVariantUseCase: getIt<UpdateAdminVariantUseCase>(),
+
       deleteVariantUseCase: getIt<DeleteAdminVariantUseCase>(),
     ),
   );

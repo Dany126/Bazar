@@ -1,101 +1,161 @@
+import 'dart:ui';
+
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:e_commerce/core/helper_function/fix_image_utl.dart';
+import 'package:e_commerce/core/utils/app_colors.dart';
+import 'package:e_commerce/core/utils/app_styles.dart';
 import 'package:e_commerce/features/home/data/models/product_model.dart';
 import 'package:flutter/material.dart';
 
 class AdminProductCard extends StatelessWidget {
-  final ProductModel product;
+  const AdminProductCard({
+    super.key,
+    required this.product,
+    this.onEdit,
+    this.onDelete,
+  });
 
-  const AdminProductCard({super.key, required this.product});
+  final ProductModel product;
+  final VoidCallback? onEdit;
+  final VoidCallback? onDelete;
 
   @override
+
   Widget build(BuildContext context) {
-    final imageUrl = fixImageUrl(product.thumbnailUrl);
+    final String imageUrl = fixImageUrl(product.thumbnailUrl);
 
     return Container(
+      clipBehavior: Clip.hardEdge,
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xffE8EAF0)),
+        color: AppColors.kCardBackgroundColor,
+        borderRadius: BorderRadius.circular(8),
       ),
-      clipBehavior: Clip.antiAlias,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Expanded(
-            child: Container(
-              width: double.infinity,
-              color: const Color(0xffF5F5F8),
-              child: imageUrl.isEmpty
-                  ? const _ProductImagePlaceholder()
-                  : Image.network(
-                      imageUrl,
-                      width: double.infinity,
-                      height: double.infinity,
-                      fit: BoxFit.cover,
+          Stack(
+            children: [
+              SizedBox(
+                height: 220,
+                width: double.infinity,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: imageUrl.isEmpty
+                      ? const _ProductImagePlaceholder()
+                      : CachedNetworkImage(
+                          imageUrl: imageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) {
+                            return const Center(
+                              child: CircularProgressIndicator(),
+                            );
+                          },
+                          errorWidget: (context, url, error) {
+                            debugPrint(
+                              'ADMIN PRODUCT IMAGE ERROR\n'
+                              'URL: $imageUrl\n'
+                              'ERROR: $error',
+                            );
 
-                      // Prevent broken image exceptions
-                      // from breaking the card.
-                      errorBuilder: (context, error, stackTrace) {
-                        debugPrint('PRODUCT IMAGE ERROR');
-                        debugPrint('URL: $imageUrl');
-                        debugPrint('ERROR: $error');
+                            return const _ProductImagePlaceholder();
+                          },
+                        ),
+                ),
+              ),
 
-                        return const _ProductImagePlaceholder();
-                      },
+              // Admin actions
+              Positioned(
+                top: 5,
+                right: 8,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(100),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                    child: Container(
+                      height: 32,
+                      width: 32,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.75),
+                        shape: BoxShape.circle,
+                      ),
+                      child: PopupMenuButton<String>(
+                        padding: EdgeInsets.zero,
+                        tooltip: 'Product actions',
+                        icon: const Icon(Icons.more_vert, size: 20),
+                        onSelected: (value) {
+                          switch (value) {
+                            case 'edit':
+                              onEdit?.call();
+                              break;
 
-                      loadingBuilder: (context, child, loadingProgress) {
-                        if (loadingProgress == null) {
-                          return child;
-                        }
-
-                        return const Center(
-                          child: SizedBox(
-                            width: 28,
-                            height: 28,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                        );
-                      },
+                            case 'delete':
+                              onDelete?.call();
+                              break;
+                          }
+                        },
+                        itemBuilder: (context) {
+                          return const [
+                            PopupMenuItem<String>(
+                              value: 'edit',
+                              child: Row(
+                                children: [
+                                  Icon(Icons.edit_outlined, size: 20),
+                                  SizedBox(width: 10),
+                                  Text('Edit'),
+                                ],
+                              ),
+                            ),
+                            PopupMenuItem<String>(
+                              value: 'delete',
+                              child: Row(
+                                children: [
+                                  Icon(
+                                    Icons.delete_outline,
+                                    size: 20,
+                                    color: Colors.red,
+                                  ),
+                                  SizedBox(width: 10),
+                                  Text('Delete'),
+                                ],
+                              ),
+                            ),
+                          ];
+                        },
+                      ),
                     ),
-            ),
+                  ),
+                ),
+              ),
+            ],
           ),
 
           Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.symmetric(horizontal: 4),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
               children: [
+                const SizedBox(height: 8),
+
                 Text(
                   product.name,
-                  maxLines: 2,
+                  maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xff20222F),
-                  ),
+                  style: AppStyles.textStylesRegular12(context),
                 ),
 
-                const SizedBox(height: 10),
+                const SizedBox(height: 4),
 
                 Text(
                   '\$${product.price.toStringAsFixed(2)}',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xff6C63FF),
-                  ),
+                  style: AppStyles.textStylesRegular12(
+                    context,
+                  ).copyWith(fontWeight: FontWeight.bold),
                 ),
 
-                const SizedBox(height: 6),
-
-                Text(
-                  'Stock: ${product.stock}',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    color: Color(0xff858897),
-                  ),
-                ),
+                const SizedBox(height: 8),
               ],
             ),
           ),

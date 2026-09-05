@@ -1,8 +1,8 @@
 import 'package:e_commerce/features/admin/domain/usecases/create_admin_category.dart';
 import 'package:e_commerce/features/admin/domain/usecases/delete_admin_category.dart';
 import 'package:e_commerce/features/admin/domain/usecases/get_all_admin_categories.dart';
-import 'package:e_commerce/features/admin/domain/usecases/update_admin_category.dart';
 import 'package:e_commerce/features/admin/domain/usecases/get_all_admin_products.dart';
+import 'package:e_commerce/features/admin/domain/usecases/update_admin_category.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_categories_state.dart';
 import 'package:e_commerce/features/home/data/models/category_model.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -10,6 +10,7 @@ import 'package:image_picker/image_picker.dart';
 
 class AdminCategoriesCubit extends Cubit<AdminCategoriesState> {
   final GetAllAdminCategoriesUseCase getAllAdminCategoriesUseCase;
+
   final CreateAdminCategoryUseCase createAdminCategoryUseCase;
   final UpdateAdminCategoryUseCase updateAdminCategoryUseCase;
   final DeleteAdminCategoryUseCase deleteAdminCategoryUseCase;
@@ -51,7 +52,7 @@ class AdminCategoriesCubit extends Cubit<AdminCategoriesState> {
       return;
     }
 
-    final categories = categoriesResult.getOrElse(() => []);
+    final categories = categoriesResult.getOrElse(() => <CategoryModel>[]);
 
     final products = productsResult.getOrElse(() => []);
 
@@ -107,16 +108,17 @@ class AdminCategoriesCubit extends Cubit<AdminCategoriesState> {
 
     final result = await createAdminCategoryUseCase(name: name, image: image);
 
-    result.fold(
-      (failure) {
+    if (result.isLeft()) {
+      result.fold((failure) {
         emit(AdminCategoriesError(failure.message));
+      }, (_) {});
 
-        emit(currentState);
-      },
-      (_) async {
-        await loadCategories();
-      },
-    );
+      emit(currentState);
+
+      return;
+    }
+
+    await loadCategories();
   }
 
   // ============================================================
@@ -140,16 +142,17 @@ class AdminCategoriesCubit extends Cubit<AdminCategoriesState> {
       image: image,
     );
 
-    result.fold(
-      (failure) {
+    if (result.isLeft()) {
+      result.fold((failure) {
         emit(AdminCategoriesError(failure.message));
+      }, (_) {});
 
-        emit(currentState);
-      },
-      (_) async {
-        await loadCategories();
-      },
-    );
+      emit(currentState);
+
+      return;
+    }
+
+    await loadCategories();
   }
 
   // ============================================================
@@ -165,15 +168,16 @@ class AdminCategoriesCubit extends Cubit<AdminCategoriesState> {
 
     final result = await deleteAdminCategoryUseCase(id: id);
 
-    result.fold(
-      (failure) {
+    if (result.isLeft()) {
+      result.fold((failure) {
         emit(AdminCategoriesError(failure.message));
+      }, (_) {});
 
-        emit(currentState);
-      },
-      (_) async {
-        await loadCategories();
-      },
-    );
+      emit(currentState);
+
+      return;
+    }
+
+    await loadCategories();
   }
 }

@@ -48,10 +48,6 @@ class AdminProductsCubit extends Cubit<AdminProductsState> {
         emit(AdminProductsFailure(failure.message));
       },
       (products) {
-        // IMPORTANT:
-        // [] is a successful response.
-        //
-        // We MUST emit Loaded([]), not Failure.
         emit(AdminProductsLoaded(products));
       },
     );
@@ -76,16 +72,24 @@ class AdminProductsCubit extends Cubit<AdminProductsState> {
       images: images,
     );
 
-    return result.fold(
+    ProductModel? createdProduct;
+
+    result.fold(
       (failure) {
         emit(AdminProductsFailure(failure.message));
-
-        return null;
       },
       (product) {
-        return product;
+        createdProduct = product;
       },
     );
+
+    if (createdProduct == null) {
+      return null;
+    }
+
+    await loadProducts();
+
+    return createdProduct;
   }
 
   // ============================================================
@@ -107,19 +111,26 @@ class AdminProductsCubit extends Cubit<AdminProductsState> {
       images: images,
     );
 
-    return result.fold(
+    bool success = false;
+
+    result.fold(
       (failure) {
         emit(AdminProductsFailure(failure.message));
-
-        return false;
       },
-      (_) async {
-        await loadProducts();
-
-        return true;
+      (_) {
+        success = true;
       },
     );
+
+    if (!success) {
+      return false;
+    }
+
+    await loadProducts();
+
+    return true;
   }
+
   // ============================================================
   // DELETE PRODUCT
   // ============================================================
@@ -127,17 +138,24 @@ class AdminProductsCubit extends Cubit<AdminProductsState> {
   Future<bool> deleteProduct(String id) async {
     final result = await deleteProductUseCase(id);
 
-    return result.fold(
+    bool success = false;
+
+    result.fold(
       (failure) {
         emit(AdminProductsFailure(failure.message));
-
-        return false;
       },
-      (_) async {
-        await loadProducts();
-        return true;
+      (_) {
+        success = true;
       },
     );
+
+    if (!success) {
+      return false;
+    }
+
+    await loadProducts();
+
+    return true;
   }
 
   // ============================================================
