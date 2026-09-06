@@ -241,7 +241,8 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
   // ============================================================
   // GET FINAL PRICE
   //
-  // FINAL PRICE = PRODUCT BASE PRICE + VARIANT PRICE
+  // FINAL PRICE =
+  // PRODUCT BASE PRICE + VARIANT PRICE
   // ============================================================
 
   double _getFinalPrice(ProductDetailsEntity product) {
@@ -363,11 +364,8 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
     if (variant != null) {
       log('Product: ${product.toMap()}');
       log('Product: ${product.name}');
-
       log('Base price: ${product.price}');
-
       log('Variant price: ${variant.price}');
-
       log('Final price: $price');
     }
 
@@ -539,9 +537,17 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
                     height: 18,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: _colorFromHex(selectedColor!),
+                      color: _colorFromValue(selectedColor!),
+                      border: Border.all(color: Colors.grey.shade300),
                     ),
                   ),
+
+                const SizedBox(width: 8),
+
+                Text(
+                  selectedColor ?? '-',
+                  style: AppStyles.textStylesRegular16(context),
+                ),
 
                 const SizedBox(width: 8),
 
@@ -789,8 +795,12 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
 
     final canAddToCart = isValidVariant && !isOutOfStock && quantity > 0;
 
-    // IMPORTANT:
-    // Base product price + variant price
+    // ==========================================================
+    // FINAL PRICE
+    //
+    // BASE PRODUCT PRICE + VARIANT PRICE
+    // ==========================================================
+
     final double price = _getFinalPrice(product);
 
     return Container(
@@ -983,7 +993,7 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
         return ColorPickerSheet(
           colors: product.colors,
           selectedColor: selectedColor,
-          onSelected: (color) {
+          onColorSelected: (color) {
             _selectColor(product, color);
           },
         );
@@ -1225,25 +1235,172 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
   }
 
   // ============================================================
-  // COLOR FROM HEX
+  // COLOR FROM VALUE
+  //
+  // Supports:
+  // Black
+  // White
+  // Red
+  // Blue
+  // #000000
+  // 000000
+  // #FF000000
+  // FF000000
   // ============================================================
 
-  Color _colorFromHex(String hex) {
-    try {
-      final cleanHex = hex.replaceAll('#', '').trim();
+  Color _colorFromValue(String value) {
+    final input = value.trim();
 
-      if (cleanHex.length == 6) {
-        return Color(int.parse('FF$cleanHex', radix: 16));
-      }
-
-      if (cleanHex.length == 8) {
-        return Color(int.parse(cleanHex, radix: 16));
-      }
-
-      return Colors.grey;
-    } catch (_) {
+    if (input.isEmpty) {
       return Colors.grey;
     }
+
+    // Try HEX first.
+    final hexColor = _colorFromHex(input);
+
+    if (hexColor != null) {
+      return hexColor;
+    }
+
+    // ==========================================================
+    // NAMED COLORS
+    // ==========================================================
+
+    switch (input.toLowerCase()) {
+      case 'black':
+        return Colors.black;
+
+      case 'white':
+        return Colors.white;
+
+      case 'red':
+        return Colors.red;
+
+      case 'green':
+        return Colors.green;
+
+      case 'blue':
+        return Colors.blue;
+
+      case 'yellow':
+        return Colors.yellow;
+
+      case 'orange':
+        return Colors.orange;
+
+      case 'purple':
+        return Colors.purple;
+
+      case 'pink':
+        return Colors.pink;
+
+      case 'brown':
+        return Colors.brown;
+
+      case 'grey':
+      case 'gray':
+        return Colors.grey;
+
+      case 'cyan':
+        return Colors.cyan;
+
+      case 'teal':
+        return Colors.teal;
+
+      case 'indigo':
+        return Colors.indigo;
+
+      case 'lime':
+        return Colors.lime;
+
+      case 'amber':
+        return Colors.amber;
+
+      case 'deep orange':
+      case 'deeporange':
+        return Colors.deepOrange;
+
+      case 'deep purple':
+      case 'deeppurple':
+        return Colors.deepPurple;
+
+      case 'light blue':
+      case 'lightblue':
+        return Colors.lightBlue;
+
+      case 'light green':
+      case 'lightgreen':
+        return Colors.lightGreen;
+
+      case 'navy':
+        return const Color(0xFF000080);
+
+      case 'maroon':
+        return const Color(0xFF800000);
+
+      case 'olive':
+        return const Color(0xFF808000);
+
+      case 'silver':
+        return const Color(0xFFC0C0C0);
+
+      case 'gold':
+        return const Color(0xFFFFD700);
+
+      case 'beige':
+        return const Color(0xFFF5F5DC);
+
+      case 'cream':
+        return const Color(0xFFFFFDD0);
+
+      case 'transparent':
+        return Colors.transparent;
+
+      default:
+        return Colors.grey;
+    }
+  }
+
+  // ============================================================
+  // COLOR FROM HEX
+  //
+  // IMPORTANT:
+  // This method NEVER throws for values such as "Black".
+  // ============================================================
+
+  Color? _colorFromHex(String value) {
+    var hex = value.trim();
+
+    if (hex.startsWith('#')) {
+      hex = hex.substring(1);
+    }
+
+    // "Black", "Red", etc. are not hexadecimal.
+    if (!RegExp(r'^[0-9a-fA-F]+$').hasMatch(hex)) {
+      return null;
+    }
+
+    // RGB
+    // 000000
+    if (hex.length == 6) {
+      try {
+        return Color(int.parse('FF$hex', radix: 16));
+      } catch (_) {
+        return null;
+      }
+    }
+
+    // ARGB
+    // FF000000
+    if (hex.length == 8) {
+      try {
+        return Color(int.parse(hex, radix: 16));
+      } catch (_) {
+        return null;
+      }
+    }
+
+    return null;
   }
 
   // ============================================================
