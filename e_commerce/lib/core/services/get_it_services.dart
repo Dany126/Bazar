@@ -12,6 +12,12 @@ import 'package:e_commerce/features/admin/domain/usecases/update_admin_category.
 import 'package:e_commerce/features/admin/presentation/cubit/admin_earnings_cubit.dart';
 import 'package:e_commerce/features/admin/presentation/cubit/admin_orders_cubit.dart';
 import 'package:e_commerce/features/payment/domain/use_case/get_paymob_payment_status_use_case.dart';
+import 'package:e_commerce/features/profile/data/data_source/profile_remote_data_source_impl.dart';
+import 'package:e_commerce/features/profile/data/repo/profile_repository_impl.dart';
+import 'package:e_commerce/features/profile/domain/data_source/profile_remote_data_source.dart';
+import 'package:e_commerce/features/profile/domain/repository/profile_repository.dart';
+import 'package:e_commerce/features/profile/domain/use_case/update_profile_use_case.dart';
+import 'package:e_commerce/features/profile/presentation/cubit/profile_cubit.dart';
 import 'package:get_it/get_it.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/network/dio_error_interceptor.dart';
@@ -353,6 +359,34 @@ Future<void> setupServiceLocator({required CookieJar cookieJar}) async {
       apiService: getIt<ApiService>(),
     ),
   );
+
+  // ==========================================================
+  // PROFILE
+  // ==========================================================
+
+  getIt.registerLazySingleton<ProfileRemoteDataSource>(
+    () => ProfileRemoteDataSourceImpl(apiService: getIt<ApiService>()),
+  );
+
+  getIt.registerLazySingleton<ProfileRepository>(
+    () => ProfileRepositoryImpl(
+      remoteDataSource: getIt<ProfileRemoteDataSource>(),
+      localDataSource: getIt<AuthLocalDataSource>(),
+    ),
+  );
+
+  getIt.registerLazySingleton<UpdateProfileUseCase>(
+    () => UpdateProfileUseCase(getIt<ProfileRepository>()),
+  );
+
+  getIt.registerLazySingleton<ProfileCubit>(
+    () => ProfileCubit(
+      repository: getIt<ProfileRepository>(),
+      updateProfileUseCase: getIt<UpdateProfileUseCase>(),
+    ),
+  );
+  // ==========================================================
+  // ==========================================================
   // ==========================================================
   // HOME DATA SOURCE
   // ==========================================================

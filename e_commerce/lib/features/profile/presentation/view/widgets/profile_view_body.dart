@@ -2,32 +2,73 @@ import 'package:e_commerce/core/services/get_it_services.dart';
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
 import 'package:e_commerce/core/utils/assets.dart';
-import 'package:e_commerce/features/auth/data/auth_data_source/auth_local_data_source.dart';
 import 'package:e_commerce/features/auth/domain/entity/user_entity.dart';
 import 'package:e_commerce/features/auth/presentation/view/sign_in_view.dart';
 import 'package:e_commerce/features/auth/presentation/view_model/sign_out/cubit/sign_out_cubit.dart';
+import 'package:e_commerce/features/profile/presentation/cubit/profile_cubit.dart';
+import 'package:e_commerce/features/profile/presentation/cubit/profile_state.dart';
 import 'package:e_commerce/features/profile/presentation/view/profile_details_view.dart';
 import 'package:e_commerce/features/profile/presentation/view/widgets/profile_list_view.dart';
 import 'package:e_commerce/main.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-class ProfileViewBody extends StatelessWidget {
+class ProfileViewBody extends StatefulWidget {
   const ProfileViewBody({super.key});
 
   @override
+  State<ProfileViewBody> createState() => _ProfileViewBodyState();
+}
+
+class _ProfileViewBodyState extends State<ProfileViewBody> {
+  @override
+  void initState() {
+    super.initState();
+
+    getIt<ProfileCubit>().loadUser();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    final localDataSource = getIt<AuthLocalDataSource>();
+    return BlocProvider.value(
+      value: getIt<ProfileCubit>(),
+      child: BlocConsumer<ProfileCubit, ProfileState>(
+        listener: (context, profileState) {
+          if (profileState is ProfileFailure) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(
+                content: Text(profileState.message),
+                backgroundColor: Colors.red,
+              ),
+            );
+          }
+        },
+        builder: (context, profileState) {
+          UserEntity? user;
 
-    final cachedUserResult = localDataSource.getCachedUser();
+          if (profileState is ProfileLoaded) {
+            user = profileState.user;
+          }
 
-    return cachedUserResult.fold(
-      (failure) {
-        return _buildNoUserView(context, failure.message);
-      },
-      (user) {
-        return _buildProfileView(context, user);
-      },
+          if (profileState is ProfileUpdating) {
+            user = profileState.user;
+          }
+
+          if (profileState is ProfileUpdated) {
+            user = profileState.user;
+          }
+
+          if (user == null) {
+            if (profileState is ProfileFailure) {
+              return _buildNoUserView(context, profileState.message);
+            }
+
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          return _buildProfileView(context, user);
+        },
+      ),
     );
   }
 
@@ -58,37 +99,22 @@ class ProfileViewBody extends StatelessWidget {
             children: [
               const SizedBox(height: 30),
 
-              // =========================
-              // PROFILE IMAGE
-              // =========================
               _buildProfileAvatar(user),
 
               const SizedBox(height: 20),
 
-              // =========================
-              // USER INFORMATION CARD
-              // =========================
               _buildUserCard(context, user),
 
               const SizedBox(height: 20),
 
-              // =========================
-              // PROFILE OPTIONS
-              // =========================
               ProfileListView(),
 
               const SizedBox(height: 12),
 
-              // =========================
-              // DARK MODE
-              // =========================
               _buildThemeTile(context),
 
               const SizedBox(height: 30),
 
-              // =========================
-              // SIGN OUT
-              // =========================
               if (state is! SignOutSuccess && state is! SignOutFailure)
                 _buildSignOutButton(context),
 
@@ -99,10 +125,6 @@ class ProfileViewBody extends StatelessWidget {
       },
     );
   }
-
-  // ============================================================
-  // PROFILE AVATAR
-  // ============================================================
 
   Widget _buildProfileAvatar(UserEntity user) {
     final imageUrl = user.imageUrl?.trim();
@@ -135,19 +157,17 @@ class ProfileViewBody extends StatelessWidget {
     return _buildDefaultAvatar(user);
   }
 
-  // ============================================================
-  // DEFAULT AVATAR
-  // ============================================================
-
   Widget _buildDefaultAvatar(UserEntity user) {
     final name = user.name.trim();
 
     if (name.isEmpty) {
-      return const Image(
-        image: AssetImage(Assets.assetsImagesProfile),
-        width: 100,
-        height: 100,
-        fit: BoxFit.fill,
+      return const ClipOval(
+        child: Image(
+          image: AssetImage(Assets.assetsImagesProfile),
+          width: 100,
+          height: 100,
+          fit: BoxFit.cover,
+        ),
       );
     }
 
@@ -170,10 +190,6 @@ class ProfileViewBody extends StatelessWidget {
     );
   }
 
-  // ============================================================
-  // USER CARD
-  // ============================================================
-
   Widget _buildUserCard(BuildContext context, UserEntity user) {
     return Container(
       width: double.infinity,
@@ -186,18 +202,10 @@ class ProfileViewBody extends StatelessWidget {
           horizontal: 16,
           vertical: 10,
         ),
-
-        // =========================
-        // NAME
-        // =========================
         title: Text(
           user.name.isEmpty ? 'User' : user.name,
           style: AppStyles.textStylesSemiBold18(context),
         ),
-
-        // =========================
-        // EMAIL + PHONE
-        // =========================
         subtitle: Padding(
           padding: const EdgeInsets.only(top: 5),
           child: Column(
@@ -209,7 +217,6 @@ class ProfileViewBody extends StatelessWidget {
                   context,
                 ).copyWith(color: const Color(0xff7F7F7F)),
               ),
-
               if (user.phone.isNotEmpty) ...[
                 const SizedBox(height: 4),
                 Text(
@@ -222,20 +229,19 @@ class ProfileViewBody extends StatelessWidget {
             ],
           ),
         ),
-
-        // =========================
-        // EDIT BUTTON
-        // =========================
         trailing: IconButton(
-          onPressed: () async {
-            await Navigator.push(
+          onPressed: () {
+            Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (_) => ProfileDetailsView(
-                  initialName: user.name,
-                  initialEmail: user.email,
-                  initialPhone: user.phone,
-                ),
+                builder: (_) {
+                  return ProfileDetailsView(
+                    initialName: user.name,
+                    initialEmail: user.email,
+                    initialPhone: user.phone,
+                    initialImageUrl: user.imageUrl,
+                  );
+                },
               ),
             );
           },
@@ -245,10 +251,6 @@ class ProfileViewBody extends StatelessWidget {
       ),
     );
   }
-
-  // ============================================================
-  // THEME TILE
-  // ============================================================
 
   Widget _buildThemeTile(BuildContext context) {
     return ListTile(
@@ -268,10 +270,6 @@ class ProfileViewBody extends StatelessWidget {
       ),
     );
   }
-
-  // ============================================================
-  // SIGN OUT BUTTON
-  // ============================================================
 
   Widget _buildSignOutButton(BuildContext context) {
     return SizedBox(
@@ -296,10 +294,6 @@ class ProfileViewBody extends StatelessWidget {
       ),
     );
   }
-
-  // ============================================================
-  // NO USER
-  // ============================================================
 
   Widget _buildNoUserView(BuildContext context, String message) {
     return Center(

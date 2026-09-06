@@ -106,11 +106,23 @@ export const deleteUser = async (req, res) => {
     message: "user deleted successfuly",
   });
 };
-import { User } from "../models/user_model.js";
-
 export const updateMyProfile = async (req, res) => {
   try {
-    const user = await User.findById(req.id);
+    console.log("======================================");
+    console.log("UPDATE MY PROFILE");
+    console.log("REQ.USER:", req.user);
+    console.log("BODY:", req.body);
+    console.log("FILE:", req.file);
+    console.log("======================================");
+
+    if (!req.user || !req.user.id) {
+      return res.status(401).json({
+        status: "Failed",
+        message: "Authentication user id is missing",
+      });
+    }
+
+    const user = await User.findById(req.user.id);
 
     if (!user) {
       return res.status(404).json({
@@ -119,23 +131,36 @@ export const updateMyProfile = async (req, res) => {
       });
     }
 
-    const { name, email, phone } = req.body;
+    const {
+      name,
+      email,
+      phone,
+    } = req.body;
 
+    // Update name
     if (name !== undefined) {
       user.name = name;
     }
 
+    // Update email
     if (email !== undefined) {
       user.email = email;
     }
 
+    // Update phone
     if (phone !== undefined) {
       user.phone = phone;
     }
 
+    // Update profile image
     if (req.file) {
       user.imageUrl =
         `${req.protocol}://${req.get("host")}/public/${req.file.filename}`;
+
+      console.log(
+        "NEW IMAGE URL:",
+        user.imageUrl,
+      );
     }
 
     await user.save();
@@ -150,11 +175,12 @@ export const updateMyProfile = async (req, res) => {
       user: updatedUser,
     });
   } catch (err) {
-    console.error(err);
+    console.error("UPDATE PROFILE ERROR:", err);
 
     return res.status(500).json({
       status: "Failed",
       message: "Internal Server Error",
+      error: err.message,
     });
   }
 };
