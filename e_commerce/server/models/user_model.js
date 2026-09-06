@@ -47,6 +47,10 @@ const userSchema = new mongoose.Schema(
         ref: "Product",
       },
     ],
+    imageUrl: {
+  type: String,
+  default: null,
+},
   },
   {
     timestamps: true,

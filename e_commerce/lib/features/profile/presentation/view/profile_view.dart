@@ -6,14 +6,13 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 class ProfileView extends StatelessWidget {
   const ProfileView({super.key});
+
   static const routeName = 'profile';
 
   @override
   Widget build(BuildContext context) {
     return BlocProvider<SignOutCubit>(
-      create: (BuildContext context) {
-        return getIt<SignOutCubit>();
-      },
+      create: (_) => getIt<SignOutCubit>(),
       child: const Scaffold(
         body: SafeArea(
           child: Padding(

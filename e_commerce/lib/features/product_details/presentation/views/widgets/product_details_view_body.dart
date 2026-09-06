@@ -1006,9 +1006,9 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
   // ============================================================
 
   void _showAddReviewSheet(BuildContext context, String productId) {
-    final controller = TextEditingController();
-
-    double rating = 5.0;
+    // IMPORTANT:
+    // Get the existing ReviewCubit before opening the bottom sheet.
+    final reviewCubit = context.read<ReviewCubit>();
 
     showModalBottomSheet(
       context: context,
@@ -1017,133 +1017,10 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return SafeArea(
-              child: Padding(
-                padding: EdgeInsets.only(
-                  left: 20,
-                  right: 20,
-                  top: 20,
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 20,
-                ),
-                child: SingleChildScrollView(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Text(
-                            'Write a review',
-                            style: AppStyles.textStylesBold16Mono(context),
-                          ),
-
-                          const Spacer(),
-
-                          IconButton(
-                            onPressed: () {
-                              Navigator.pop(sheetContext);
-                            },
-                            icon: const Icon(Icons.close),
-                          ),
-                        ],
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      const Text(
-                        'Rating',
-                        style: TextStyle(fontWeight: FontWeight.w600),
-                      ),
-
-                      const SizedBox(height: 8),
-
-                      Row(
-                        children: List.generate(5, (index) {
-                          final star = index + 1;
-
-                          return IconButton(
-                            onPressed: () {
-                              setSheetState(() {
-                                rating = star.toDouble();
-                              });
-                            },
-                            icon: Icon(
-                              star <= rating ? Icons.star : Icons.star_border,
-                              color: Colors.amber,
-                              size: 32,
-                            ),
-                          );
-                        }),
-                      ),
-
-                      const SizedBox(height: 12),
-
-                      TextField(
-                        controller: controller,
-                        maxLines: 5,
-                        textInputAction: TextInputAction.newline,
-                        decoration: InputDecoration(
-                          hintText: 'Write your review...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(16),
-                          ),
-                        ),
-                      ),
-
-                      const SizedBox(height: 16),
-
-                      SizedBox(
-                        width: double.infinity,
-                        height: 52,
-                        child: ElevatedButton(
-                          onPressed: () {
-                            final description = controller.text.trim();
-
-                            if (description.isEmpty) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(
-                                  content: Text('Please write a review.'),
-                                ),
-                              );
-                              return;
-                            }
-
-                            Navigator.pop(sheetContext);
-
-                            context.read<ReviewCubit>().createReview(
-                              productId: productId,
-                              rating: rating,
-                              description: description,
-                            );
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: kProductAccentColor,
-                            foregroundColor: Colors.white,
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(16),
-                            ),
-                          ),
-                          child: const Text(
-                            'Submit Review',
-                            style: TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            );
-          },
-        );
+      builder: (_) {
+        return AddReviewSheet(productId: productId, reviewCubit: reviewCubit);
       },
-    ).whenComplete(controller.dispose);
+    );
   }
 
   // ============================================================
@@ -1411,5 +1288,239 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(message)));
+  }
+}
+
+class AddReviewSheet extends StatefulWidget {
+  const AddReviewSheet({
+    super.key,
+    required this.productId,
+    required this.reviewCubit,
+  });
+
+  final String productId;
+  final ReviewCubit reviewCubit;
+
+  @override
+  State<AddReviewSheet> createState() => _AddReviewSheetState();
+}
+
+class _AddReviewSheetState extends State<AddReviewSheet> {
+  late final TextEditingController _controller;
+
+  double _rating = 0.0;
+  bool _isSubmitting = false;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = TextEditingController();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+
+    super.dispose();
+  }
+
+  Future<void> _submitReview() async {
+    if (_isSubmitting) {
+      return;
+    }
+
+    final description = _controller.text.trim();
+
+    if (description.isEmpty) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Please write a review')));
+      return;
+    }
+
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    await widget.reviewCubit.createReview(
+      productId: widget.productId,
+      rating: _rating,
+      description: description,
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    final state = widget.reviewCubit.state;
+
+    if (state is ReviewCreated) {
+      // Close the bottom sheet after successful submission.
+      Navigator.of(context).pop();
+      return;
+    }
+
+    // Keep the sheet open if the request failed.
+    setState(() {
+      _isSubmitting = false;
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final keyboardHeight = MediaQuery.of(context).viewInsets.bottom;
+
+    return SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(20, 16, 20, 24 + keyboardHeight),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // =========================================================
+              // HEADER
+              // =========================================================
+
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  const Text(
+                    'Add Review',
+                    style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+                  ),
+                  IconButton(
+                    onPressed: _isSubmitting
+                        ? null
+                        : () {
+                            Navigator.of(context).pop();
+                          },
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 8),
+
+              // =========================================================
+              // RATING
+              // =========================================================
+              const Text(
+                'Rating',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              ),
+
+              const SizedBox(height: 10),
+
+              Row(
+                children: List.generate(5, (index) {
+                  final starNumber = index + 1;
+
+                  return GestureDetector(
+                    onTap: _isSubmitting
+                        ? null
+                        : () {
+                            setState(() {
+                              _rating = starNumber.toDouble();
+                            });
+                          },
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 6),
+                      child: Icon(
+                        starNumber <= _rating ? Icons.star : Icons.star_border,
+                        size: 32,
+                        color: kProductAccentColor,
+                      ),
+                    ),
+                  );
+                }),
+              ),
+
+              const SizedBox(height: 16),
+
+              // =========================================================
+              // REVIEW
+              // =========================================================
+              const Text(
+                'Your review',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600),
+              ),
+
+              const SizedBox(height: 10),
+
+              TextField(
+                controller: _controller,
+                enabled: !_isSubmitting,
+                maxLines: 5,
+                textInputAction: TextInputAction.newline,
+                decoration: InputDecoration(
+                  hintText: 'Write your review...',
+                  filled: true,
+                  fillColor: Colors.grey[100],
+                  contentPadding: const EdgeInsets.all(16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: BorderSide.none,
+                  ),
+                  focusedBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(14),
+                    borderSide: const BorderSide(
+                      color: kProductAccentColor,
+                      width: 1.5,
+                    ),
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // =========================================================
+              // SUBMIT BUTTON
+              // =========================================================
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: ElevatedButton(
+                  onPressed: _isSubmitting ? null : _submitReview,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: kProductAccentColor,
+                    foregroundColor: Colors.white,
+                    disabledBackgroundColor: kProductAccentColor.withOpacity(
+                      0.6,
+                    ),
+                    disabledForegroundColor: Colors.white,
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14),
+                    ),
+                  ),
+                  child: _isSubmitting
+                      ? const SizedBox(
+                          width: 22,
+                          height: 22,
+                          child: CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          ),
+                        )
+                      : const Text(
+                          'Submit Review',
+                          style: TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }

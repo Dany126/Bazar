@@ -1,4 +1,5 @@
 import express, { application } from "express";
+import { upload } from "../utils/imageStore.js";
 import {
   register,
   login,
@@ -11,6 +12,7 @@ import {
   deleteUser,
   getAllUsers,
   updateUser,
+  updateMyProfile,
 } from "../controllers/user_controller.js";
 import { requireAuth } from "../middleware/requireAuth.js";
 import { orderRouter } from "./order_routes.js";
@@ -25,7 +27,11 @@ userRouter.post("/refresh", refresh);
 userRouter.post("/logout", logoutHandler);
 userRouter.post("/forget-password", forgetPassword);
 userRouter.post("/reset-password", resetPassword);
-
+userRouter.patch(
+  "/profile",
+  upload.single("image"),
+  updateMyProfile,
+);
 userRouter.use(requireAuth);
 
 userRouter.use("/:user/order", orderRouter);

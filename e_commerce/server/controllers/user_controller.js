@@ -106,3 +106,55 @@ export const deleteUser = async (req, res) => {
     message: "user deleted successfuly",
   });
 };
+import { User } from "../models/user_model.js";
+
+export const updateMyProfile = async (req, res) => {
+  try {
+    const user = await User.findById(req.id);
+
+    if (!user) {
+      return res.status(404).json({
+        status: "Failed",
+        message: "User not found",
+      });
+    }
+
+    const { name, email, phone } = req.body;
+
+    if (name !== undefined) {
+      user.name = name;
+    }
+
+    if (email !== undefined) {
+      user.email = email;
+    }
+
+    if (phone !== undefined) {
+      user.phone = phone;
+    }
+
+    if (req.file) {
+      user.imageUrl =
+        `${req.protocol}://${req.get("host")}/public/${req.file.filename}`;
+    }
+
+    await user.save();
+
+    const updatedUser = user.toObject();
+
+    delete updatedUser.password_hash;
+
+    return res.status(200).json({
+      status: "success",
+      message: "Profile updated successfully",
+      user: updatedUser,
+    });
+  } catch (err) {
+    console.error(err);
+
+    return res.status(500).json({
+      status: "Failed",
+      message: "Internal Server Error",
+    });
+  }
+};
