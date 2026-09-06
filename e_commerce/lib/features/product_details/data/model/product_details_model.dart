@@ -1,3 +1,4 @@
+
 import 'package:e_commerce/features/home/presentation/viewModel/products_cubit/get_products_cubit.dart';
 import 'package:e_commerce/features/product_details/data/model/review_model.dart';
 import 'package:e_commerce/features/product_details/data/model/variant_model.dart';
@@ -20,37 +21,118 @@ class ProductDetailsModel extends ProductDetailsEntity {
     super.reviews,
   });
 
-  factory ProductDetailsModel.fromJson(Map<String, dynamic> json) {
+  // ============================================================
+  // FROM JSON
+  // ============================================================
+
+  factory ProductDetailsModel.fromJson(
+    Map<String, dynamic> json,
+  ) {
     final variantsRaw = json['variants'];
 
     final variants = variantsRaw is List
         ? variantsRaw
             .whereType<Map<String, dynamic>>()
-            .map((v) => VariantModel.fromJson(v))
+            .map(
+              (variant) => VariantModel.fromJson(
+                variant,
+              ),
+            )
             .toList()
         : <VariantModel>[];
 
     final productId =
-        json['_id']?.toString() ?? json['id']?.toString() ?? '';
+        json['_id']?.toString() ??
+        json['id']?.toString() ??
+        '';
 
     return ProductDetailsModel(
       id: productId,
+
       name: json['name']?.toString() ?? '',
-      price: _toDouble(json['price']),
-      images: _parseImages(json['image']),
 
-      // IMPORTANT:
-      // Never allow NaN, infinity, negative rating,
-      // or rating greater than 5 to reach the UI.
-      avgRating: _toRating(json['avg_rating']),
+      // ----------------------------------------------------------
+      // BASE PRODUCT PRICE
+      // ----------------------------------------------------------
+      //
+      // Product price is stored directly in:
+      //
+      // json['price']
+      //
+      // Variant price is stored separately in VariantModel.price.
+      //
+      price: _toDouble(
+        json['price'],
+      ),
 
-      ratingsQuantity: _toInt(json['ratingsQuantity']),
-      stock: _toInt(json['stock']),
-      soldCount: _toInt(json['soldCount']),
-      categoryId: _parseCategoryId(json['category']),
+      // ----------------------------------------------------------
+      // MULTIPLE IMAGES
+      // ----------------------------------------------------------
+
+      images: _parseImages(
+        json['image'],
+      ),
+
+      // ----------------------------------------------------------
+      // RATING
+      // ----------------------------------------------------------
+
+      avgRating: _toRating(
+        json['avg_rating'],
+      ),
+
+      ratingsQuantity: _toInt(
+        json['ratingsQuantity'],
+      ),
+
+      // ----------------------------------------------------------
+      // STOCK
+      // ----------------------------------------------------------
+
+      stock: _toInt(
+        json['stock'],
+      ),
+
+      // ----------------------------------------------------------
+      // SOLD COUNT
+      // ----------------------------------------------------------
+
+      soldCount: _toInt(
+        json['soldCount'],
+      ),
+
+      // ----------------------------------------------------------
+      // CATEGORY
+      // ----------------------------------------------------------
+
+      categoryId: _parseCategoryId(
+        json['category'],
+      ),
+
+      // ----------------------------------------------------------
+      // DESCRIPTION
+      // ----------------------------------------------------------
+
       description: json['description']?.toString(),
-      reviews: _parseReviews(json['reviews']),
+
+      // ----------------------------------------------------------
+      // REVIEWS
+      // ----------------------------------------------------------
+
+      reviews: _parseReviews(
+        json['reviews'],
+      ),
+
+      // ----------------------------------------------------------
+      // VARIANTS
+      // ----------------------------------------------------------
+
       variants: variants,
+
+      // ----------------------------------------------------------
+      // FAVORITE
+      // ----------------------------------------------------------
+
       isFavorite: _getFavoriteState(
         productId,
         json['isFavorite'],
@@ -60,60 +142,357 @@ class ProductDetailsModel extends ProductDetailsEntity {
     );
   }
 
+  // ============================================================
+  // FROM VARIANTS JSON
+  // ============================================================
+  //
+  // Your API response looks like:
+  //
+  // {
+  //   "status": "Success",
+  //   "variants": [
+  //     {
+  //       "_id": "...",
+  //       "size": "S",
+  //       "price": 500,
+  //       "color": "Black",
+  //       "stock": 11,
+  //       "soldCount": 4,
+  //
+  //       "product": {
+  //         "_id": "...",
+  //         "name": "Dany",
+  //         "image": [
+  //           "...",
+  //           "...",
+  //           "...",
+  //           "..."
+  //         ],
+  //         "avg_rating": 0,
+  //         "ratingsQuantity": 0,
+  //         "category": {...},
+  //         "price": 100
+  //       }
+  //     }
+  //   ],
+  //   "noOfVariants": 1
+  // }
+  //
+  // Therefore:
+  //
+  // Base product price = 100
+  // Variant price      = 500
+  // Final price        = 600
+  //
+  // ProductDetailsModel.price = 100
+  // VariantModel.price        = 500
+  //
+  // ProductDetailsViewBody calculates 100 + 500.
+
   factory ProductDetailsModel.fromVariantsJson({
     required Map<String, dynamic> product,
     required List<dynamic> variantsJson,
   }) {
-    final variantMaps =
-        variantsJson.whereType<Map<String, dynamic>>().toList();
+    // ----------------------------------------------------------
+    // PARSE VARIANTS
+    // ----------------------------------------------------------
 
-    final variants =
-        variantMaps.map((v) => VariantModel.fromJson(v)).toList();
+    final variantMaps = variantsJson
+        .whereType<Map<String, dynamic>>()
+        .toList();
+
+    final variants = variantMaps
+        .map(
+          (variant) => VariantModel.fromJson(
+            variant,
+          ),
+        )
+        .toList();
+
+    // ----------------------------------------------------------
+    // FIRST VARIANT
+    // ----------------------------------------------------------
 
     final firstVariant =
-        variantMaps.isNotEmpty ? variantMaps.first : null;
+        variantMaps.isNotEmpty
+            ? variantMaps.first
+            : null;
+
+    // ----------------------------------------------------------
+    // PRODUCT INSIDE VARIANT
+    // ----------------------------------------------------------
+    //
+    // The API returns:
+    //
+    // variant.product.price
+    //
+    // as the base product price.
+
+    Map<String, dynamic>? variantProduct;
+
+    if (firstVariant != null) {
+      final productData = firstVariant['product'];
+
+      if (productData is Map<String, dynamic>) {
+        variantProduct = productData;
+      }
+    }
+
+    // ----------------------------------------------------------
+    // PRODUCT ID
+    // ----------------------------------------------------------
 
     final productId =
         product['_id']?.toString() ??
         product['id']?.toString() ??
+        variantProduct?['_id']?.toString() ??
+        variantProduct?['id']?.toString() ??
         '';
+
+    // ----------------------------------------------------------
+    // PRODUCT NAME
+    // ----------------------------------------------------------
+
+    final productName =
+        product['name']?.toString() ??
+        variantProduct?['name']?.toString() ??
+        '';
+
+    // ----------------------------------------------------------
+    // BASE PRODUCT PRICE
+    // ----------------------------------------------------------
+    //
+    // IMPORTANT:
+    //
+    // DO NOT use:
+    //
+    // firstVariant['price']
+    //
+    // because that is the variant price.
+    //
+    // We need:
+    //
+    // product['price']
+    //
+    // OR:
+    //
+    // variantProduct['price']
+    //
+    // In your actual response:
+    //
+    // variant.price = 500
+    // variant.product.price = 100
+
+    final basePrice =
+        product['price'] ??
+        variantProduct?['price'];
+
+    // ----------------------------------------------------------
+    // PRODUCT IMAGES
+    // ----------------------------------------------------------
+
+    final productImages =
+        product['image'] ??
+        variantProduct?['image'];
+
+    // ----------------------------------------------------------
+    // PRODUCT CATEGORY
+    // ----------------------------------------------------------
+
+    final category =
+        product['category'] ??
+        variantProduct?['category'];
+
+    // ----------------------------------------------------------
+    // PRODUCT DESCRIPTION
+    // ----------------------------------------------------------
+
+    final description =
+        product['description'] ??
+        variantProduct?['description'];
+
+    // ----------------------------------------------------------
+    // PRODUCT RATING
+    // ----------------------------------------------------------
+
+    final avgRating =
+        product['avg_rating'] ??
+        variantProduct?['avg_rating'];
+
+    final ratingsQuantity =
+        product['ratingsQuantity'] ??
+        variantProduct?['ratingsQuantity'];
+
+    // ----------------------------------------------------------
+    // PRODUCT REVIEWS
+    // ----------------------------------------------------------
+
+    final reviews =
+        product['reviews'] ??
+        variantProduct?['reviews'];
+
+    // ----------------------------------------------------------
+    // FAVORITE STATE
+    // ----------------------------------------------------------
+
+    final isFavorite =
+        product['isFavorite'] ??
+        variantProduct?['isFavorite'];
+
+    final isFavourite =
+        product['isFavourite'] ??
+        variantProduct?['isFavourite'];
+
+    final isInWishlist =
+        product['isInWishlist'] ??
+        variantProduct?['isInWishlist'];
+
+    // ----------------------------------------------------------
+    // PRODUCT SOLD COUNT
+    // ----------------------------------------------------------
+
+    final soldCount =
+        product['soldCount'] ??
+        variantProduct?['soldCount'];
+
+    // ----------------------------------------------------------
+    // PRODUCT STOCK
+    // ----------------------------------------------------------
+    //
+    // Stock belongs to the variant.
+    //
+    // The first variant is the initial/default variant.
+    //
+    // When the user selects another variant, your UI should use
+    // that selected variant's stock.
+
+    final productStock =
+        product['stock'] ??
+        variantProduct?['stock'];
+
+    // ----------------------------------------------------------
+    // RETURN MODEL
+    // ----------------------------------------------------------
 
     return ProductDetailsModel(
       id: productId,
-      name: product['name']?.toString() ?? '',
-      price: _toDouble(
-        firstVariant?['price'] ?? product['price'],
-      ),
-      images: _parseImages(product['image']),
 
-      // IMPORTANT:
-      // Same protection here because this factory can also
-      // create ProductDetailsModel objects.
-      avgRating: _toRating(product['avg_rating']),
+      name: productName,
+
+      // ========================================================
+      // BASE PRODUCT PRICE
+      // ========================================================
+      //
+      // Your example:
+      //
+      // product.price = 100
+      // variant.price = 500
+      //
+      // Therefore:
+      //
+      // ProductDetailsModel.price = 100
+      //
+      price: _toDouble(
+        basePrice,
+      ),
+
+      // ========================================================
+      // ALL PRODUCT IMAGES
+      // ========================================================
+
+      images: _parseImages(
+        productImages,
+      ),
+
+      // ========================================================
+      // RATING
+      // ========================================================
+
+      avgRating: _toRating(
+        avgRating,
+      ),
 
       ratingsQuantity: _toInt(
-        product['ratingsQuantity'],
+        ratingsQuantity,
       ),
-      stock: _toInt(
-        firstVariant?['stock'] ?? product['stock'],
-      ),
+
+      // ========================================================
+      // STOCK
+      // ========================================================
+      //
+      // ProductDetailsEntity still requires a product stock.
+      //
+      // Use the first variant's stock when variants exist.
+      //
+
+      stock: firstVariant != null
+          ? _toInt(
+              firstVariant['stock'],
+            )
+          : _toInt(
+              productStock,
+            ),
+
+      // ========================================================
+      // SOLD COUNT
+      // ========================================================
+      //
+      // This is the PRODUCT sold count.
+      //
+      // We do NOT access:
+      //
+      // variant.soldCount
+      //
+      // because VariantEntity does not have soldCount.
+
       soldCount: _toInt(
-        firstVariant?['soldCount'] ?? product['soldCount'],
+        soldCount,
       ),
+
+      // ========================================================
+      // CATEGORY
+      // ========================================================
+
       categoryId: _parseCategoryId(
-        product['category'],
+        category,
       ),
-      description: product['description']?.toString(),
-      reviews: _parseReviews(product['reviews']),
+
+      // ========================================================
+      // DESCRIPTION
+      // ========================================================
+
+      description: description?.toString(),
+
+      // ========================================================
+      // REVIEWS
+      // ========================================================
+
+      reviews: _parseReviews(
+        reviews,
+      ),
+
+      // ========================================================
+      // VARIANTS
+      // ========================================================
+
       variants: variants,
+
+      // ========================================================
+      // FAVORITE
+      // ========================================================
+
       isFavorite: _getFavoriteState(
         productId,
-        product['isFavorite'],
-        product['isFavourite'],
-        product['isInWishlist'],
+        isFavorite,
+        isFavourite,
+        isInWishlist,
       ),
     );
   }
+
+  // ============================================================
+  // FAVORITE STATE
+  // ============================================================
 
   static bool _getFavoriteState(
     String productId,
@@ -143,14 +522,13 @@ class ProductDetailsModel extends ProductDetailsEntity {
     return false;
   }
 
-  /// Converts a normal number/string to double.
-  ///
-  /// This method protects the application from:
-  /// - null
-  /// - invalid strings
-  /// - NaN
-  /// - infinity
-  static double _toDouble(dynamic value) {
+  // ============================================================
+  // DOUBLE PARSER
+  // ============================================================
+
+  static double _toDouble(
+    dynamic value,
+  ) {
     if (value == null) {
       return 0.0;
     }
@@ -160,7 +538,8 @@ class ProductDetailsModel extends ProductDetailsEntity {
     if (value is num) {
       result = value.toDouble();
     } else {
-      result = double.tryParse(
+      result =
+          double.tryParse(
             value.toString().trim(),
           ) ??
           0.0;
@@ -173,11 +552,16 @@ class ProductDetailsModel extends ProductDetailsEntity {
     return result;
   }
 
-  /// Converts avg_rating to a valid product rating.
-  ///
-  /// Rating must always be between 0 and 5.
-  static double _toRating(dynamic value) {
-    final rating = _toDouble(value);
+  // ============================================================
+  // RATING PARSER
+  // ============================================================
+
+  static double _toRating(
+    dynamic value,
+  ) {
+    final rating = _toDouble(
+      value,
+    );
 
     if (!rating.isFinite) {
       return 0.0;
@@ -194,7 +578,13 @@ class ProductDetailsModel extends ProductDetailsEntity {
     return rating;
   }
 
-  static int _toInt(dynamic value) {
+  // ============================================================
+  // INT PARSER
+  // ============================================================
+
+  static int _toInt(
+    dynamic value,
+  ) {
     if (value == null) {
       return 0;
     }
@@ -213,32 +603,58 @@ class ProductDetailsModel extends ProductDetailsEntity {
         0;
   }
 
-  static List<String> _parseImages(dynamic value) {
+  // ============================================================
+  // IMAGES PARSER
+  // ============================================================
+
+  static List<String> _parseImages(
+    dynamic value,
+  ) {
     if (value is! List) {
-      return [];
+      return <String>[];
     }
 
     return value
-        .where((image) => image != null)
-        .map((image) => image.toString().trim())
-        .where((image) => image.isNotEmpty)
+        .where(
+          (image) => image != null,
+        )
+        .map(
+          (image) => image.toString().trim(),
+        )
+        .where(
+          (image) => image.isNotEmpty,
+        )
         .toList();
   }
 
-  static List<ReviewModel> _parseReviews(dynamic value) {
+  // ============================================================
+  // REVIEWS PARSER
+  // ============================================================
+
+  static List<ReviewModel> _parseReviews(
+    dynamic value,
+  ) {
     if (value is! List) {
-      return [];
+      return <ReviewModel>[];
     }
 
     return value
         .whereType<Map<String, dynamic>>()
         .map(
-          (review) => ReviewModel.fromJson(review),
+          (review) => ReviewModel.fromJson(
+            review,
+          ),
         )
         .toList();
   }
 
-  static String _parseCategoryId(dynamic category) {
+  // ============================================================
+  // CATEGORY ID PARSER
+  // ============================================================
+
+  static String _parseCategoryId(
+    dynamic category,
+  ) {
     if (category is String) {
       return category;
     }
@@ -250,5 +666,71 @@ class ProductDetailsModel extends ProductDetailsEntity {
     }
 
     return '';
+  }
+
+  // ============================================================
+  // TO MAP
+  // ============================================================
+
+  Map<String, dynamic> toMap() {
+    return {
+      '_id': id,
+
+      'name': name,
+
+      // Base product price.
+      'price': price,
+
+      // All product images.
+      'image': images,
+
+      'avg_rating': avgRating,
+
+      'ratingsQuantity': ratingsQuantity,
+
+      'stock': stock,
+
+      'soldCount': soldCount,
+
+      'category': categoryId,
+
+      if (description != null)
+        'description': description,
+
+      'isFavorite': isFavorite,
+
+      // --------------------------------------------------------
+      // VARIANTS
+      // --------------------------------------------------------
+      //
+      // VariantEntity contains:
+      // id
+      // size
+      // color
+      // price
+      // stock
+      //
+      // It does NOT contain soldCount.
+
+      'variants': variants
+          .map(
+            (variant) => {
+              '_id': variant.id,
+              'size': variant.size,
+              'color': variant.color,
+              'price': variant.price,
+              'stock': variant.stock,
+            },
+          )
+          .toList(),
+    };
+  }
+
+  // ============================================================
+  // TO JSON
+  // ============================================================
+
+  Map<String, dynamic> toJson() {
+    return toMap();
   }
 }

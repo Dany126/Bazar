@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:dartz/dartz.dart';
 import 'package:e_commerce/constant.dart';
 import 'package:e_commerce/core/error/failure.dart';
@@ -31,6 +33,7 @@ class ProductDetailsRemoteDataSourceImpl
         },
         (response) async {
           try {
+            log(response.toString());
             final variants = response['variants'] as List<dynamic>? ?? [];
 
             if (variants.isEmpty) {

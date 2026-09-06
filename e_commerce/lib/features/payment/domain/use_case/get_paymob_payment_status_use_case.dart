@@ -9,16 +9,6 @@ class GetPaymobPaymentStatusUseCase {
 
   final PaymobRepository repository;
 
-  /*
-   * Checks the current status of a payment session.
-   *
-   * Possible backend values:
-   *
-   * pending
-   * paid
-   * failed
-   * expired
-   */
   Future<Either<Failure, Map<String, dynamic>>> call({
     required String paymentSessionId,
   }) {

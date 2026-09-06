@@ -58,4 +58,6 @@ class ProductDetailsEntity {
 
     return null;
   }
+
+  toMap() {}
 }

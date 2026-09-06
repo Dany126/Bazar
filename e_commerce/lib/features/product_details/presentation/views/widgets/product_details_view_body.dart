@@ -1,3 +1,5 @@
+import 'dart:developer';
+
 import 'package:e_commerce/core/utils/app_colors.dart';
 import 'package:e_commerce/core/utils/app_styles.dart';
 import 'package:e_commerce/core/utils/assets.dart';
@@ -109,10 +111,16 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
                       ),
                     ),
 
+                    // ==================================================
+                    // PRODUCT IMAGES
+                    // ==================================================
                     SliverToBoxAdapter(
                       child: ProductImageGallery(images: product.images),
                     ),
 
+                    // ==================================================
+                    // PRODUCT CONTENT
+                    // ==================================================
                     SliverPadding(
                       padding: const EdgeInsets.fromLTRB(16, 16, 16, 110),
                       sliver: SliverList(
@@ -169,6 +177,9 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
                   ],
                 ),
 
+                // ======================================================
+                // BOTTOM BAR
+                // ======================================================
                 Positioned(
                   left: 0,
                   right: 0,
@@ -225,6 +236,25 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
     }
 
     return product.findVariant(size: selectedSize!, color: selectedColor!);
+  }
+
+  // ============================================================
+  // GET FINAL PRICE
+  //
+  // FINAL PRICE = PRODUCT BASE PRICE + VARIANT PRICE
+  // ============================================================
+
+  double _getFinalPrice(ProductDetailsEntity product) {
+    final variant = _getSelectedVariant(product);
+
+    if (variant == null) {
+      return product.price;
+    }
+
+    final basePrice = product.price;
+    final variantPrice = variant.price;
+
+    return basePrice + variantPrice;
   }
 
   // ============================================================
@@ -328,7 +358,18 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
   Widget _buildTitleAndPrice(ProductDetailsEntity product) {
     final variant = _getSelectedVariant(product);
 
-    final price = variant?.price ?? product.price;
+    final double price = _getFinalPrice(product);
+
+    if (variant != null) {
+      log('Product: ${product.toMap()}');
+      log('Product: ${product.name}');
+
+      log('Base price: ${product.price}');
+
+      log('Variant price: ${variant.price}');
+
+      log('Final price: $price');
+    }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -748,7 +789,9 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
 
     final canAddToCart = isValidVariant && !isOutOfStock && quantity > 0;
 
-    final price = variant?.price ?? product.price;
+    // IMPORTANT:
+    // Base product price + variant price
+    final double price = _getFinalPrice(product);
 
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
@@ -766,6 +809,10 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
         top: false,
         child: Row(
           children: [
+            // ==================================================
+            // TOTAL
+            // ==================================================
+
             Expanded(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -791,6 +838,9 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
 
             const SizedBox(width: 12),
 
+            // ==================================================
+            // ADD TO CART
+            // ==================================================
             Expanded(
               flex: 2,
               child: SizedBox(
@@ -892,6 +942,7 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
       _showMessage(context, e.toString());
     }
   }
+
   // ============================================================
   // SIZE SHEET
   // ============================================================
@@ -978,7 +1029,9 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
                             'Write a review',
                             style: AppStyles.textStylesBold16Mono(context),
                           ),
+
                           const Spacer(),
+
                           IconButton(
                             onPressed: () {
                               Navigator.pop(sheetContext);
@@ -1052,7 +1105,7 @@ class _ProductDetailsViewBodyState extends State<ProductDetailsViewBody> {
 
                             context.read<ReviewCubit>().createReview(
                               productId: productId,
-                              rating: rating.toDouble(),
+                              rating: rating,
                               description: description,
                             );
                           },
